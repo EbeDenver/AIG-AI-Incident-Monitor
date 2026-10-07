@@ -1,0 +1,8 @@
+{
+  "demonstration_notice": "DEMONSTRATION DATA \u2014 NOT A REAL INCIDENT",
+  "amount_status": "UNKNOWN",
+  "exact_amount": "0.00",
+  "supporting_evidence_ids": [],
+  "expected_error": "InvalidMonetaryStateError",
+  "expected_rule": "Rule 1 & 2: Unknown monetary amount must be null, not zero"
+}

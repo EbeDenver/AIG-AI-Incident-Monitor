@@ -1,0 +1,8 @@
+{
+  "demonstration_notice": "DEMONSTRATION DATA \u2014 NOT A REAL INCIDENT",
+  "schema_version": "1.0.0",
+  "involvement_status": "AI_INVOLVEMENT_ALLEGED",
+  "component_implicated": "MODEL_WEIGHTS_OR_INFERENCE",
+  "supporting_evidence_ids": [],
+  "technical_rationale": "Civil complaint asserts AI algorithm bias in credit denial, but model audit report has not been released."
+}

@@ -1,0 +1,27 @@
+{
+  "demonstration_notice": "DEMONSTRATION DATA \u2014 NOT A REAL INCIDENT",
+  "schema_version": "1.0.0",
+  "id": "CLM-1010",
+  "incident_id": "INC-0011",
+  "claim_text": "Initial unverified report stated 1,200 client workstations failed following agent update.",
+  "claim_type": "NUMERIC_METRIC",
+  "epistemic_status": "UNVERIFIED_ALLEGATION",
+  "supporting_evidence_ids": [
+    "EVD-2010"
+  ],
+  "contradicting_evidence_ids": [],
+  "confidence": "LOW",
+  "materiality": "SECONDARY_CONTRIBUTOR",
+  "is_causal_claim": false,
+  "is_numeric_claim": false,
+  "is_legal_claim": false,
+  "is_framework_interpretation": false,
+  "causal_assessment": null,
+  "numeric_amount": null,
+  "review_status": "DRAFT_UNREVIEWED",
+  "human_review_id": null,
+  "lifecycle_status": "SUPERSEDED",
+  "superseded_by": "CLM-1011",
+  "supersedes": null,
+  "supersession_reason": "CORRECTED_FACTUAL_ERROR"
+}

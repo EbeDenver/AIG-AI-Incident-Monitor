@@ -1,0 +1,17 @@
+{
+  "demonstration_notice": "DEMONSTRATION DATA \u2014 NOT A REAL INCIDENT",
+  "id": "CLM-9925",
+  "incident_id": "INC-0925",
+  "claim_text": "The vision model hallucination directly caused the automated delivery collision.",
+  "claim_type": "CAUSAL_ASSERTION",
+  "epistemic_status": "TECHNICAL_ANALYSIS",
+  "supporting_evidence_ids": [
+    "EVD-2099"
+  ],
+  "confidence": "HIGH",
+  "materiality": "CORE_IMPACT",
+  "is_causal_claim": true,
+  "causal_assessment": null,
+  "expected_error": "UngroundedClaimError",
+  "expected_rule": "Rule 6: Causal claim requires attached CausalAssessment"
+}

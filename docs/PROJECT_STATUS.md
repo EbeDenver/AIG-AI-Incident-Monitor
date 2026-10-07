@@ -1,10 +1,10 @@
 # PROJECT STATUS & MATURITY DASHBOARD
-**Project:** AI Incident Monitor  
-**Organization:** AI Guardians LLC  
-**Document Identifier:** STAT-001  
-**Last Updated:** 2026-10-07  
-**Current Milestone:** Phase 1 (Foundational Governing Documentation Suite)  
-**Overall Status:** GREEN (On Schedule, Baseline Architecture Established)  
+**Project:** AI Incident Monitor
+**Organization:** AI Guardians LLC
+**Document Identifier:** STAT-001
+**Last Updated:** 2026-10-07
+**Current Milestone:** Phase 2 (Core Epistemic Schemas, Pydantic v2 Domain Models, & Golden Fixtures)
+**Overall Status:** GREEN (Phase 2 Completed, 89/89 Tests Passing, 20/69 Requirements Verified)
 
 ---
 
@@ -13,7 +13,7 @@
 | Phase | Description | Target Deliverables | Status | Completion Date |
 | :---: | :--- | :--- | :---: | :---: |
 | **Phase 1** | **Foundational Governing Documentation** | 11 governing docs, Git repo init, .gitignore, ADR-001..005, RTM | **COMPLETED** | **2026-10-07** |
-| **Phase 2** | Core Schemas & Epistemic Types | Pydantic v2 models, EpistemicValue[T], golden fixtures, tests | Planned | Phase 2 Session |
+| **Phase 2** | **Core Schemas & Epistemic Models** | Pydantic v2 models, epistemic typing, 29 golden fixtures, 89 tests | **COMPLETED** | **2026-10-07** |
 | **Phase 3** | Ingestion & Injection Defense | Connectors (RSS, arXiv), XML wrappers, SSRF defense, hasher | Planned | Phase 3 Session |
 | **Phase 4** | AIG-ISI Scoring & Governance Map | AIG-ISI engine, factor rationales, OECD/NIST/EU Act mappers | Planned | Phase 4 Session |
 | **Phase 5** | Editorial Pipeline & Human Review | Substack generator, neutral tone linter, HITL review CLI | Planned | Phase 5 Session |
@@ -36,36 +36,49 @@ Based on [`docs/REQUIREMENTS_TRACEABILITY.md`](REQUIREMENTS_TRACEABILITY.md):
     - `GIT-005`: Session lifecycle documentation sync (`PROJECT_STATUS.md`, `NEXT_SESSION.md`).
     - `PRI-002`: Copyright fair-use compliance (no raw articles in Git).
     - `SEC-003`: Zero-secret enforcement via `.gitignore` and git hygiene.
-  - `PLANNED (Phases 2–6)`: 62 requirements
+  - `VERIFIED (Phase 2 Schemas & Models)`: 13 requirements
+    - `EVD-001`: Zero fabrication guarantees (evidence grounding checks).
+    - `EVD-002`: Epistemic tri-state modeling (`UNKNOWN` is not coerced to zero).
+    - `EVD-003`: Claim categorical classification (5 epistemic tiers).
+    - `EVD-004`: Mandatory evidence linkage (URI, timestamp, quotation offsets).
+    - `EVD-005`: Verbatim direct quotation validation (`QuoteSpan` offsets).
+    - `EVD-006`: Orthogonal separation of Incident Severity and Evidence Confidence.
+    - `SEV-004`: Strict segregation of Actual Harm vs Potential Harm.
+    - `SEV-005`: Non-monetization constraint for human dignity and physical harm.
+    - `PRI-004`: Sanitized synthetic test fixtures (22 golden + 7 invalid).
+    - `TST-001`: Automated test suite with zero test failures (89 tests pass).
+    - `TST-003`: Negative testing suite validating rejection of ungrounded data.
+    - `TST-004`: Property/invariant testing that `UNKNOWN` is never coerced to zero.
+    - `AUD-003`: Immutable and append-only assessment records (`frozen=True`).
+  - `PLANNED (Phases 3–6)`: 49 requirements
+* **Total Verified**: 20 / 69 (29.0%)
 
 ---
 
 ## 3. Active Risk & Mitigation Register
 
 | Risk ID | Description | Severity | Impact | Mitigation Strategy | Status |
-| :---: | :--- | :---: | :---: | :--- | :---: |
-| **RSK-001** | Indirect Prompt Injection in Incident Text | HIGH | Agent diversion during extraction | Mandatory `<untrusted_source_content>` XML wrapper isolation; read-only extraction prompts with zero tool execution rights (`SEC-001`, `SEC-002`). | MITIGATED IN DESIGN |
-| **RSK-002** | Aggregation Skew (Unknown vs Zero) | HIGH | Distorted safety benchmarks | Schema-level `EpistemicValue[T]` type preventing `NULL` coercion to 0; dual-metric reporting (`known_sample_count` vs `unknown_count`) (`DATA_GOVERNANCE.md`). | MITIGATED IN DESIGN |
-| **RSK-003** | Copyright Infringement Claims | MEDIUM | Legal DMCA liability | Strict prohibition against committing full text to Git; store only SHA-256 hashes, URLs, and fair-use quote snippets (`DATA_GOVERNANCE.md`). | MITIGATED IN DESIGN |
-| **RSK-004** | LLM Hallucinated Citations | HIGH | Credibility collapse | Mandatory verification requiring extracted quotes to match source text verbatim (`EVD-005`). | MITIGATED IN DESIGN |
+| :---: | :--- | :--- | :---: | :--- | :---: |
+| **RSK-001** | Indirect Prompt Injection in Incident Text | HIGH | Agent diversion during extraction | Mandatory `<untrusted_source_content>` XML wrapper isolation; read-only extraction prompts with zero tool execution rights (`SEC-001`, `SEC-002`). | MITIGATED IN DESIGN & FIXTURE |
+| **RSK-002** | Aggregation Skew (Unknown vs Zero) | HIGH | Distorted safety benchmarks | Schema-level `MonetaryAmount` & `DateWithPrecision` enforcing `null` for unknown; verified via unit tests (`TST-004`). | VERIFIED IN CODE |
+| **RSK-003** | Copyright Infringement Claims | MEDIUM | Legal DMCA liability | Raw article bodies excluded from Git; stored as SHA-256 digests and fair-use quote spans only (`PRI-002`, `PRI-004`). | VERIFIED IN CODE |
+| **RSK-004** | LLM Hallucinated Citations | HIGH | Credibility collapse | Mandatory verification requiring extracted quotes to match source offsets (`EVD-004`, `EVD-005`). | VERIFIED IN CODE |
 
 ---
 
-## 4. Documentation-Level Acceptance Criteria Verification
+## 4. Phase 2 Verification & Acceptance Criteria
 
-All 11 governing documents have been reviewed and verified against documentation-level acceptance criteria:
+All Phase 2 deliverables have been implemented and verified:
 
-- [x] **`AGENTS.md`**: Covers startup, execution, closeout, tool rules, macOS portability, and the 17 non-negotiable rules.
-- [x] **`README.md`**: Sets forth project vision, AI Guardians LLC mission, repository layout, and setup prerequisites.
-- [x] **`docs/PRODUCT_REQUIREMENTS.md`**: Detailed scope, user personas, end-to-end data pipelines, and non-functional requirements.
-- [x] **`docs/REQUIREMENTS_TRACEABILITY.md`**: Exhaustive 15-category requirement registry using standardized 9-field schema (69 requirements).
-- [x] **`docs/PROJECT_CONSTITUTION.md`**: Verbatim codification of all 17 non-negotiable rules with operational definitions and violation triggers.
-- [x] **`docs/EDITORIAL_PRINCIPLES.md`**: Controlled epistemic vocabulary, Substack formatting standards, entity treatment, and 10-point HITL gate checklist.
-- [x] **`docs/SECURITY_PRINCIPLES.md`**: Threat model, indirect prompt injection defense, untrusted containment, SSRF prevention, zero secrets.
-- [x] **`docs/DATA_GOVERNANCE.md`**: Copyright fair use, unknown-is-not-zero data modeling, cryptographic provenance schemas, synthetic fixtures.
-- [x] **`docs/DECISIONS.md`**: Formally ratified ADR-001 through ADR-005 establishing foundational architecture.
-- [x] **`docs/PROJECT_STATUS.md`**: Real-time maturity dashboard, requirement coverage tallies, and risk register (this file).
-- [x] **`docs/NEXT_SESSION.md`**: Concrete Phase 2 handoff contract, prerequisites, commands, and target deliverables.
+- [x] **Core Domain Architecture**: 12 domain modules in `backend/src/ai_incident_monitor/domain/` with 64 exported symbols.
+- [x] **Epistemic Invariant Enforcement**: `BaseEntity(frozen=True, extra="forbid")`, `SchemaVersioned("1.0.0")`.
+- [x] **Tri-State Epistemics**: `MonetaryAmountStatus.UNKNOWN` where `amount is None`, rejected if `0.00`.
+- [x] **LLM Self-Approval Prohibition**: `ReviewerIdentity.is_human = True` strictly enforced.
+- [x] **Machine Recommendation Decoupling**: Separate fields and models for machine recommendations vs human approvals.
+- [x] **Sanitized Golden Fixtures**: 22 positive fixtures + 7 negative fixtures, all bearing demonstration notice banners.
+- [x] **Comprehensive Test Suite**: 12 test modules, 89 unit tests passing (`89 passed in 0.48s`).
+- [x] **JSON Schema Generation**: Draft 2020-12 schema generation tested and functional.
+- [x] **Supporting Documentation**: `SPEC-001`, `EPIS-001`, `FIXT-001`, `VER-001`, `ADR-006` authored.
 
 ---
 
@@ -73,7 +86,5 @@ All 11 governing documents have been reviewed and verified against documentation
 
 * **Active Blockers**: 0
 * **Approved Decisions**:
-  - `DEC-001`: Raw source articles stored in out-of-tree local cache (`.data/cache/`), never committed to Git.
-  - `DEC-002`: Structural AIG-ISI dimensions ratified; numerical weights calibrated in Phase 2.
-  - `DEC-003`: Technical stack standardized on Python 3.11+ / Pydantic v2 / pytest.
-  - `DEC-004`: Substack draft export via CLI Markdown formatter with human gatekeeper review.
+  - `ADR-006`: Pydantic v2 core epistemic schemas and golden fixtures ratified.
+  - Phase 3 targeting Ingestion Connectors & Prompt Injection Defense.

@@ -1,0 +1,37 @@
+{
+  "demonstration_notice": "DEMONSTRATION DATA \u2014 NOT A REAL INCIDENT",
+  "schema_version": "1.0.0",
+  "id": "SRC-3014",
+  "title": "Special Investigation: Inside the Quantico Defense LLM Glitch",
+  "publisher": "AeroTech Intelligence Review",
+  "author": null,
+  "url": "https://aerotech-fictional.com/subscriber-only/quantico-leak",
+  "canonical_url": null,
+  "source_type": "INVESTIGATIVE_OUTLET",
+  "publication_date": {
+    "schema_version": "1.0.0",
+    "precision": "EXACT",
+    "exact_date": "2026-05-10",
+    "year": null,
+    "month": null,
+    "start_date": null,
+    "end_date": null,
+    "supporting_evidence_ids": [],
+    "note": null
+  },
+  "retrieval_date": "2026-05-11T09:00:00Z",
+  "access_status": "PAYWALLED",
+  "authority": "INDEPENDENT_RESEARCHER",
+  "reliability": "HIGH",
+  "independence": "INDEPENDENT_ORIGINAL",
+  "syndication_origin": null,
+  "language": "en",
+  "content_hash": null,
+  "copyright_restrictions": {
+    "schema_version": "1.0.0",
+    "is_copyright_restricted": true,
+    "fair_use_quotation_only": true,
+    "full_text_git_excluded": true,
+    "retention_policy_days": null
+  }
+}

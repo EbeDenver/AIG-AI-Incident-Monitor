@@ -1,0 +1,20 @@
+{
+  "demonstration_notice": "DEMONSTRATION DATA \u2014 NOT A REAL INCIDENT",
+  "schema_version": "1.0.0",
+  "id": "REV-9001",
+  "reviewer": {
+    "schema_version": "1.0.0",
+    "reviewer_id": "USR-44",
+    "full_name": "Sarah T. Jenkins, Esq.",
+    "email": "sjenkins@aiguardians.com",
+    "role": "Senior AI Safety Regulatory Auditor",
+    "is_human": true
+  },
+  "review_status": "HUMAN_APPROVED",
+  "review_decision": "APPROVED",
+  "rationale": "All 10 points of the gatekeeper review checklist verified. Evidence anchors confirmed.",
+  "requested_changes": [],
+  "approval_restrictions": [],
+  "reviewed_at": "2026-06-01T15:00:00Z",
+  "supersedes_review_id": null
+}

@@ -1,0 +1,11 @@
+{
+  "demonstration_notice": "DEMONSTRATION DATA \u2014 NOT A REAL INCIDENT",
+  "schema_version": "1.0.0",
+  "attribution_status": "POSSIBLE_CONTRIBUTOR",
+  "mechanism_description": "Stochastic output fluctuation in vision model may have delayed emergency brake actuation.",
+  "target_outcome": "Autonomous ground transport collision with stationary foam barrier.",
+  "supporting_evidence_ids": [
+    "EVD-2009"
+  ],
+  "counterfactual_rationale": "Human override telemetry showed operator attempted manual braking 150ms after model alert."
+}

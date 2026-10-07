@@ -1,0 +1,37 @@
+{
+  "demonstration_notice": "DEMONSTRATION DATA \u2014 NOT A REAL INCIDENT",
+  "schema_version": "1.0.0",
+  "id": "SRC-3013",
+  "title": "Wire Repost: Autonomous Logistics Glitch Delays Air Cargo",
+  "publisher": "Global Trade Wire Digest",
+  "author": null,
+  "url": "https://wires.globaltrade-fictional.com/news/1029",
+  "canonical_url": null,
+  "source_type": "MAINSTREAM_NEWS",
+  "publication_date": {
+    "schema_version": "1.0.0",
+    "precision": "EXACT",
+    "exact_date": "2026-05-02",
+    "year": null,
+    "month": null,
+    "start_date": null,
+    "end_date": null,
+    "supporting_evidence_ids": [],
+    "note": null
+  },
+  "retrieval_date": "2026-05-02T14:30:00Z",
+  "access_status": "OPEN_PUBLIC",
+  "authority": "ACCREDITED_JOURNALIST",
+  "reliability": "MEDIUM",
+  "independence": "SYNDICATED_COPY",
+  "syndication_origin": "Reuters / AP Syndicate Dispatch 4402",
+  "language": "en",
+  "content_hash": null,
+  "copyright_restrictions": {
+    "schema_version": "1.0.0",
+    "is_copyright_restricted": true,
+    "fair_use_quotation_only": true,
+    "full_text_git_excluded": true,
+    "retention_policy_days": null
+  }
+}

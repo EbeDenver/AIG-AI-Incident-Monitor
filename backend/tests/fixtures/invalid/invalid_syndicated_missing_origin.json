@@ -1,0 +1,21 @@
+{
+  "demonstration_notice": "DEMONSTRATION DATA \u2014 NOT A REAL INCIDENT",
+  "id": "SRC-9929",
+  "title": "Syndicated Repost of Air Traffic Glitch",
+  "publisher": "Syndicate Mirror Web",
+  "url": "https://syndicate-mirror-fictional.com/repost/10",
+  "source_type": "MAINSTREAM_NEWS",
+  "publication_date": {
+    "precision": "EXACT",
+    "exact_date": "2026-06-01",
+    "supporting_evidence_ids": []
+  },
+  "retrieval_date": "2026-06-01T12:00:00Z",
+  "access_status": "OPEN_PUBLIC",
+  "authority": "ACCREDITED_JOURNALIST",
+  "reliability": "MEDIUM",
+  "independence": "SYNDICATED_COPY",
+  "syndication_origin": null,
+  "expected_error": "ValueError",
+  "expected_rule": "Rule 13: Syndicated source must specify syndication_origin"
+}
