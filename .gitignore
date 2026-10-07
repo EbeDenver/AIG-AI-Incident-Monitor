@@ -1,0 +1,103 @@
+# ==============================================================================
+# AI Incident Monitor - Git Ignore Configuration
+# Rule 9 / Rule 15: Zero secrets, mutable DBs, or raw copyrighted text in Git
+# ==============================================================================
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# Environment and Secrets (CRITICAL: Rule 9 / Rule 15)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+credentials.json
+client_secret*.json
+id_rsa
+id_ed25519
+
+# Mutable Databases and Storage (CRITICAL: Rule 9 / Rule 15)
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.sqlite-journal
+*.db-wal
+*.sqlite-wal
+
+# Out-of-tree Raw Source Cache & Crawled Content (Rule 9 / DEC-001)
+# Raw copyrighted source articles must NOT be committed to Git.
+.data/
+data/raw/
+data/cache/
+data/crawled/
+cache/
+tmp/
+temp/
+
+# Python virtual environments & bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+.venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Testing and Tooling Caches
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+
+# Editor and IDE Files
+.vscode/
+!.vscode/settings.json.example
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# Logs and Run Artifacts
+*.log
+logs/
+run/
