@@ -1,4 +1,4 @@
-"""Importers package providing file ingestion, sanitization, and OECD mapping."""
+"""Importers package providing file ingestion, sanitization, OECD mapping, and workflows."""
 
 from ai_incident_monitor.importers.base import (
     MAX_FILE_SIZE_BYTES,
@@ -18,6 +18,10 @@ from ai_incident_monitor.importers.sanitizers import (
     sanitize_formula_injection,
     sanitize_row_dict,
 )
+from ai_incident_monitor.importers.workflow import (
+    get_importer_for_format,
+    run_manual_import_workflow,
+)
 from ai_incident_monitor.importers.xlsx_importer import XLSXImporter
 
 __all__ = [
@@ -32,6 +36,8 @@ __all__ = [
     "OECDIncidentMapper",
     "XLSXImporter",
     "compute_file_sha256",
+    "get_importer_for_format",
+    "run_manual_import_workflow",
     "sanitize_cell_value",
     "sanitize_formula_injection",
     "sanitize_row_dict",
