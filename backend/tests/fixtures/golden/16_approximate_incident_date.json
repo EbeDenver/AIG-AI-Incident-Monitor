@@ -1,0 +1,12 @@
+{
+  "demonstration_notice": "DEMONSTRATION DATA \u2014 NOT A REAL INCIDENT",
+  "schema_version": "1.0.0",
+  "precision": "APPROXIMATE",
+  "exact_date": null,
+  "year": 2026,
+  "month": 5,
+  "start_date": null,
+  "end_date": null,
+  "supporting_evidence_ids": [],
+  "note": "Incident observed approximately mid-May 2026 per engineer forum postings"
+}

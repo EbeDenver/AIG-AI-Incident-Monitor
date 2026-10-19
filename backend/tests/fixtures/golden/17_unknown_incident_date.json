@@ -1,0 +1,12 @@
+{
+  "demonstration_notice": "DEMONSTRATION DATA \u2014 NOT A REAL INCIDENT",
+  "schema_version": "1.0.0",
+  "precision": "UNKNOWN",
+  "exact_date": null,
+  "year": null,
+  "month": null,
+  "start_date": null,
+  "end_date": null,
+  "supporting_evidence_ids": [],
+  "note": "Date of initial model weight corruption remains unknown; discovered during June audit"
+}

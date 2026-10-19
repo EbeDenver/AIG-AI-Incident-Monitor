@@ -1,0 +1,242 @@
+"""Controlled vocabularies (Enums) for the AI Incident Monitor domain layer.
+
+No free-text strings are permitted where a stable controlled vocabulary is required.
+"""
+
+from enum import Enum
+
+
+class EpistemicStatus(str, Enum):
+    """Rigorous epistemic category separation per Constitutional Rule 3."""
+
+    CONFIRMED_FACT = "CONFIRMED_FACT"
+    UNVERIFIED_ALLEGATION = "UNVERIFIED_ALLEGATION"
+    TECHNICAL_ANALYSIS = "TECHNICAL_ANALYSIS"
+    FRAMEWORK_INTERPRETATION = "FRAMEWORK_INTERPRETATION"
+    EDITORIAL_OPINION = "EDITORIAL_OPINION"
+    IDENTIFIED_UNCERTAINTY = "IDENTIFIED_UNCERTAINTY"
+
+
+class ClaimType(str, Enum):
+    """Categorical taxonomy of assertions made in an incident dossier."""
+
+    FACTUAL_EVENT = "FACTUAL_EVENT"
+    CAUSAL_ASSERTION = "CAUSAL_ASSERTION"
+    NUMERIC_METRIC = "NUMERIC_METRIC"
+    HARM_OUTCOME = "HARM_OUTCOME"
+    LEGAL_COMPLIANCE = "LEGAL_COMPLIANCE"
+    GOVERNANCE_ALIGNMENT = "GOVERNANCE_ALIGNMENT"
+    POLICY_COMMENTARY = "POLICY_COMMENTARY"
+
+
+class ClaimMateriality(str, Enum):
+    """Materiality and significance of the claim to the overall incident evaluation."""
+
+    CORE_IMPACT = "CORE_IMPACT"
+    SECONDARY_CONTRIBUTOR = "SECONDARY_CONTRIBUTOR"
+    CONTEXTUAL_BACKGROUND = "CONTEXTUAL_BACKGROUND"
+    INCIDENTAL_DETAIL = "INCIDENTAL_DETAIL"
+
+
+class EvidenceType(str, Enum):
+    """Objective classification of the evidence artifact."""
+
+    TECHNICAL_POSTMORTEM = "TECHNICAL_POSTMORTEM"
+    FIRST_PARTY_ADMISSION = "FIRST_PARTY_ADMISSION"
+    CODE_OR_DATA_ARTIFACT = "CODE_OR_DATA_ARTIFACT"
+    REGULATORY_FINDING = "REGULATORY_FINDING"
+    JUDICIAL_FILING = "JUDICIAL_FILING"
+    INVESTIGATIVE_JOURNALISM = "INVESTIGATIVE_JOURNALISM"
+    ACADEMIC_RESEARCH = "ACADEMIC_RESEARCH"
+    THIRD_PARTY_TELEMETRY = "THIRD_PARTY_TELEMETRY"
+    USER_COMPLAINT = "USER_COMPLAINT"
+    MEDIA_REPORT = "MEDIA_REPORT"
+
+
+class EvidenceDirectness(str, Enum):
+    """Epistemic directness of evidence relative to the physical/software event."""
+
+    PRIMARY_DIRECT = "PRIMARY_DIRECT"
+    PRIMARY_OBSERVATIONAL = "PRIMARY_OBSERVATIONAL"
+    SECONDARY_DERIVED = "SECONDARY_DERIVED"
+    HEARSAY_OR_ANECDOTAL = "HEARSAY_OR_ANECDOTAL"
+
+
+class EvidenceSpecificity(str, Enum):
+    """Level of technical and contextual specificity provided by the evidence."""
+
+    HIGHLY_SPECIFIC = "HIGHLY_SPECIFIC"
+    MODERATELY_SPECIFIC = "MODERATELY_SPECIFIC"
+    VAGUE_OR_GENERAL = "VAGUE_OR_GENERAL"
+
+
+class SourceType(str, Enum):
+    """Type of publication or channel from which evidence was ingested."""
+
+    OFFICIAL_POSTMORTEM = "OFFICIAL_POSTMORTEM"
+    REGULATORY_DOCKET = "REGULATORY_DOCKET"
+    COURT_FILING = "COURT_FILING"
+    ARXIV_PAPER = "ARXIV_PAPER"
+    PEER_REVIEWED_JOURNAL = "PEER_REVIEWED_JOURNAL"
+    CORPORATE_DISCLOSURE = "CORPORATE_DISCLOSURE"
+    INVESTIGATIVE_OUTLET = "INVESTIGATIVE_OUTLET"
+    MAINSTREAM_NEWS = "MAINSTREAM_NEWS"
+    BLOG_OR_FORUM = "BLOG_OR_FORUM"
+    SOCIAL_MEDIA_FEED = "SOCIAL_MEDIA_FEED"
+    ANONYMOUS_LEAK = "ANONYMOUS_LEAK"
+
+
+class SourceAuthority(str, Enum):
+    """Authority tier of the source entity."""
+
+    FIRST_PARTY_AUTHORITATIVE = "FIRST_PARTY_AUTHORITATIVE"
+    REGULATORY_JUDICIAL_AUTHORITY = "REGULATORY_JUDICIAL_AUTHORITY"
+    INDEPENDENT_RESEARCHER = "INDEPENDENT_RESEARCHER"
+    ACCREDITED_JOURNALIST = "ACCREDITED_JOURNALIST"
+    COMMERCIAL_COMPETITOR = "COMMERCIAL_COMPETITOR"
+    ANONYMOUS_UNVERIFIED = "ANONYMOUS_UNVERIFIED"
+
+
+class SourceIndependence(str, Enum):
+    """Independence status. Quantity of copies does not determine independence."""
+
+    INDEPENDENT_ORIGINAL = "INDEPENDENT_ORIGINAL"
+    FIRST_PARTY_SELF_REPORT = "FIRST_PARTY_SELF_REPORT"
+    AFFILIATED_OR_SPONSORED = "AFFILIATED_OR_SPONSORED"
+    SYNDICATED_COPY = "SYNDICATED_COPY"
+    DEPENDENT_REHASH = "DEPENDENT_REHASH"
+
+
+class CorroborationStatus(str, Enum):
+    """Degree of independent empirical verification for a piece of evidence or claim."""
+
+    FULLY_CORROBORATED = "FULLY_CORROBORATED"
+    PARTIALLY_CORROBORATED = "PARTIALLY_CORROBORATED"
+    SINGLE_SOURCE_UNCONTESTED = "SINGLE_SOURCE_UNCONTESTED"
+    CONTESTED_DISPUTED = "CONTESTED_DISPUTED"
+    REFUTED = "REFUTED"
+
+
+class ConfidenceLevel(str, Enum):
+    """Confidence in evidentiary backing. Orthogonal to incident severity."""
+
+    VERY_HIGH = "VERY_HIGH"
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    LOW = "LOW"
+    VERY_LOW = "VERY_LOW"
+    UNASSESSED = "UNASSESSED"
+
+
+class AccessStatus(str, Enum):
+    """Current availability and access conditions for the source."""
+
+    OPEN_PUBLIC = "OPEN_PUBLIC"
+    PAYWALLED = "PAYWALLED"
+    REGISTRATION_REQUIRED = "REGISTRATION_REQUIRED"
+    RESTRICTED_OR_PRIVATE = "RESTRICTED_OR_PRIVATE"
+    DEFUNCT_OR_BROKEN = "DEFUNCT_OR_BROKEN"
+
+
+class ReviewStatus(str, Enum):
+    """Lifecycle status of review. Machine recommendation != human approval."""
+
+    DRAFT_UNREVIEWED = "DRAFT_UNREVIEWED"
+    PENDING_HUMAN_REVIEW = "PENDING_HUMAN_REVIEW"
+    HUMAN_APPROVED = "HUMAN_APPROVED"
+    HUMAN_REJECTED = "HUMAN_REJECTED"
+    REVISION_REQUESTED = "REVISION_REQUESTED"
+
+
+class ReviewDecision(str, Enum):
+    """Specific verdict issued during human gatekeeper review."""
+
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    REVISION_REQUESTED = "REVISION_REQUESTED"
+    HOLD = "HOLD"
+
+
+class CausalAttributionStatus(str, Enum):
+    """Degree of established causal link between system action and real-world outcome."""
+
+    CONFIRMED_CAUSE = "CONFIRMED_CAUSE"
+    PROBABLE_CONTRIBUTOR = "PROBABLE_CONTRIBUTOR"
+    POSSIBLE_CONTRIBUTOR = "POSSIBLE_CONTRIBUTOR"
+    UNSUPPORTED_SPECULATION = "UNSUPPORTED_SPECULATION"
+    UNKNOWN = "UNKNOWN"
+
+
+class AIInvolvementStatus(str, Enum):
+    """Role and demonstrated involvement of artificial intelligence components."""
+
+    CONFIRMED_CAUSAL_CONTRIBUTION = "CONFIRMED_CAUSAL_CONTRIBUTION"
+    PROBABLE_CAUSAL_CONTRIBUTION = "PROBABLE_CAUSAL_CONTRIBUTION"
+    POSSIBLE_CAUSAL_CONTRIBUTION = "POSSIBLE_CAUSAL_CONTRIBUTION"
+    AI_INVOLVEMENT_ESTABLISHED_CAUSALITY_UNCLEAR = "AI_INVOLVEMENT_ESTABLISHED_CAUSALITY_UNCLEAR"
+    AI_INVOLVEMENT_ALLEGED = "AI_INVOLVEMENT_ALLEGED"
+    NO_DEMONSTRATED_AI_CONTRIBUTION = "NO_DEMONSTRATED_AI_CONTRIBUTION"
+
+
+class AIComponentType(str, Enum):
+    """Specific architectural component of the AI system implicated in the event."""
+
+    MODEL_WEIGHTS_OR_INFERENCE = "MODEL_WEIGHTS_OR_INFERENCE"
+    TRAINING_DATA_OR_FINE_TUNING = "TRAINING_DATA_OR_FINE_TUNING"
+    AGENT_AUTONOMOUS_TOOL_EXECUTION = "AGENT_AUTONOMOUS_TOOL_EXECUTION"
+    SYSTEM_INTEGRATION_PIPELINE = "SYSTEM_INTEGRATION_PIPELINE"
+    PROMPT_TEMPLATE_OR_SYSTEM_INSTRUCTION = "PROMPT_TEMPLATE_OR_SYSTEM_INSTRUCTION"
+    HUMAN_OVERSIGHT_INTERFACE = "HUMAN_OVERSIGHT_INTERFACE"
+    UNKNOWN = "UNKNOWN"
+
+
+class MonetaryAmountStatus(str, Enum):
+    """Status of financial quantification. Unknown must remain null, never zero."""
+
+    CONFIRMED_ZERO = "CONFIRMED_ZERO"
+    EXACT_KNOWN = "EXACT_KNOWN"
+    RANGE_KNOWN = "RANGE_KNOWN"
+    ESTIMATE_KNOWN = "ESTIMATE_KNOWN"
+    UNKNOWN = "UNKNOWN"
+    NOT_APPLICABLE = "NOT_APPLICABLE"
+
+
+class DatePrecision(str, Enum):
+    """Precision tier for temporal dates."""
+
+    EXACT = "EXACT"
+    MONTH = "MONTH"
+    YEAR = "YEAR"
+    APPROXIMATE = "APPROXIMATE"
+    RANGE = "RANGE"
+    UNKNOWN = "UNKNOWN"
+
+
+class AssessmentLifecycleStatus(str, Enum):
+    """Status in the versioned, immutable incident record lifecycle."""
+
+    INITIAL_ASSESSMENT = "INITIAL_ASSESSMENT"
+    UNDER_ACTIVE_INVESTIGATION = "UNDER_ACTIVE_INVESTIGATION"
+    CORRECTED = "CORRECTED"
+    SUPERSEDED = "SUPERSEDED"
+    ARCHIVED = "ARCHIVED"
+
+
+class SupersessionReason(str, Enum):
+    """Justification for superseding or updating a historical record."""
+
+    NEW_PRIMARY_EVIDENCE = "NEW_PRIMARY_EVIDENCE"
+    CORRECTED_FACTUAL_ERROR = "CORRECTED_FACTUAL_ERROR"
+    LEGAL_ADJUDICATION_REVERSAL = "LEGAL_ADJUDICATION_REVERSAL"
+    METHODOLOGY_UPDATE = "METHODOLOGY_UPDATE"
+    ERRONEOUS_ATTRIBUTION = "ERRONEOUS_ATTRIBUTION"
+
+
+class UnresolvedReason(str, Enum):
+    """Reason why an identified uncertainty cannot currently be resolved."""
+
+    INFORMATION_NOT_PUBLIC = "INFORMATION_NOT_PUBLIC"
+    INVESTIGATION_ONGOING = "INVESTIGATION_ONGOING"
+    PROPRIETARY_TRADE_SECRET = "PROPRIETARY_TRADE_SECRET"
+    MULTI_PARTY_CONTRADICTION = "MULTI_PARTY_CONTRADICTION"
+    TECHNICAL_INFEASIBILITY = "TECHNICAL_INFEASIBILITY"

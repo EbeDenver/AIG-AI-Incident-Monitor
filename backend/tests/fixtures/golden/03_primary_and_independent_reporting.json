@@ -1,0 +1,41 @@
+{
+  "demonstration_notice": "DEMONSTRATION DATA \u2014 NOT A REAL INCIDENT",
+  "schema_version": "1.0.0",
+  "id": "SRC-3001",
+  "title": "Postmortem: Diagnostic Cluster Outage Incident 402",
+  "publisher": "NovaHealth Systems Internal Engineering",
+  "author": "Engineering Safety Review Board",
+  "url": "https://engineering.novahealth-fictional.internal/postmortems/402",
+  "canonical_url": "https://engineering.novahealth-fictional.internal/postmortems/402",
+  "source_type": "OFFICIAL_POSTMORTEM",
+  "publication_date": {
+    "schema_version": "1.0.0",
+    "precision": "EXACT",
+    "exact_date": "2026-03-15",
+    "year": null,
+    "month": null,
+    "start_date": null,
+    "end_date": null,
+    "supporting_evidence_ids": [],
+    "note": null
+  },
+  "retrieval_date": "2026-03-16T10:00:00Z",
+  "access_status": "OPEN_PUBLIC",
+  "authority": "FIRST_PARTY_AUTHORITATIVE",
+  "reliability": "VERY_HIGH",
+  "independence": "FIRST_PARTY_SELF_REPORT",
+  "syndication_origin": null,
+  "language": "en",
+  "content_hash": {
+    "schema_version": "1.0.0",
+    "algorithm": "sha256",
+    "digest": "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90"
+  },
+  "copyright_restrictions": {
+    "schema_version": "1.0.0",
+    "is_copyright_restricted": true,
+    "fair_use_quotation_only": true,
+    "full_text_git_excluded": true,
+    "retention_policy_days": null
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "demonstration_notice": "DEMONSTRATION DATA \u2014 NOT A REAL INCIDENT",
+  "schema_version": "1.0.0",
+  "created_by": "agent:incident-extraction-v2",
+  "is_model_generated": true,
+  "model_metadata": {
+    "schema_version": "1.0.0",
+    "model_id": "gemini-1.5-pro-002",
+    "prompt_version": "2.1.0",
+    "prompt_hash": {
+      "schema_version": "1.0.0",
+      "algorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "temperature": 0.0,
+    "execution_timestamp": "2026-06-01T14:45:00Z"
+  },
+  "created_at": "2026-06-01T14:45:00Z",
+  "updated_at": "2026-06-01T14:45:00Z",
+  "reviewed_by": null,
+  "human_review_id": null,
+  "reviewed_at": null,
+  "supersedes_id": null
+}

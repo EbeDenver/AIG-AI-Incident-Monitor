@@ -1,0 +1,27 @@
+{
+  "demonstration_notice": "DEMONSTRATION DATA \u2014 NOT A REAL INCIDENT",
+  "schema_version": "1.0.0",
+  "id": "CLM-1011",
+  "incident_id": "INC-0011",
+  "claim_text": "Corrected figure: 120 affected client workstations, down from initial erroneous report of 1,200.",
+  "claim_type": "NUMERIC_METRIC",
+  "epistemic_status": "CONFIRMED_FACT",
+  "supporting_evidence_ids": [
+    "EVD-2011"
+  ],
+  "contradicting_evidence_ids": [],
+  "confidence": "HIGH",
+  "materiality": "SECONDARY_CONTRIBUTOR",
+  "is_causal_claim": false,
+  "is_numeric_claim": false,
+  "is_legal_claim": false,
+  "is_framework_interpretation": false,
+  "causal_assessment": null,
+  "numeric_amount": null,
+  "review_status": "DRAFT_UNREVIEWED",
+  "human_review_id": null,
+  "lifecycle_status": "CORRECTED",
+  "superseded_by": null,
+  "supersedes": "CLM-1010",
+  "supersession_reason": "CORRECTED_FACTUAL_ERROR"
+}

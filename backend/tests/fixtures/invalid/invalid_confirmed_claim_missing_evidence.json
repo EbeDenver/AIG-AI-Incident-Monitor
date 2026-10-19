@@ -1,0 +1,13 @@
+{
+  "demonstration_notice": "DEMONSTRATION DATA \u2014 NOT A REAL INCIDENT",
+  "id": "CLM-9924",
+  "incident_id": "INC-0924",
+  "claim_text": "The model weights suffered deliberate poisoning during training.",
+  "claim_type": "FACTUAL_EVENT",
+  "epistemic_status": "CONFIRMED_FACT",
+  "supporting_evidence_ids": [],
+  "confidence": "VERY_HIGH",
+  "materiality": "CORE_IMPACT",
+  "expected_error": "UngroundedClaimError",
+  "expected_rule": "Rule 4: Confirmed factual claim must have supporting evidence"
+}

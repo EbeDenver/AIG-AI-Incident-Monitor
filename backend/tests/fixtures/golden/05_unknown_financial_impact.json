@@ -1,0 +1,12 @@
+{
+  "demonstration_notice": "DEMONSTRATION DATA \u2014 NOT A REAL INCIDENT",
+  "schema_version": "1.0.0",
+  "amount_status": "UNKNOWN",
+  "exact_amount": null,
+  "min_amount": null,
+  "max_amount": null,
+  "currency": null,
+  "value_date": null,
+  "conversion": null,
+  "supporting_evidence_ids": []
+}

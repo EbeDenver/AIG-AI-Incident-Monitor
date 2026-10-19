@@ -85,3 +85,24 @@
   - Seamless agent session transitions across machines.
   - Zero local environment drift or machine lock-in.
   - Mandates strict session startup and closeout synchronization protocols in `AGENTS.md`.
+
+---
+
+### ADR-006: Core Epistemic Schemas, Pydantic v2 Domain Models, and Golden Fixtures
+* **Date**: 2026-10-07
+* **Status**: RATIFIED
+* **Deciders**: AI Guardians LLC Engineering, Antigravity AI
+* **Context**: Enforcing the 17 Non-Negotiable Rules in the Project Constitution requires software-level mathematical invariants rather than relying solely on LLM prompt instructions. Without immutable typing and deterministic validators, systems inevitably succumb to prompt drift, null-coercion to zero, fabricated citations, and self-approval.
+* **Decision**: Implement core domain entities as immutable Pydantic v2 models (`frozen=True`, `extra="forbid"`):
+  1. Strongly typed prefixed UUIDs (`SourceId`, `EvidenceId`, `ClaimId`, `IncidentId`, `ReviewId`, `UncertaintyId`).
+  2. Controlled vocabularies via 22 string enums (`EpistemicStatus`, `ClaimType`, `SourceAuthority`, `HarmType`, etc.).
+  3. Epistemic tri-state modeling in `MonetaryAmount` and `DateWithPrecision`, guaranteeing `UNKNOWN` is never coerced to zero.
+  4. Mandatory evidence linkage for facts, numeric claims, and root causes; human approval mandatory for legal claims.
+  5. Cryptographic source provenance (`ContentHash` SHA-256) and strict character-offset quote spans (`QuoteSpan`).
+  6. Human review models strictly requiring `is_human=True` (`ReviewerIdentity`), structurally preventing LLM self-approval.
+  7. Strict separation of `machine_recommended_status` and `human_approved` in `AuditMetadata`.
+  8. 29 sanitized demonstration fixtures (22 valid golden, 7 invalid negative) labeled `DEMONSTRATION DATA — NOT A REAL INCIDENT`.
+* **Consequences**:
+  - Constitutional rules are enforced as hard Python validation errors (`ConstitutionalViolationError`, `UngroundedClaimError`, `InvalidMonetaryStateError`).
+  - Zero database, ORM, network, or external LLM dependencies in the core domain layer.
+  - Comprehensive automated test suite (89 unit tests) guarantees zero regressions.

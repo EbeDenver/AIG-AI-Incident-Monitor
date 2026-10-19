@@ -1,0 +1,31 @@
+{
+  "demonstration_notice": "DEMONSTRATION DATA \u2014 NOT A REAL INCIDENT",
+  "schema_version": "1.0.0",
+  "amount_status": "EXACT_KNOWN",
+  "exact_amount": "1300000.00",
+  "min_amount": null,
+  "max_amount": null,
+  "currency": "USD",
+  "value_date": null,
+  "conversion": {
+    "schema_version": "1.0.0",
+    "original_currency": "GBP",
+    "original_amount": "1000000.00",
+    "exchange_rate": "1.3000",
+    "conversion_date": {
+      "schema_version": "1.0.0",
+      "precision": "EXACT",
+      "exact_date": "2026-04-01",
+      "year": null,
+      "month": null,
+      "start_date": null,
+      "end_date": null,
+      "supporting_evidence_ids": [],
+      "note": null
+    },
+    "rate_source": "European Central Bank Official Reference Rate"
+  },
+  "supporting_evidence_ids": [
+    "EVD-2008"
+  ]
+}

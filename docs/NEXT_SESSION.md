@@ -1,97 +1,85 @@
-# NEXT SESSION HANDOFF: Phase 2 Kickoff
-**Project:** AI Incident Monitor  
-**Organization:** AI Guardians LLC  
-**Document Identifier:** NEXT-001  
-**Target Milestone:** Phase 2 (Core Epistemic Schemas, Data Models, & Golden Fixtures)  
-**Parent Handoff:** Phase 1 (Governing Documentation Suite Completed)  
+# NEXT SESSION HANDOFF: Phase 3 Kickoff
+**Project:** AI Incident Monitor
+**Organization:** AI Guardians LLC
+**Document Identifier:** NEXT-001
+**Target Milestone:** Phase 3 (Ingestion Connectors, Cryptographic Provenance, & Prompt Injection Defense)
+**Parent Handoff:** Phase 2 (Core Epistemic Schemas & Golden Fixtures Completed)
+**Effective Date:** 2026-10-07
 
 ---
 
-## 1. Incoming Agent Mission: Phase 2 Objectives
+## 1. Incoming Agent Mission: Phase 3 Objectives
 
-Welcome to Phase 2 of **AI Incident Monitor**. In this phase, you will implement the core epistemic typing system and foundational Pydantic v2 data models that enforce the 17 non-negotiable constitutional rules directly at the software and schema level.
+Welcome to Phase 3 of **AI Incident Monitor**. In this phase, you will implement the source ingestion connectors, cryptographic raw payload provenance engine, and prompt-injection containment defenses that safely ingest untrusted external news, scientific papers, and regulatory filings into the system.
 
-### Targeted Requirements
-During Phase 2, the following requirements from [`docs/REQUIREMENTS_TRACEABILITY.md`](REQUIREMENTS_TRACEABILITY.md) will be transitioned to implementation and verification:
-- **`EVD-001`**: Zero fabrication guarantees.
-- **`EVD-002`**: Epistemic tri-state modeling (`UNKNOWN` is not equivalent to zero).
-- **`EVD-003`**: Claim categorical classification (Fact, Allegation, Analysis, Uncertainty, Opinion).
-- **`EVD-004`**: Mandatory evidence linkage with URI, timestamp, and quotation offsets.
-- **`EVD-005`**: Verbatim direct quotation validation.
-- **`EVD-006`**: Orthogonal separation of Incident Severity and Evidence Confidence.
-- **`SEV-004`**: Strict segregation of Actual Harm vs Potential Harm.
-- **`SEV-005`**: Non-monetization constraint for human dignity and physical harm.
-- **`AUD-003`**: Append-only, immutable assessment record schemas.
-- **`PRI-004`**: Sanitized, non-infringing synthetic test fixtures.
-- **`TST-001`, `TST-003`, `TST-004`**: Automated unit and property test suites.
+### Targeted Requirements from RTM ([`docs/REQUIREMENTS_TRACEABILITY.md`](REQUIREMENTS_TRACEABILITY.md))
+- **`SRC-001`**: Pluggable connectors for RSS feeds, arXiv papers, regulatory dockets, and manual submissions.
+- **`SRC-002`**: SHA-256 cryptographic digest computation and persistence upon ingestion.
+- **`SRC-003`**: Mandatory structured XML containment (`<untrusted_source_content>`) prior to LLM processing.
+- **`SRC-004`**: Multi-source incident deduplication and clustering.
+- **`SRC-005`**: Unstable endpoint resilience, timeouts, and failure fallbacks.
+- **`SEC-001`**: Adversarial prompt-injection defense test suite.
+- **`SEC-002`**: Read-only ingestion and extraction sandboxing.
+- **`SEC-004`**: SSRF prevention and URL sanitization.
+- **`SEC-005`**: Prompt template cryptographic digest integrity verification.
+- **`PRI-003`**: Whistleblower pseudonymization schemas.
+- **`OPS-002`**: Rate-limiting and backoff policies for web fetchers.
 
 ---
 
 ## 2. Startup Verification Checklist
 
-Before writing any code:
-1. [ ] Run `git status` — verify you are on branch `main` and working tree is clean.
-2. [ ] Read [`AGENTS.md`](../AGENTS.md) — re-verify all 17 non-negotiable constitutional rules and session protocols.
-3. [ ] Read [`docs/PROJECT_STATUS.md`](PROJECT_STATUS.md) — verify Phase 1 baseline is completed.
-4. [ ] Verify Python environment (Python 3.11+):
+Before writing any code in Phase 3:
+1. [ ] Check current branch and git status:
    ```bash
-   python3 --version
+   git status
+   git branch --show-current
+   ```
+2. [ ] Review the 17 non-negotiable constitutional rules in [`AGENTS.md`](../AGENTS.md).
+3. [ ] Read [`docs/PROJECT_STATUS.md`](PROJECT_STATUS.md) to confirm Phase 2 is green and verified.
+4. [ ] Run the Phase 2 test suite to verify baseline integrity:
+   ```bash
+   PYTHONPATH=backend/src pytest backend/tests
    ```
 
 ---
 
-## 3. Targeted Deliverables for Phase 2
+## 3. Targeted Deliverables for Phase 3
 
-You will create the following package layout and implementation files:
+You will build upon the `backend/` package layout:
 
 ```
-src/
-└── aig_monitor/
+backend/src/ai_incident_monitor/
+├── domain/                      # (Completed in Phase 2)
+│   └── ...
+└── ingestion/                   # (Targeted in Phase 3)
     ├── __init__.py
-    ├── core/
-    │   ├── __init__.py
-    │   ├── epistemic.py         # EpistemicValue[T], EpistemicCertainty enum (Rule 2)
-    │   └── exceptions.py        # ConstitutionalViolationError, UngroundedClaimError
-    └── models/
-        ├── __init__.py
-        ├── source.py            # SourceProvenance, SHA256 digest models (Rule 4, Rule 16)
-        ├── evidence.py          # EvidenceClaim, QuoteSpan, Fact/Allegation tags (Rule 3)
-        ├── severity.py          # AIG-ISI dimensional models (Harm, Autonomy, Scope) (Rule 7, 8)
-        ├── governance.py        # OECD, NIST, EU AI Act mapping models (Rule 8, 10, 11)
-        └── incident.py          # Master IncidentDossier model unifying all layers
-tests/
-├── __init__.py
-├── conftest.py
-├── fixtures/
-│   └── synthetic_incidents.json # Sanitized, non-copyrighted golden test fixtures
-├── test_epistemic_models.py     # Property tests verifying unknown != 0
-├── test_validation_rules.py     # Negative tests verifying rejection of ungrounded data
-└── test_immutability.py         # Verification that historical records are append-only
-pyproject.toml                   # Project metadata, dependencies (pydantic>=2.7, pytest)
+    ├── connectors/
+    │   ├── base.py              # BaseConnector abstract class with rate limiter
+    │   ├── rss.py               # Feedparser / RSS news connector
+    │   ├── arxiv.py             # arXiv API metadata connector
+    │   └── manual.py            # Manual JSON submission connector
+    ├── security/
+    │   ├── ssrf.py              # SSRF URL filter and IP validator (RFC 1918 blocking)
+    │   ├── isolation.py         # Structured XML wrapper (<untrusted_source_content>)
+    │   └── sanitizer.py         # Raw payload sanitizer and normalizer
+    └── storage/
+        ├── cache.py             # Out-of-tree local cache (.data/cache/), ADR-003 compliant
+        └── hasher.py            # SHA-256 payload digest generator
+backend/tests/
+├── unit/
+│   ├── test_connectors.py       # Mocked connector fetch tests
+│   ├── test_ssrf.py             # SSRF blocklist tests
+│   └── test_prompt_isolation.py # XML containment & adversarial escape tests
+└── fixtures/
+    └── adversarial/             # Injection payload test fixtures
 ```
 
 ---
 
-## 4. Key Implementation Rules for Phase 2
+## 4. Key Implementation Rules for Phase 3
 
-1. **Constitutional Primacy**: Every validator in `src/aig_monitor/` must directly raise a descriptive `ConstitutionalViolationError` if an ungrounded assertion, unhedged allegation, or coerced zero is detected.
-2. **Type-Level Unknown Handling**: Ensure `EpistemicValue[T]` cannot be accidentally evaluated as falsy or coerced into `0` during numerical operations.
-3. **No External Network Calls**: Phase 2 is strictly local schemas, validation rules, and offline test fixtures. Do not introduce network dependencies or scrapers yet (deferred to Phase 3).
-4. **macOS Cross-Workstation Portability**: Ensure all paths in tests use `pathlib.Path` relative to the repository root.
-
----
-
-## 5. Phase 2 Closeout Commands
-
-When Phase 2 implementation is complete:
-```bash
-# 1. Run unit test suite
-pytest -v
-
-# 2. Type check
-mypy src/ tests/
-
-# 3. Synchronize status docs
-# Update docs/PROJECT_STATUS.md (mark Phase 2 VERIFIED)
-# Update docs/NEXT_SESSION.md (specify Phase 3 Ingestion deliverables)
-```
+1. **Copyright Compliance (ADR-003)**: Never write raw article payloads to tracked Git directories. All raw cached payloads must reside in `.data/cache/` (which is gitignored).
+2. **SSRF Defense (SEC-004)**: All external fetch operations must resolve domain DNS and block loopback (`127.0.0.1`), private RFC 1918 ranges (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), link-local addresses, and non-HTTP schemes.
+3. **Prompt Injection Containment (SEC-001, Rule 12)**: Untrusted external text must never be concatenated into raw instruction strings. It must always be wrapped in `<untrusted_source_content>` XML delimiters.
+4. **Mocked Offline Tests**: All unit tests must use mocked responses or local fixtures; no live outbound network calls during CI test runs.
