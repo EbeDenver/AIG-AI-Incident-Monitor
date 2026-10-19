@@ -1,0 +1,24 @@
+[
+  {
+    "id": "OECD-JSON-001",
+    "title": "Automated Dispatch Route Deviation",
+    "description": "Demonstration scenario: Autonomous fleet dispatch algorithm miscalculated road clearance height under bridge.",
+    "date": "2025-04-05",
+    "url": "https://example.com/reports/dispatch-deviation.html",
+    "harm_type": "Property Damage",
+    "system": "Fleet Route Optimizer v2",
+    "entity": "Metro Courier Services",
+    "demonstration_notice": "DEMONSTRATION DATA — NOT A REAL INCIDENT"
+  },
+  {
+    "id": "OECD-JSON-002",
+    "title": "Facial Recognition Gate Access Denial",
+    "description": "Demonstration scenario: Biometric access barrier denied entry to credentialed employees following lighting reconfiguration.",
+    "date": "2025-05-12",
+    "url": "https://example.com/reports/gate-access-denial.html",
+    "harm_type": "Access Disruption",
+    "system": "BioGate ID 400",
+    "entity": "SecureTech Facilities",
+    "demonstration_notice": "DEMONSTRATION DATA — NOT A REAL INCIDENT"
+  }
+]
