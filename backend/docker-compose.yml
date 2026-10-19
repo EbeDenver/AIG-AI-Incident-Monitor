@@ -1,0 +1,18 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: aig_postgres_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ai_incident_monitor_dev
+      POSTGRES_USER: aig_dev
+      POSTGRES_PASSWORD: aig_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - ../.data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aig_dev -d ai_incident_monitor_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
