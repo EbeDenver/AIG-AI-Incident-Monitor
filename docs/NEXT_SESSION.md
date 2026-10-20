@@ -1,16 +1,23 @@
-# NEXT SESSION HANDOFF: Phase 4 Kickoff
+# NEXT SESSION HANDOFF: Phase 4 Execution
 **Project:** AI Incident Monitor
 **Organization:** AI Guardians LLC
 **Document Identifier:** NEXT-001
-**Target Milestone:** Phase 4 (Ingestion Connectors, Cryptographic Provenance, & Prompt Injection Defense)
-**Parent Handoff:** Phase 3 (Relational Data Foundation, Dual-Engine Migrations, & Manual Import Engine)
-**Effective Date:** 2026-10-19
+**Target Milestone:** Phase 4 (Secure Ingestion Connectors, Cryptographic Provenance, & Source Containment)
+**Parent Handoff:** Phase 3 (Relational Data Foundation Merged to `main` at `4b5379a`)
+**Effective Date:** 2026-10-20
+**Current Branch:** `feature/secure-ingestion-connectors`
 
 ---
 
-## 1. Incoming Agent Mission: Phase 4 Objectives
+## 1. Incoming Agent Mission: Phase 4 Increment 1 Objectives
 
-Welcome to Phase 4 of **AI Incident Monitor**. In this phase, you will build upon the approved Phase 3 data foundation (`feature/data-foundation-import` merged to `main`) to implement automated ingestion connectors, cryptographic raw payload provenance, SSRF defenses, and structured prompt-injection containment wrappers.
+In this increment, you will implement the Security Core & SSRF Defense subsystem under `backend/src/ai_incident_monitor/security/`:
+1. `url_policy.py`: Outbound URL normalization, scheme validation (HTTPS default), port restriction (443 default), credential stripping.
+2. `dns_validation.py`: Pre-flight DNS resolution and exhaustive IP validation against 21 blocked ranges (RFC 1918, loopback, link-local, cloud metadata `169.254.169.254`, carrier-grade NAT, IPv6 ULA, IPv4-mapped IPv6), decimal/octal/hex IP parsing, punycode normalization.
+3. `ssrf.py`: Validated-destination connection pinning transport that connects directly to the pre-validated IP while preserving original hostname for TLS SNI negotiation, certificate validation, and HTTP Host header (DEC-P4-003).
+4. `redirects.py`: Redirect hop inspector (max 3 hops, per-hop DNS resolution & IP check, downgrade prohibition).
+5. `content_limits.py`: Response streaming size ceiling (5 MB) and decompression ratio guard (5:1 max ratio).
+6. Unit test suite: Comprehensive tests covering all SSRF bypass techniques, DNS rebinding simulation, TLS certificate validation preservation, redirect hops, and content limits.
 
 ### Targeted Requirements from RTM ([`docs/REQUIREMENTS_TRACEABILITY.md`](REQUIREMENTS_TRACEABILITY.md))
 - **`SRC-001`**: Pluggable connectors for RSS news feeds, arXiv papers, regulatory dockets, and scheduled polling.

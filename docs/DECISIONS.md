@@ -126,3 +126,38 @@
   - Zero network dependencies during test execution (140/140 unit and integration tests passing).
   - Ready for future automated connectors, Gemini analysis, and Cloudflare subdomain ingress (`incidents.aiguardiansllc.us`).
 
+---
+
+### ADR-008: Secure Ingestion Connectors, Cryptographic Provenance, and SSRF Defense
+* **Date**: 2026-10-20
+* **Status**: RATIFIED
+* **Deciders**: AI Guardians LLC Leadership, Antigravity AI
+* **Context**: Phase 4 extends the AI Incident Monitor to ingest external feeds (RSS, arXiv, OECD exports) while strictly observing constitutional rules (Rule 1, Rule 9, Rule 11, Rule 14, Rule 15, Rule 16). Ingesting external feeds introduces severe attack surfaces: Server-Side Request Forgery (SSRF) targeting internal networks and cloud metadata (`169.254.169.254`), DNS rebinding (TOCTOU) attacks bypassing initial DNS checks, TLS SNI mismatches, denial of service via oversized feeds and decompression bombs, copyright violations from storing full raw articles in Git, and untracked feed alteration.
+* **Decision**: Adopt a defense-in-depth architecture ratified across four core decisions:
+  1. **OECD Integration Architecture (DEC-P4-001, Option A)**:
+     - Utilize a pluggable OECD adapter operating strictly on offline structured exports, fixtures, and officially documented file formats.
+     - Zero live scraping, polling, or reverse-engineering of undocumented OECD web or UI API endpoints.
+     - The adapter interface is standardized so an authorized official API or approved bulk connector can be enabled in the future with zero changes to downstream pipeline contracts.
+  2. **Raw Feed Storage & Retention Policy (DEC-P4-002, Option A)**:
+     - Database persistence is strictly limited to metadata, canonical URLs, structured parsed fields, cryptographic provenance hashes (`SHA-256`), and minimal fair-use direct snippets.
+     - Full raw payloads are staged strictly in a gitignored local or object storage staging area (`.data/raw_feeds/`) governed by a configurable 30-day purge TTL.
+     - Zero raw feed payloads, full article bodies, or copyrighted text are committed to GitHub or permanently retained in the relational database.
+  3. **SSRF Defense and DNS-Rebinding Connection Pinning (DEC-P4-003, Option A with Constraints)**:
+     - Enforce a strict outbound URL policy: HTTPS only by default (HTTP permitted only in explicit local test environments), blocked non-HTTP schemes (`file://`, `gopher://`, `ftp://`), stripped userinfo credentials, and default port 443.
+     - Pre-flight DNS resolution and IP validation rejecting 21 blocked IP ranges: RFC 1918 private subnets, loopback, link-local, carrier-grade NAT, multicast, broadcast, documentation, benchmarking, IPv6 unique local, IPv6 link-local, IPv4-mapped IPv6, 6to4, Teredo, and cloud metadata endpoints (`169.254.169.254`, `metadata.google.internal`).
+     - Connection pinning: Establish TCP connections directly to the pre-validated IP address while preserving the original hostname for TLS SNI negotiation, certificate validation, and the HTTP `Host` header. Simplistic IP-replacement that breaks TLS certificate verification is explicitly prohibited.
+     - Validate every redirect hop independently up to a maximum of 3 hops; prohibit HTTPS-to-HTTP downgrades.
+     - Enforce strict content bounds: maximum 5 MB payload size and streaming decompression expansion ratio limits.
+  4. **Sequential Ingestion-Run Hash Chaining (DEC-P4-004, Option A)**:
+     - Ingestion manifests record a tamper-evident cryptographic hash chain where each run links to `previous_manifest_sha256`.
+     - The genesis manifest links to a deterministic 64-character zero-hash anchor (`0000000000000000000000000000000000000000000000000000000000000000`).
+     - This provides immutable audit traceability and sequence verification for all ingestion runs without distributed consensus or blockchain overhead.
+  5. **Decoupled & Deferred Scheduler**:
+     - Background scheduling (cron/daemon) is decoupled from the core ingestion pipeline and deferred. Phase 4 operations are invoked deterministically via CLI commands and Makefile targets.
+* **Consequences**:
+  - Full mitigation of SSRF, DNS rebinding, decompression bombs, and cloud metadata theft.
+  - Provable copyright compliance under fair-use doctrine.
+  - Complete cryptographic auditability across all feed ingestion runs.
+  - Zero live network dependencies during automated test execution.
+
+
