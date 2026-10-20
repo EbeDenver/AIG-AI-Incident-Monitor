@@ -155,3 +155,30 @@ To prevent Internationalized Domain Name (IDN) homograph attacks and bypasses:
 1. Domains are converted to ASCII via Punycode (`idna.encode()`).
 2. Confusable characters, right-to-left override markers, and non-printable characters are rejected.
 3. Hex and octal IP address strings disguised as hostnames are resolved and checked as IP literals.
+
+---
+
+## 7. Ingestion Connector Isolation & Network Bypass Prohibition
+
+1. **Mandatory Secure Gateway Routing**: Every connector (`RSSConnector`, `ArXivConnector`, future `OECDAdapter`) must inherit from `BaseConnector` and execute all outbound network requests strictly through an injected `SecureHTTPClient`.
+2. **Parser Network Isolation**: Third-party parser libraries (e.g., `feedparser`, XML parsers) are strictly prohibited from receiving URL strings. All payload bytes are retrieved first via `SecureHTTPClient`, validated in memory, and passed to parsers strictly as raw byte streams.
+3. **XXE Entity Bomb Defense**: Feed payloads are pre-screened with `defusedxml` to block XML external entity expansion (Billion Laughs, DTD attacks) prior to feed structure processing.
+4. **HTML Sanitization & Copyright Boundary**: All feed HTML is sanitized to plain text snippets (maximum 500 characters) adhering to fair-use doctrine. Full article bodies and PDFs are never downloaded or stored.
+
+---
+
+## 8. Connector Configuration & Rate-Limiting Policy Guide
+
+| Setting | RSS / Atom Connector | arXiv API Connector |
+| :--- | :--- | :--- |
+| **Default Endpoint Allowlist** | Configured per-source allowlist (e.g. `safe-news.org`) | Exactly `export.arxiv.org` |
+| **Allowed Scheme** | `https` only | `https` only |
+| **Min Request Interval** | 1.0 second | 3.0 seconds |
+| **Concurrency Ceiling** | Per-instance queue | Strict 1 connection mutex |
+| **Default Enablement** | Enabled (`True`) | Disabled (`False`) via `ARXIV_CONNECTOR_ENABLED` |
+| **Payload Ceiling** | 5.0 MB | 5.0 MB |
+| **Epistemic Classification** | Unverified Allegation | Research Context Signal (Not an Incident) |
+| **User-Agent Header** | `AIIncidentMonitor/0.2.0 (+<contact_url>)` | `AIIncidentMonitor/0.2.0 (+<contact_url>; mailto:<contact_email>)` |
+| **Conditional Requests** | `ETag` and `Last-Modified` | `ETag` and `Last-Modified` |
+| **PDF Downloads** | Banned | Banned |
+

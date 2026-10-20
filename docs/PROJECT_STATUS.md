@@ -4,7 +4,7 @@
 **Document Identifier:** STAT-001
 **Last Updated:** 2026-10-20
 **Current Milestone:** Phase 4 (Secure Ingestion Connectors, Cryptographic Provenance, & Source Containment)
-**Overall Status:** GREEN (Branch `feature/secure-ingestion-connectors` Active, ADR-008 Ratified, Baseline 144/144 Tests Passing, Increment 1 In Progress)
+**Overall Status:** GREEN (Branch `feature/secure-ingestion-connectors` Active, ADR-008 Ratified, 271/271 Tests Passing, Increments 1 & 2 Complete)
 
 ---
 
@@ -55,8 +55,13 @@ Based on [`docs/REQUIREMENTS_TRACEABILITY.md`](REQUIREMENTS_TRACEABILITY.md):
     - `SRC-002`: Cryptographic SHA-256 digest computation and persistence upon ingestion (`compute_file_sha256`, `raw_import_records`).
     - `SRC-004`: Multi-source incident deduplication and human review queue (`DeduplicationEngine`, `dedup_candidates`).
     - `AUD-004`: Tamper-evident, append-only audit trail for all stage transitions (`AuditRepository`, `AuditLogModel`).
-  - `PLANNED (Phases 4–7)`: 46 requirements
-* **Total Verified**: 23 / 69 (33.3%)
+  - `VERIFIED (Phase 4 Ingestion Connectors)`: 4 requirements
+    - `SEC-004`: SSRF prevention, URL sanitization, 21 blocked IP ranges, and connection pinning.
+    - `SRC-001`: Pluggable source connectors for RSS news feeds and arXiv research API.
+    - `SRC-005`: Unstable endpoint resilience, exponential backoff, jitter, and failure fallbacks.
+    - `OPS-002`: Per-connector rate-limiting and concurrency controls.
+  - `PLANNED (Phases 4–7)`: 42 requirements
+* **Total Verified**: 27 / 69 (39.1%)
 
 ---
 
@@ -104,8 +109,8 @@ All Phase 3 deliverables have been implemented, tested, and verified on `feature
 ## 6. Phase 4 Delivery Increments & Tracking
 
 Phase 4 executes in 5 sequential increments:
-- **Increment 1 (In Progress)**: URL policy, DNS resolution, connection pinning transport (SSRF defense, 21 blocked IP ranges, SNI preservation), redirect inspector, content limits.
-- **Increment 2 (Planned)**: Base connector framework, rate limiter with backoff, RSS connector, arXiv connector.
-- **Increment 3 (Planned)**: OECD export adapter (DEC-P4-001), raw feed staging store (`.data/raw_feeds/`), 30-day purge TTL job (DEC-P4-002).
-- **Increment 4 (Planned)**: Ingestion run manifests, sequential cryptographic hash chaining (DEC-P4-004), genesis zero-hash anchor.
-- **Increment 5 (Planned)**: XML containment wrapper (`<untrusted_source_content>`), prompt template SHA-256 verifier, golden adversarial injection test suite, end-to-end integration tests.
+- [x] **Increment 1 (Verified)**: URL policy, DNS resolution, connection pinning transport (SSRF defense, 21 blocked IP ranges, SNI preservation), redirect inspector, content limits. (85 tests)
+- [x] **Increment 2 (Verified)**: Base connector framework, per-connector rate limiter, exponential backoff with jitter, RSS/Atom connector with HTML sanitization & bozo handling, arXiv connector with strict single-connection policy. (42 tests)
+- [ ] **Increment 3 (Planned)**: OECD export adapter (DEC-P4-001), raw feed staging store (`.data/raw_feeds/`), 30-day purge TTL job (DEC-P4-002).
+- [ ] **Increment 4 (Planned)**: Ingestion run manifests, sequential cryptographic hash chaining (DEC-P4-004), genesis zero-hash anchor.
+- [ ] **Increment 5 (Planned)**: XML containment wrapper (`<untrusted_source_content>`), prompt template SHA-256 verifier, golden adversarial injection test suite, end-to-end integration tests.

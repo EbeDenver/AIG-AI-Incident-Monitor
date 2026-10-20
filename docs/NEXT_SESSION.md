@@ -2,22 +2,39 @@
 **Project:** AI Incident Monitor
 **Organization:** AI Guardians LLC
 **Document Identifier:** NEXT-001
-**Target Milestone:** Phase 4 (Secure Ingestion Connectors, Cryptographic Provenance, & Source Containment)
-**Parent Handoff:** Phase 3 (Relational Data Foundation Merged to `main` at `4b5379a`)
+**Target Milestone:** Phase 4 Increment 3 (OECD Export Adapter, Raw Feed Staging Store, & 30-Day Purge TTL Job)
+**Parent Handoff:** Phase 4 Increments 1 & 2 Verified on `feature/secure-ingestion-connectors`
 **Effective Date:** 2026-10-20
 **Current Branch:** `feature/secure-ingestion-connectors`
 
 ---
 
-## 1. Incoming Agent Mission: Phase 4 Increment 1 Objectives
+## 1. Current State: Increments 1 & 2 Completed
 
-In this increment, you will implement the Security Core & SSRF Defense subsystem under `backend/src/ai_incident_monitor/security/`:
-1. `url_policy.py`: Outbound URL normalization, scheme validation (HTTPS default), port restriction (443 default), credential stripping.
-2. `dns_validation.py`: Pre-flight DNS resolution and exhaustive IP validation against 21 blocked ranges (RFC 1918, loopback, link-local, cloud metadata `169.254.169.254`, carrier-grade NAT, IPv6 ULA, IPv4-mapped IPv6), decimal/octal/hex IP parsing, punycode normalization.
-3. `ssrf.py`: Validated-destination connection pinning transport that connects directly to the pre-validated IP while preserving original hostname for TLS SNI negotiation, certificate validation, and HTTP Host header (DEC-P4-003).
-4. `redirects.py`: Redirect hop inspector (max 3 hops, per-hop DNS resolution & IP check, downgrade prohibition).
-5. `content_limits.py`: Response streaming size ceiling (5 MB) and decompression ratio guard (5:1 max ratio).
-6. Unit test suite: Comprehensive tests covering all SSRF bypass techniques, DNS rebinding simulation, TLS certificate validation preservation, redirect hops, and content limits.
+- **Increment 1 (Security Core)**: SSRF defense, 21 blocked IP ranges, DNS resolution, connection pinning transport preserving TLS SNI and cert verification (`DEC-P4-003`), redirect inspector (max 3 hops), and 5 MB content bounds. (85 tests)
+- **Increment 2 (Pluggable Connectors)**: `BaseConnector`, per-connector rate limiter with concurrency guard, exponential backoff with jitter on 429/503/transient errors, `RSSConnector` (feedparser byte parsing, defusedxml pre-screening, HTML sanitization, bozo tracking), `ArXivConnector` (export.arxiv.org official API, 1-connection 3-second rate limit, research signal labeling, PDF download blocking). (42 tests)
+- **Total Passing Tests**: 271 / 271 tests passing with zero regressions.
+
+---
+
+## 2. Incoming Agent Mission: Phase 4 Increment 3 Objectives
+
+In Increment 3, you will implement:
+1. **OECD Export Adapter (`OECDAdapter`)**:
+   - Implements offline structured export and fixture-only parsing (`DEC-P4-001`, Option A).
+   - Zero live scraping or polling of undocumented OECD web/UI API endpoints.
+   - Standardized adapter interface so an authorized future API or bulk export can be plugged in seamlessly.
+2. **Raw Feed Payload Staging Store (`.data/raw_feeds/`)**:
+   - Stages raw retrieved feed payloads in `.data/raw_feeds/{year}/{month}/{manifest_id}.raw` (`DEC-P4-002`, Option A).
+   - Strictly gitignored to uphold copyright fair-use rules and prevent repository bloat (ADR-003, Rule 15).
+3. **30-Day Purge TTL Job**:
+   - Automated purge routine deleting staged raw payloads older than 30 days (`DEC-P4-002`).
+   - CLI / Makefile trigger (`make purge-raw-feeds`).
+   - Appends immutable audit record to `audit_logs` documenting each purge run.
+4. **Unit and Integration Tests**:
+   - Test OECD export parser against sanitized OECD exports.
+   - Test staging file writes and retrieval.
+   - Test 30-day purge TTL job logic and audit record creation.
 
 ### Targeted Requirements from RTM ([`docs/REQUIREMENTS_TRACEABILITY.md`](REQUIREMENTS_TRACEABILITY.md))
 - **`SRC-001`**: Pluggable connectors for RSS news feeds, arXiv papers, regulatory dockets, and scheduled polling.
