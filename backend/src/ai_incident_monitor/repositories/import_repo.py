@@ -12,6 +12,7 @@ from ai_incident_monitor.db.models.import_record import (
     DedupCandidateModel,
     RawImportRecordModel,
 )
+from ai_incident_monitor.repositories.audit_repo import AuditRepository
 from ai_incident_monitor.repositories.base import BaseRepository
 
 
@@ -127,13 +128,38 @@ class ImportRepository(BaseRepository[RawImportRecordModel]):
         candidate_id: int,
         decision: str,
         reviewed_by: str,
+        notes: Optional[str] = None,
+        audit_repo: Optional[AuditRepository] = None,
     ) -> DedupCandidateModel:
-        """Record human gatekeeper review decision on a deduplication candidate."""
+        """Record human gatekeeper review decision (CONFIRMED, REJECTED, DEFERRED) on a deduplication candidate.
+
+        Enforces Constitutional Rules 14 & 16: Zero automated merging; generates an immutable audit trail.
+        """
         candidate = self.get_dedup_candidate(candidate_id)
         if candidate is None:
             raise KeyError(f"Dedup candidate '{candidate_id}' not found.")
-        candidate.review_decision = decision
+        norm_decision = decision.strip().upper()
+        candidate.review_decision = norm_decision
         candidate.reviewed_by = reviewed_by
         candidate.reviewed_at = datetime.now(timezone.utc)
+        self.session.flush()
+
+        # Record immutable audit event for every deduplication decision
+        auditor = audit_repo or AuditRepository(self.session)
+        auditor.record_action(
+            entity_type="DEDUP_CANDIDATE",
+            entity_id=str(candidate.id),
+            action=f"DEDUP_{norm_decision}",
+            actor_id=reviewed_by,
+            payload_after={
+                "candidate_id": candidate.id,
+                "existing_incident_id": candidate.existing_incident_id,
+                "tier": candidate.tier,
+                "similarity_score": candidate.similarity_score,
+                "decision": norm_decision,
+                "reviewed_by": reviewed_by,
+                "notes": notes,
+            },
+        )
         self.session.flush()
         return candidate

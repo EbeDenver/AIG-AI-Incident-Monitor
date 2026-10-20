@@ -4,12 +4,15 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Optional
+import json
 import uuid
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ai_incident_monitor.db.models.claim import ClaimRecordModel
 from ai_incident_monitor.db.models.evidence import ClaimEvidenceLinkModel, EvidenceRecordModel
+from ai_incident_monitor.db.models.import_record import RawImportRecordModel
 from ai_incident_monitor.db.models.source import SourceReferenceModel
 from ai_incident_monitor.deduplication.engine import DeduplicationEngine
 from ai_incident_monitor.domain.identifiers import new_evidence_id
@@ -90,6 +93,28 @@ def run_manual_import_workflow(
         staged_path=str(staged_path),
     )
 
+    # Idempotency guard: retrying an identical file must not create duplicate incidents or duplicate audit logs
+    existing_raw_records = list(
+        session.execute(
+            select(RawImportRecordModel).where(
+                RawImportRecordModel.content_hash == content_hash
+            )
+        )
+        .scalars()
+        .all()
+    )
+    if existing_raw_records:
+        for rec in existing_raw_records:
+            summary.duplicate_count += 1
+            summary.records.append(
+                ImportRecordResult(
+                    row_index=rec.row_index,
+                    status="AUTO_LINKED",
+                    incident_id=rec.incident_id,
+                )
+            )
+        return summary
+
     # 3. Process each row through the 4-tier deduplication waterfall
     for row_idx, raw_row in enumerate(raw_rows, start=1):
         # A. Preserve raw payload and hash
@@ -139,13 +164,26 @@ def run_manual_import_workflow(
                 )
 
             elif decision.outcome == "FLAG_FOR_REVIEW":
-                # Tier 3: Queue near-duplicate candidate for human review (Rule 14)
+                # Tier 3: Queue near-duplicate candidate for human review (Rule 14 & Req 5)
+                match_payload = {
+                    "tier": decision.tier,
+                    "fields_compared": decision.fields_compared,
+                    "normalized_values": decision.normalized_values,
+                    "similarity_score": decision.similarity_score,
+                    "date_window_result": decision.date_window_result,
+                    "matched_incident_id": decision.matched_incident_id,
+                    "candidate_incident_id": decision.candidate_incident_id,
+                    "decision_status": decision.decision_status,
+                    "rationale": decision.rationale,
+                    "algorithm_version": decision.algorithm_version,
+                    "timestamp": decision.timestamp.isoformat(),
+                }
                 import_repo.create_dedup_candidate(
                     raw_import_id=raw_rec.id,
                     existing_incident_id=decision.matched_incident_id or "UNKNOWN",
                     tier=3,
                     similarity_score=decision.similarity_score,
-                    match_rationale=decision.rationale,
+                    match_rationale=json.dumps(match_payload),
                 )
                 import_repo.update_raw_record_status(
                     record_id=raw_rec.id,

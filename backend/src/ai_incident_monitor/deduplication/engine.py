@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import date
-from typing import Optional
+from dataclasses import dataclass, field
+from datetime import date, datetime, timezone
+from typing import Any, Optional
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -15,6 +15,7 @@ from ai_incident_monitor.db.models.incident import IncidentModel
 from ai_incident_monitor.db.models.source import SourceReferenceModel
 from ai_incident_monitor.deduplication.normalizer import (
     calculate_title_similarity,
+    normalize_title,
     normalize_url,
 )
 
@@ -29,8 +30,15 @@ class DedupDecision:
     tier: int  # 1, 2, 3, or 4
     outcome: str  # "AUTO_LINK_ID", "AUTO_LINK_URL", "FLAG_FOR_REVIEW", "DISTINCT"
     matched_incident_id: Optional[str] = None
+    candidate_incident_id: Optional[str] = None
     similarity_score: float = 0.0
+    fields_compared: list[str] = field(default_factory=list)
+    normalized_values: dict[str, Any] = field(default_factory=dict)
+    date_window_result: Optional[str] = None
+    decision_status: str = "PENDING"
     rationale: str = ""
+    algorithm_version: str = "dedup-waterfall-v1.0"
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class DeduplicationEngine:
@@ -64,7 +72,15 @@ class DeduplicationEngine:
                 tier=1,
                 outcome="AUTO_LINK_ID",
                 matched_incident_id=existing_by_id.id,
+                candidate_incident_id=proposed_incident_id,
                 similarity_score=1.0,
+                fields_compared=["incident_id"],
+                normalized_values={
+                    "proposed_id": proposed_incident_id,
+                    "matched_id": existing_by_id.id,
+                },
+                date_window_result="NOT_APPLICABLE",
+                decision_status="AUTO_LINKED",
                 rationale=f"Exact incident identifier match: '{proposed_incident_id}'.",
             )
 
@@ -90,7 +106,15 @@ class DeduplicationEngine:
                         tier=2,
                         outcome="AUTO_LINK_URL",
                         matched_incident_id=incident_id,
+                        candidate_incident_id=proposed_incident_id,
                         similarity_score=1.0,
+                        fields_compared=["canonical_url"],
+                        normalized_values={
+                            "matched_canonical_url": canonical,
+                            "raw_url": raw_url,
+                        },
+                        date_window_result="NOT_APPLICABLE",
+                        decision_status="AUTO_LINKED",
                         rationale=f"Exact canonical source URL match: '{canonical}'.",
                     )
 
@@ -103,12 +127,35 @@ class DeduplicationEngine:
             if sim >= SIMILARITY_THRESHOLD:
                 # Check date compatibility
                 date_match = cls._dates_compatible(proposed_date, existing.incident_exact_date)
+                date_window_str = (
+                    "WITHIN_TOLERANCE"
+                    if (proposed_date and existing.incident_exact_date and date_match)
+                    else (
+                        "UNKNOWN_TOLERATED"
+                        if (proposed_date is None or existing.incident_exact_date is None)
+                        else "OUTSIDE_TOLERANCE"
+                    )
+                )
                 if date_match:
                     return DedupDecision(
                         tier=3,
                         outcome="FLAG_FOR_REVIEW",
                         matched_incident_id=existing.id,
+                        candidate_incident_id=proposed_incident_id,
                         similarity_score=sim,
+                        fields_compared=["title", "incident_date"],
+                        normalized_values={
+                            "proposed_title": normalize_title(proposed_title),
+                            "existing_title": normalize_title(existing.title),
+                            "proposed_date": str(proposed_date) if proposed_date else "UNKNOWN",
+                            "existing_date": (
+                                str(existing.incident_exact_date)
+                                if existing.incident_exact_date
+                                else "UNKNOWN"
+                            ),
+                        },
+                        date_window_result=date_window_str,
+                        decision_status="FLAGGED_FOR_REVIEW",
                         rationale=(
                             f"Title similarity {sim:.2f} >= {SIMILARITY_THRESHOLD} and dates "
                             f"compatible with existing incident '{existing.id}' ('{existing.title}')."
@@ -122,7 +169,15 @@ class DeduplicationEngine:
             tier=4,
             outcome="DISTINCT",
             matched_incident_id=None,
+            candidate_incident_id=proposed_incident_id,
             similarity_score=0.0,
+            fields_compared=["incident_id", "canonical_url", "title", "incident_date"],
+            normalized_values={
+                "proposed_id": proposed_incident_id,
+                "proposed_title": normalize_title(proposed_title),
+            },
+            date_window_result="NO_MATCH",
+            decision_status="DISTINCT",
             rationale="No existing identifier, canonical URL, or near-duplicate title match found.",
         )
 

@@ -201,3 +201,140 @@ def test_dedup_waterfall_tier4_distinct(session: Session) -> None:
     assert decision.tier == 4
     assert decision.outcome == "DISTINCT"
     assert decision.matched_incident_id is None
+
+
+def test_dedup_similar_title_different_date_rejected_as_distinct(session: Session) -> None:
+    """Verify that incidents with near-identical titles but dates outside tolerance fall through to Tier 4 DISTINCT."""
+    incident = IncidentModel(
+        id="INC-EXISTING-600",
+        title="Autonomous Shuttle Collision with Parked Delivery Truck",
+        summary="Testing event in spring.",
+        status="CONFIRMED",
+        incident_date_precision="EXACT",
+        incident_exact_date=date(2025, 1, 15),
+    )
+    session.add(incident)
+    session.commit()
+
+    # Same title, but date is 6 months later
+    decision = DeduplicationEngine.evaluate(
+        session=session,
+        proposed_incident_id="INC-NEW-601",
+        proposed_title="Autonomous Shuttle Collision with Parked Delivery Truck",
+        proposed_date=date(2025, 7, 15),
+        source_urls=["https://example.com/different-date.html"],
+    )
+    # Because dates are outside +/- 2 days, this must NOT flag as duplicate, but be treated as Tier 4 DISTINCT
+    assert decision.tier == 4
+    assert decision.outcome == "DISTINCT"
+    assert decision.matched_incident_id is None
+
+
+def test_dedup_null_date_handled_safely(session: Session) -> None:
+    """Verify that null/missing incident dates do not cause false negative rejection when title similarity is high."""
+    incident = IncidentModel(
+        id="INC-EXISTING-700",
+        title="Automated High-Frequency Trading Cascade Disruption",
+        summary="Algorithmic trading glitch.",
+        status="UNDER_INVESTIGATION",
+        incident_date_precision="UNKNOWN",
+        incident_exact_date=None,
+    )
+    session.add(incident)
+    session.commit()
+
+    # Proposed incident with known date matching title of incident with unknown date
+    decision = DeduplicationEngine.evaluate(
+        session=session,
+        proposed_incident_id="INC-NEW-701",
+        proposed_title="Automated High-Frequency Trading Cascade Disruption Event",
+        proposed_date=date(2025, 4, 10),
+        source_urls=["https://trading.example.com/event.html"],
+    )
+    assert decision.tier == 3
+    assert decision.outcome == "FLAG_FOR_REVIEW"
+    assert decision.matched_incident_id == "INC-EXISTING-700"
+    assert decision.date_window_result == "UNKNOWN_TOLERATED"
+
+
+def test_dedup_candidate_reviewer_confirm_reject_defer_with_audit(session: Session) -> None:
+    """Verify human reviewer confirm, reject, and defer states and their mandatory audit trail creation."""
+    from ai_incident_monitor.db.models import AuditLogModel, RawImportRecordModel
+    from ai_incident_monitor.repositories.import_repo import ImportRepository
+    from sqlalchemy import select
+
+    # Setup existing incident and raw import record
+    incident = IncidentModel(
+        id="INC-EXISTING-800",
+        title="Clinical Diagnostic Failure",
+        summary="Hospital telemetry alarm failure.",
+        status="CONFIRMED",
+    )
+    session.add(incident)
+    session.flush()
+
+    raw_rec = RawImportRecordModel(
+        batch_id="BATCH-TEST-800",
+        source_filename="test.csv",
+        source_format="CSV",
+        content_hash="abc123hash",
+        row_index=1,
+        raw_payload={"title": "Clinical Diagnostic Failure"},
+    )
+    session.add(raw_rec)
+    session.flush()
+
+    import_repo = ImportRepository(session)
+
+    # 1. Create candidate
+    candidate = import_repo.create_dedup_candidate(
+        raw_import_id=raw_rec.id,
+        existing_incident_id=incident.id,
+        tier=3,
+        similarity_score=0.94,
+        match_rationale='{"fields_compared": ["title"]}',
+    )
+    assert candidate.review_decision is None
+
+    # 2. Test DEFER state
+    deferred = import_repo.resolve_dedup_candidate(
+        candidate_id=candidate.id,
+        decision="DEFERRED",
+        reviewed_by="USER-REVIEWER-01",
+        notes="Awaiting technical logs.",
+    )
+    assert deferred.review_decision == "DEFERRED"
+    assert deferred.reviewed_by == "USER-REVIEWER-01"
+
+    # Check audit log for DEFER
+    log = session.execute(
+        select(AuditLogModel).where(AuditLogModel.action == "DEDUP_DEFERRED")
+    ).scalar_one()
+    assert log.actor_id == "USER-REVIEWER-01"
+    assert log.payload_after["decision"] == "DEFERRED"
+
+    # 3. Test REJECT state
+    rejected = import_repo.resolve_dedup_candidate(
+        candidate_id=candidate.id,
+        decision="REJECTED",
+        reviewed_by="USER-REVIEWER-02",
+        notes="Confirmed as separate incident at different facility.",
+    )
+    assert rejected.review_decision == "REJECTED"
+    log_rej = session.execute(
+        select(AuditLogModel).where(AuditLogModel.action == "DEDUP_REJECTED")
+    ).scalar_one()
+    assert log_rej.actor_id == "USER-REVIEWER-02"
+
+    # 4. Test CONFIRM state
+    confirmed = import_repo.resolve_dedup_candidate(
+        candidate_id=candidate.id,
+        decision="CONFIRMED",
+        reviewed_by="USER-REVIEWER-03",
+        notes="Verified duplicate report.",
+    )
+    assert confirmed.review_decision == "CONFIRMED"
+    log_conf = session.execute(
+        select(AuditLogModel).where(AuditLogModel.action == "DEDUP_CONFIRMED")
+    ).scalar_one()
+    assert log_conf.actor_id == "USER-REVIEWER-03"

@@ -111,6 +111,38 @@ def test_reimport_triggers_deduplication(session: Session) -> None:
     # Total incidents in DB must still be 3 (no accidental duplication)
     assert len(session.execute(select(IncidentModel)).scalars().all()) == 3
 
+    # Idempotency: verify no duplicate batch audit log was created on replay
+    audit_logs = session.execute(
+        select(AuditLogModel).where(AuditLogModel.entity_type == "IMPORT_BATCH")
+    ).scalars().all()
+    assert len(audit_logs) == 1
+
+
+def test_formula_injection_import_persists_safely(session: Session) -> None:
+    """Verify that spreadsheet files containing formula injection attacks persist safely as inert text."""
+    csv_path = FIXTURES_DIR / "formula_injection_attack.csv"
+    summary = run_manual_import_workflow(
+        session=session,
+        file_path=csv_path,
+        source_format="CSV",
+        actor_id="USER-ANALYST-01",
+        demonstration_notice="DEMONSTRATION DATA — NOT A REAL INCIDENT",
+    )
+
+    # All valid attack rows parsed and persisted safely
+    assert summary.imported_count >= 1
+
+    # Verify that malicious payload in DB has prepended quote (')
+    raw_records = session.execute(select(RawImportRecordModel)).scalars().all()
+    assert len(raw_records) >= 1
+    found_neutralized = False
+    for r in raw_records:
+        title = r.raw_payload.get("Incident Title", "")
+        if title.startswith("'="):
+            found_neutralized = True
+            break
+    assert found_neutralized, "Expected at least one formula-injected title to be neutralized with leading single quote"
+
 
 def test_json_manual_import_end_to_end(session: Session) -> None:
     """Verify end-to-end JSON manual import workflow."""
