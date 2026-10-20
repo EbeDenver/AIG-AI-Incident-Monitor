@@ -16,6 +16,20 @@ from ai_incident_monitor.ingestion.connectors import (
     RSSConnector,
     sanitize_html_to_snippet,
 )
+from ai_incident_monitor.ingestion.manifest import (
+    DEFAULT_CHAIN_SCOPE,
+    MANIFEST_SCHEMA_VERSION,
+    IngestionManifest,
+    ManifestBuilder,
+    ManifestChainStore,
+    ManifestForkError,
+    ManifestRunStatus,
+    ManifestStorageError,
+    VerificationReport,
+    canonical_json_bytes,
+    canonical_json_dumps,
+    verify_provenance_chain,
+)
 from ai_incident_monitor.ingestion.models import (
     ConnectorExecutionResult,
     ConnectorMetadata,
@@ -30,6 +44,10 @@ from ai_incident_monitor.ingestion.oecd_adapter import (
     OECDExportAdapter,
     OECDRecord,
     OECDSourceMode,
+)
+from ai_incident_monitor.ingestion.pipeline import (
+    IngestionPipeline,
+    PipelineExecutionResult,
 )
 from ai_incident_monitor.ingestion.purge import (
     PurgeAuditEvent,
@@ -89,4 +107,20 @@ __all__ = [
     "PurgeAuditEvent",
     "PurgeResult",
     "purge_staged_feeds",
+    # Provenance Manifests & Verification (ADR-010, SRC-002, AUD-004)
+    "IngestionManifest",
+    "ManifestBuilder",
+    "ManifestChainStore",
+    "ManifestForkError",
+    "ManifestRunStatus",
+    "ManifestStorageError",
+    "VerificationReport",
+    "verify_provenance_chain",
+    "canonical_json_dumps",
+    "canonical_json_bytes",
+    "DEFAULT_CHAIN_SCOPE",
+    "MANIFEST_SCHEMA_VERSION",
+    # Ingestion Pipeline
+    "IngestionPipeline",
+    "PipelineExecutionResult",
 ]

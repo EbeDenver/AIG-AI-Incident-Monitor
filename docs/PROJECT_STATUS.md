@@ -4,7 +4,7 @@
 **Document Identifier:** STAT-001
 **Last Updated:** 2026-10-20
 **Current Milestone:** Phase 4 (Secure Ingestion Connectors, Cryptographic Provenance, & Source Containment)
-**Overall Status:** GREEN (Branch `feature/secure-ingestion-connectors` Active, ADR-008 & ADR-009 Ratified, 294/294 Tests Passing, Increments 1, 2, & 3 Complete)
+**Overall Status:** GREEN (Branch `feature/secure-ingestion-connectors` Active, ADR-008..011 Ratified, 341/341 Tests Passing, Increments 1–4 Complete)
 
 ---
 
@@ -15,7 +15,7 @@
 | **Phase 1** | **Foundational Governing Documentation** | 11 governing docs, Git repo init, .gitignore, ADR-001..005, RTM | **COMPLETED** | **2026-10-07** |
 | **Phase 2** | **Core Schemas & Epistemic Models** | Pydantic v2 models, epistemic typing, 29 golden fixtures, 89 tests | **COMPLETED** | **2026-10-19** |
 | **Phase 3** | **Data Foundation & Manual Import Engine** | SQLAlchemy 2.0 ORM, dual-engine Alembic, repositories, CSV/JSON/XLSX import, CWE-1236 sanitizer, 4-tier dedup, append-only audit, 144 tests | **COMPLETED** | **2026-10-19** |
-| **Phase 4** | **Secure Ingestion Connectors & Provenance** | SSRF defense, RSS/arXiv connectors, OECD adapter, manifest hash chaining, XML containment, 30-day purge | **IN PROGRESS** | Target: Phase 4 |
+| **Phase 4** | **Secure Ingestion Connectors & Provenance** | SSRF defense, RSS/arXiv connectors, OECD adapter, raw staging store, 30-day purge, manifest hash chaining, XML containment, 197 tests | **COMPLETED** | **2026-10-20** |
 | **Phase 5** | AIG-ISI Scoring & Governance Map | AIG-ISI engine, factor rationales, OECD/NIST/EU Act mappers | Planned | Phase 5 Session |
 | **Phase 6** | Editorial Pipeline & Human Review | Substack generator, neutral tone linter, HITL review CLI | Planned | Phase 6 Session |
 | **Phase 7** | End-to-End Harness & Observability | Orchestration, telemetry, multi-Mac test suite, monitoring, Cloudflare deployment prep | Planned | Phase 7 Session |
@@ -55,15 +55,19 @@ Based on [`docs/REQUIREMENTS_TRACEABILITY.md`](REQUIREMENTS_TRACEABILITY.md):
     - `SRC-002`: Cryptographic SHA-256 digest computation and persistence upon ingestion (`compute_file_sha256`, `raw_import_records`).
     - `SRC-004`: Multi-source incident deduplication and human review queue (`DeduplicationEngine`, `dedup_candidates`).
     - `AUD-004`: Tamper-evident, append-only audit trail for all stage transitions (`AuditRepository`, `AuditLogModel`).
-  - `VERIFIED (Phase 4 Ingestion Connectors)`: 6 requirements
-    - `SEC-004`: SSRF prevention, URL sanitization, 21 blocked IP ranges, and connection pinning.
-    - `SRC-001`: Pluggable source connectors for RSS news feeds and arXiv research API.
-    - `SRC-005`: Unstable endpoint resilience, exponential backoff, jitter, and failure fallbacks.
-    - `OPS-002`: Per-connector rate-limiting and concurrency controls.
+  - `VERIFIED (Phase 4 Ingestion Connectors)`: 10 requirements
+    - `SEC-004`: SSRF prevention, URL sanitization, 21 blocked IP ranges, and connection pinning (`SecureHTTPClient`, `DEC-P4-003`).
+    - `SRC-001`: Pluggable source connectors for RSS news feeds and arXiv research API (`BaseConnector`, `RSSConnector`, `ArXivConnector`).
+    - `SRC-002`: Cryptographic provenance manifests and sequential hash chaining (`IngestionManifest`, `verify_provenance_chain`, `ADR-010`).
+    - `SRC-003`: Mandatory structured XML containment (`<untrusted_source_content>`) prior to LLM processing (`UntrustedSourceContentEnvelope`, `ADR-011`).
+    - `SRC-005`: Unstable endpoint resilience, exponential backoff, jitter, and failure fallbacks (`RetryPolicy`).
+    - `SEC-001`: Adversarial prompt-injection defense test suite and triage classifier (`detect_prompt_injection_signals`).
+    - `SEC-002`: Read-only ingestion and extraction sandboxing (`llm_contract`).
+    - `OPS-002`: Per-connector rate-limiting and concurrency controls (`ConnectorRateLimiter`).
     - `GOV-001` (Partial): OECD export adapter support for manual official exports and fixtures without web scraping (`OECDExportAdapter`, `ADR-009`).
     - `PRI-002`: Git hygiene and fair-use retention via raw feed payload staging store (`.data/raw_feeds/`) and automated 30-day purge TTL job.
-  - `PLANNED (Phases 4–7)`: 40 requirements
-* **Total Verified**: 29 / 69 (42.0%)
+  - `PLANNED (Phases 5–7)`: 36 requirements
+* **Total Verified**: 33 / 69 (47.8%)
 
 ---
 

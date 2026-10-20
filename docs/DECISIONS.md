@@ -178,5 +178,45 @@
   - Full decoupling from volatile OECD frontend website changes.
   - Zero network dependencies for OECD data ingestion.
 
+---
+
+### ADR-010: Cryptographic Provenance Manifests and Sequential Hash-Chaining
+* **Date**: 2026-10-20
+* **Status**: RATIFIED
+* **Deciders**: AI Guardians LLC Leadership, Antigravity AI
+* **Context**: Ingestion runs require auditability and tamper evidence to prove that incident records, fair-use snippets, and diagnostic outcomes have not been secretly modified after ingestion.
+* **Decision**:
+  1. Implement `IngestionManifest` capturing 28 typed provenance attributes per ingestion run.
+  2. Use deterministic canonical JSON serialization (UTF-8, `sort_keys=True`, `separators=(',', ':')`, `ensure_ascii=False`) prior to computing the `manifest_sha256` digest.
+  3. Link manifests sequentially via `previous_manifest_sha256` within a designated `chain_scope` (default: `global_environment_default`). Genesis manifests have `previous_manifest_sha256 = None`.
+  4. Disallow self-links and forked chains.
+  5. Corrections or reprocessing append a new `SUPERSEDED` or `CORRECTION` manifest, preserving the historical trail.
+  6. Provide `verify_provenance_chain` CLI tool with diagnostic-only default mode and zero silent repair.
+  7. Formally document that this is an application-level audit chain, not a blockchain or non-repudiation ledger; privileged DBAs could rewrite history without external anchoring.
+* **Consequences**:
+  - Tamper-evident integrity across all ingestion runs.
+  - Clean separation of chain scopes across environments.
+  - Fully auditable lineage from source URL to normalized record ID.
+
+---
+
+### ADR-011: Untrusted Content Envelope and Prompt Injection Isolation Boundary
+* **Date**: 2026-10-20
+* **Status**: RATIFIED
+* **Deciders**: AI Guardians LLC Leadership, Antigravity AI
+* **Context**: All external web and feed content contains untrusted data that could attempt indirect prompt injection, script execution, or formula injection.
+* **Decision**:
+  1. Wrap all external parsed text in a typed `UntrustedSourceContentEnvelope` marked with `trust_level="UNTRUSTED_EXTERNAL"`.
+  2. The prompt serialization marker `<untrusted_source_content>` is an envelope for formatting and provenance only; internal XML entities and closing tags are strictly escaped to prevent delimiter breakout.
+  3. Enforce deterministic text normalization: HTML stripping, Unicode NFKC, removal of BiDi overrides and zero-width spaces, and CWE-1236 formula neutralization.
+  4. Deploy `detect_prompt_injection_signals` to triage active imperative override directives from objective reporting on prompt injection incidents, quarantining high-risk records.
+  5. Prohibit external source content from altering system prompts, tool definitions, permissions, connector policies, severity scores, publication state, or execution destinations.
+  6. Require explicit human-in-the-loop sign-off before any quarantined content can be evaluated by future LLM components.
+* **Consequences**:
+  - Full mitigation of indirect prompt injection delimiter escapes.
+  - Zero possibility of external content executing tools or overriding instructions.
+  - Robust display and export safety across spreadsheets, logs, and UI components.
+
+
 
 

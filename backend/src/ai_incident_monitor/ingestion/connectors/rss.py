@@ -36,11 +36,12 @@ from ai_incident_monitor.security import (
     SecureHTTPClient,
     SecureHTTPResponse,
     SecurityError,
+    detect_prompt_injection_signals,
+    inspect_xml_structure_and_bounds,
+    sanitize_feed_text,
 )
 
 DEFAULT_MAX_SNIPPET_LENGTH: int = 500
-HTML_TAG_REGEX: re.Pattern[str] = re.compile(r"<[^>]+>")
-WHITESPACE_REGEX: re.Pattern[str] = re.compile(r"\s+")
 
 
 def sanitize_html_to_snippet(
@@ -52,16 +53,11 @@ def sanitize_html_to_snippet(
     if not raw_html_or_text:
         return ""
 
-    # Strip HTML tags
-    stripped = HTML_TAG_REGEX.sub(" ", raw_html_or_text)
-    # Unescape HTML entities (&amp; -> &, &lt; -> <, etc.)
-    unescaped = html.unescape(stripped)
-    # Normalize whitespace
-    normalized = WHITESPACE_REGEX.sub(" ", unescaped).strip()
-
-    if len(normalized) > max_length:
-        return normalized[:max_length].rstrip() + "..."
-    return normalized
+    san_res = sanitize_feed_text(raw_html_or_text)
+    cleaned = san_res.cleaned_text
+    if len(cleaned) > max_length:
+        return cleaned[:max_length].rstrip() + "..."
+    return cleaned
 
 
 class RSSConnector(BaseConnector):
@@ -162,7 +158,17 @@ class RSSConnector(BaseConnector):
                 if content_list and isinstance(content_list, list):
                     raw_summary = content_list[0].get("value", "")
 
-            snippet = sanitize_html_to_snippet(raw_summary, max_length=self.max_snippet_length)
+            # Sanitize summary and evaluate prompt injection signals
+            san_result = sanitize_feed_text(raw_summary)
+            snippet = san_result.cleaned_text
+            if len(snippet) > self.max_snippet_length:
+                snippet = snippet[:self.max_snippet_length].rstrip() + "..."
+
+            inj_result = detect_prompt_injection_signals(
+                raw_summary,
+                had_bidi=san_result.removed_bidi_count > 0,
+                had_zero_width=san_result.removed_zero_width_count > 0,
+            )
 
             # Compute item content hash
             content_sig = f"{canonical_link}|{title}|{published_date or ''}"
@@ -193,6 +199,9 @@ class RSSConnector(BaseConnector):
                     "feed_title": feed_channel_title,
                     "feed_source_url": source_url,
                     "bozo": bool(getattr(feed, "bozo", 0)),
+                    "injection_signals": inj_result.signal_codes,
+                    "is_quarantined": inj_result.is_quarantined,
+                    "sanitization_actions": san_result.actions_taken,
                 },
                 is_research_context=False,
             )
