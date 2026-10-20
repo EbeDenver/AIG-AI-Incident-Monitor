@@ -106,3 +106,23 @@
   - Constitutional rules are enforced as hard Python validation errors (`ConstitutionalViolationError`, `UngroundedClaimError`, `InvalidMonetaryStateError`).
   - Zero database, ORM, network, or external LLM dependencies in the core domain layer.
   - Comprehensive automated test suite (89 unit tests) guarantees zero regressions.
+
+---
+
+### ADR-007: Relational Data Foundation, Dual-Engine Migrations, and Manual Ingestion
+* **Date**: 2026-10-19
+* **Status**: RATIFIED
+* **Deciders**: AI Guardians LLC Leadership, Antigravity AI
+* **Context**: Persisting the approved Phase 2 Pydantic domain models requires a relational database foundation capable of running locally in Docker, supporting rapid offline testing on macOS, executing schema migrations, preserving raw ingested payloads, preventing spreadsheet formula injection attacks, and implementing a deterministic deduplication waterfall.
+* **Decision**: Implement Phase 3 persistence and manual import engine governed by:
+  1. **Dual Engine Support**: Primary development targets local PostgreSQL 16 (`postgres:16-alpine` via Docker Compose); SQLite 3 is retained as a zero-dependency fallback for rapid, offline unit test runs on macOS (`DEC-P3-001`).
+  2. **Hybrid Epistemic Ingestion**: Store file metadata, SHA-256 digest, and raw row JSON snapshots in `raw_import_records` in the database. Raw uploaded files are staged in `$REPO_ROOT/.data/raw_imports/` (strictly gitignored) with a 30-day purge TTL (`DEC-P3-002`). Zero full-text copyrighted news articles are stored in Git or the database (ADR-003, Rule 16).
+  3. **4-Tier Deduplication Waterfall**: Exact Source ID (Tier 1) and exact normalized Canonical URL (Tier 2) auto-link to existing incidents. Near-duplicate matches (Tier 3: title similarity >= 0.90 + event date within $\pm 2$ days) are routed to an explicit `POTENTIAL_DUPLICATE` human review queue (`dedup_candidates`). Zero automated merges of separate incident dossiers (Rule 14, `DEC-P3-003`).
+  4. **PostgreSQL-Native Migrations with Selective SQLite Batching**: Standard PostgreSQL-native migration behavior is the default primary path. SQLite batch table recreation (`render_as_batch=True`) is used selectively with foreign-key isolation and mandatory `PRAGMA foreign_key_check;` (`DEC-P3-004 Refined`).
+  5. **Formula Injection Sanitization (CWE-1236)**: Neutralize spreadsheet formula execution triggers (`=`, `+`, `-`, `@`, `\t`, `\r`) by prepending a single quote (`'`), while openpyxl `data_only=True` treats missing cached formula values strictly as `None` / `UNKNOWN` without defaulting to zero.
+  6. **Append-Only Audit Logging**: All lifecycle actions (CREATE, UPDATE, SUPERSEDE, REVIEW, IMPORT) append immutable records to `audit_logs`. Deletion or modification raises `ImmutabilityViolationError` (Rule 16/17, AUD-003).
+* **Consequences**:
+  - Full relational persistence layer covering all Phase 2 domain entities.
+  - Zero network dependencies during test execution (140/140 unit and integration tests passing).
+  - Ready for future automated connectors, Gemini analysis, and Cloudflare subdomain ingress (`incidents.aiguardiansllc.us`).
+

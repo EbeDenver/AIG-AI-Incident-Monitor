@@ -1,0 +1,3 @@
+Incident ID,Notes,Demonstration Notice
+MISSING-001,Record with missing title and date columns to test missing-column tolerance,DEMONSTRATION DATA — NOT A REAL INCIDENT
+MISSING-002,Another record missing critical columns,DEMONSTRATION DATA — NOT A REAL INCIDENT

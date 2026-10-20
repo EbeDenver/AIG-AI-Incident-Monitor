@@ -1,0 +1,6 @@
+Incident ID,Incident Title,Description,Incident Date,Source URL,Demonstration Notice
+INJ-001,=cmd|' /C calc'!A0,Synthetic malicious payload using equals-formula prefix,2025-06-01,https://example.com/exploit1,DEMONSTRATION DATA — NOT A REAL INCIDENT
+INJ-002,+12345-alert(),Synthetic malicious payload using plus-formula prefix,2025-06-02,https://example.com/exploit2,DEMONSTRATION DATA — NOT A REAL INCIDENT
+INJ-003,@SUM(1+1)*cmd|' /C calc'!A0,Synthetic malicious payload using at-sign prefix,2025-06-03,https://example.com/exploit3,DEMONSTRATION DATA — NOT A REAL INCIDENT
+INJ-004,-2+3+cmd|' /C notepad'!A0,Synthetic malicious payload using minus prefix,2025-06-04,https://example.com/exploit4,DEMONSTRATION DATA — NOT A REAL INCIDENT
+INJ-005,	=1+1,Synthetic malicious payload using tab prefix,2025-06-05,https://example.com/exploit5,DEMONSTRATION DATA — NOT A REAL INCIDENT

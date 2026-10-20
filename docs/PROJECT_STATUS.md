@@ -2,9 +2,9 @@
 **Project:** AI Incident Monitor
 **Organization:** AI Guardians LLC
 **Document Identifier:** STAT-001
-**Last Updated:** 2026-10-07
-**Current Milestone:** Phase 2 (Core Epistemic Schemas, Pydantic v2 Domain Models, & Golden Fixtures)
-**Overall Status:** GREEN (Phase 2 Completed, 89/89 Tests Passing, 20/69 Requirements Verified)
+**Last Updated:** 2026-10-19
+**Current Milestone:** Phase 3 (Relational Data Foundation, Dual-Engine Migrations, & Manual Import Engine)
+**Overall Status:** GREEN (Phase 3 Verified on `feature/data-foundation-import`, 144/144 Tests Passing, 23/69 Requirements Verified)
 
 ---
 
@@ -13,11 +13,12 @@
 | Phase | Description | Target Deliverables | Status | Completion Date |
 | :---: | :--- | :--- | :---: | :---: |
 | **Phase 1** | **Foundational Governing Documentation** | 11 governing docs, Git repo init, .gitignore, ADR-001..005, RTM | **COMPLETED** | **2026-10-07** |
-| **Phase 2** | **Core Schemas & Epistemic Models** | Pydantic v2 models, epistemic typing, 29 golden fixtures, 89 tests | **COMPLETED** | **2026-10-07** |
-| **Phase 3** | Ingestion & Injection Defense | Connectors (RSS, arXiv), XML wrappers, SSRF defense, hasher | Planned | Phase 3 Session |
-| **Phase 4** | AIG-ISI Scoring & Governance Map | AIG-ISI engine, factor rationales, OECD/NIST/EU Act mappers | Planned | Phase 4 Session |
-| **Phase 5** | Editorial Pipeline & Human Review | Substack generator, neutral tone linter, HITL review CLI | Planned | Phase 5 Session |
-| **Phase 6** | End-to-End Harness & Observability | Orchestration, telemetry, multi-Mac test suite, monitoring | Planned | Phase 6 Session |
+| **Phase 2** | **Core Schemas & Epistemic Models** | Pydantic v2 models, epistemic typing, 29 golden fixtures, 89 tests | **COMPLETED** | **2026-10-19** |
+| **Phase 3** | **Data Foundation & Manual Import Engine** | SQLAlchemy 2.0 ORM, dual-engine Alembic, repositories, CSV/JSON/XLSX import, CWE-1236 sanitizer, 4-tier dedup, append-only audit, 144 tests | **COMPLETED** | **2026-10-19** |
+| **Phase 4** | Ingestion Connectors & Injection Defense | Connectors (RSS, arXiv), XML wrappers (`<untrusted_source_content>`), SSRF defense, automated feed pollers | Planned | Phase 4 Session |
+| **Phase 5** | AIG-ISI Scoring & Governance Map | AIG-ISI engine, factor rationales, OECD/NIST/EU Act mappers | Planned | Phase 5 Session |
+| **Phase 6** | Editorial Pipeline & Human Review | Substack generator, neutral tone linter, HITL review CLI | Planned | Phase 6 Session |
+| **Phase 7** | End-to-End Harness & Observability | Orchestration, telemetry, multi-Mac test suite, monitoring, Cloudflare deployment prep | Planned | Phase 7 Session |
 
 ---
 
@@ -46,39 +47,47 @@ Based on [`docs/REQUIREMENTS_TRACEABILITY.md`](REQUIREMENTS_TRACEABILITY.md):
     - `SEV-004`: Strict segregation of Actual Harm vs Potential Harm.
     - `SEV-005`: Non-monetization constraint for human dignity and physical harm.
     - `PRI-004`: Sanitized synthetic test fixtures (22 golden + 7 invalid).
-    - `TST-001`: Automated test suite with zero test failures (89 tests pass).
+    - `TST-001`: Automated test suite with zero test failures (144 tests pass in 3.50s).
     - `TST-003`: Negative testing suite validating rejection of ungrounded data.
     - `TST-004`: Property/invariant testing that `UNKNOWN` is never coerced to zero.
     - `AUD-003`: Immutable and append-only assessment records (`frozen=True`).
-  - `PLANNED (Phases 3–6)`: 49 requirements
-* **Total Verified**: 20 / 69 (29.0%)
+  - `VERIFIED (Phase 3 Data Foundation & Import)`: 3 requirements
+    - `SRC-002`: Cryptographic SHA-256 digest computation and persistence upon ingestion (`compute_file_sha256`, `raw_import_records`).
+    - `SRC-004`: Multi-source incident deduplication and human review queue (`DeduplicationEngine`, `dedup_candidates`).
+    - `AUD-004`: Tamper-evident, append-only audit trail for all stage transitions (`AuditRepository`, `AuditLogModel`).
+  - `PLANNED (Phases 4–7)`: 46 requirements
+* **Total Verified**: 23 / 69 (33.3%)
 
 ---
 
 ## 3. Active Risk & Mitigation Register
 
 | Risk ID | Description | Severity | Impact | Mitigation Strategy | Status |
-| :---: | :--- | :--- | :---: | :--- | :---: |
+| :---: | :--- | :--- | :--- | :--- | :--- |
 | **RSK-001** | Indirect Prompt Injection in Incident Text | HIGH | Agent diversion during extraction | Mandatory `<untrusted_source_content>` XML wrapper isolation; read-only extraction prompts with zero tool execution rights (`SEC-001`, `SEC-002`). | MITIGATED IN DESIGN & FIXTURE |
 | **RSK-002** | Aggregation Skew (Unknown vs Zero) | HIGH | Distorted safety benchmarks | Schema-level `MonetaryAmount` & `DateWithPrecision` enforcing `null` for unknown; verified via unit tests (`TST-004`). | VERIFIED IN CODE |
-| **RSK-003** | Copyright Infringement Claims | MEDIUM | Legal DMCA liability | Raw article bodies excluded from Git; stored as SHA-256 digests and fair-use quote spans only (`PRI-002`, `PRI-004`). | VERIFIED IN CODE |
+| **RSK-003** | Copyright Infringement Claims | MEDIUM | Legal DMCA liability | Raw article bodies excluded from Git; stored as SHA-256 digests and fair-use quote spans only (`PRI-002`, `PRI-004`, `ADR-003`). | VERIFIED IN CODE |
 | **RSK-004** | LLM Hallucinated Citations | HIGH | Credibility collapse | Mandatory verification requiring extracted quotes to match source offsets (`EVD-004`, `EVD-005`). | VERIFIED IN CODE |
+| **RSK-005** | Formula Injection in Spreadsheet Imports | HIGH | Remote code execution on analyst export | Formula neutralization sanitizer prepending `'` to dangerous formula triggers per CWE-1236 (`DEC-P3-004`, `ADR-007`). | VERIFIED IN CODE |
+| **RSK-006** | Accidental Audit Trail Modification | CRITICAL | Regulatory and constitutional violation | Hard `ImmutabilityViolationError` raised on any update/delete query against `audit_logs` (`AUD-004`, `ADR-007`). | VERIFIED IN CODE |
 
 ---
 
-## 4. Phase 2 Verification & Acceptance Criteria
+## 4. Phase 3 Verification & Acceptance Criteria
 
-All Phase 2 deliverables have been implemented and verified:
+All Phase 3 deliverables have been implemented, tested, and verified on `feature/data-foundation-import`:
 
-- [x] **Core Domain Architecture**: 12 domain modules in `backend/src/ai_incident_monitor/domain/` with 64 exported symbols.
-- [x] **Epistemic Invariant Enforcement**: `BaseEntity(frozen=True, extra="forbid")`, `SchemaVersioned("1.0.0")`.
-- [x] **Tri-State Epistemics**: `MonetaryAmountStatus.UNKNOWN` where `amount is None`, rejected if `0.00`.
-- [x] **LLM Self-Approval Prohibition**: `ReviewerIdentity.is_human = True` strictly enforced.
-- [x] **Machine Recommendation Decoupling**: Separate fields and models for machine recommendations vs human approvals.
-- [x] **Sanitized Golden Fixtures**: 22 positive fixtures + 7 negative fixtures, all bearing demonstration notice banners.
-- [x] **Comprehensive Test Suite**: 12 test modules, 89 unit tests passing (`89 passed in 0.48s`).
-- [x] **JSON Schema Generation**: Draft 2020-12 schema generation tested and functional.
-- [x] **Supporting Documentation**: `SPEC-001`, `EPIS-001`, `FIXT-001`, `VER-001`, `ADR-006` authored.
+- [x] **Relational Persistence Architecture**: 10 SQLAlchemy 2.0 ORM models in `backend/src/ai_incident_monitor/db/models/` mapping 1:1 to Phase 2 domain entities with deterministic naming conventions (`pk_`, `fk_`, `uq_`, `ck_`, `ix_`).
+- [x] **Dual-Engine Support**: PostgreSQL 16 container (`postgres:16-alpine` on port 5432) via `backend/docker-compose.yml`; SQLite 3 fallback in `$REPO_ROOT/.data/dev.db` for offline developer testing (`DEC-P3-001`).
+- [x] **Alembic Migration Engine**: Initial migration `001_initial_data_foundation.py` creating 14 tables with selective SQLite batch alter support (`render_as_batch=True`) and foreign key check hooks (`DEC-P3-004 Refined`).
+- [x] **Typed Repository Layer**: 5 typed repositories (`IncidentRepository`, `ClaimRepository`, `SourceRepository`, `AuditRepository`, `ImportRepository`) providing clean CRUD and transaction boundaries.
+- [x] **Append-Only Audit Logging**: Hard runtime immutability enforcement raising `ImmutabilityViolationError` on any attempt to update or delete records in `audit_logs` (Rule 16/17, `AUD-004`).
+- [x] **Multi-Format Manual Importers**: Streaming CSV parser, robust JSON parser (arrays, objects, NDJSON), and openpyxl `read_only=True, data_only=True` XLSX parser with 10MB size limits and 5,000 row limits.
+- [x] **Formula Injection Defense (CWE-1236)**: Sanitizer neutralizing `=,+,-,@,\t,\r` triggers by prepending single quotes; openpyxl `data_only=True` treats missing cached formula values strictly as `None`/`UNKNOWN` without defaulting to zero.
+- [x] **4-Tier Deduplication Waterfall**: Tier 1 exact ID, Tier 2 exact URL auto-linking; Tier 3 near-duplicate candidate routing to human review queue (`dedup_candidates`); Tier 4 distinct incident dossiers (`DEC-P3-003`). Zero automated merging of dossiers (Rule 14).
+- [x] **Comprehensive Test Suite**: 144 automated tests passing (139 unit + 5 integration) in under 4 seconds with zero regressions.
+- [x] **Developer Workflow Makefile**: Standardized targets (`make test`, `make test-unit`, `make test-integration`, `make migrate`, `make db-up`, `make db-down`, `make clean`).
+- [x] **Architectural Record**: `ADR-007` ratified and documented in `docs/DECISIONS.md`.
 
 ---
 
@@ -87,4 +96,5 @@ All Phase 2 deliverables have been implemented and verified:
 * **Active Blockers**: 0
 * **Approved Decisions**:
   - `ADR-006`: Pydantic v2 core epistemic schemas and golden fixtures ratified.
-  - Phase 3 targeting Ingestion Connectors & Prompt Injection Defense.
+  - `ADR-007`: Relational data foundation, dual-engine migrations, and manual ingestion ratified.
+  - Phase 4 targeting Ingestion Connectors (RSS, arXiv) & Prompt Injection Defense.
