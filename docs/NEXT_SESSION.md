@@ -2,47 +2,43 @@
 **Project:** AI Incident Monitor
 **Organization:** AI Guardians LLC
 **Document Identifier:** NEXT-001
-**Target Milestone:** Phase 4 Increment 3 (OECD Export Adapter, Raw Feed Staging Store, & 30-Day Purge TTL Job)
-**Parent Handoff:** Phase 4 Increments 1 & 2 Verified on `feature/secure-ingestion-connectors`
+**Target Milestone:** Phase 4 Increment 4 (Cryptographic Provenance Manifests, XML Containment, & Verification)
+**Parent Handoff:** Phase 4 Increments 1, 2, & 3 Verified on `feature/secure-ingestion-connectors`
 **Effective Date:** 2026-10-20
 **Current Branch:** `feature/secure-ingestion-connectors`
 
 ---
 
-## 1. Current State: Increments 1 & 2 Completed
+## 1. Current State: Increments 1, 2, & 3 Completed
 
 - **Increment 1 (Security Core)**: SSRF defense, 21 blocked IP ranges, DNS resolution, connection pinning transport preserving TLS SNI and cert verification (`DEC-P4-003`), redirect inspector (max 3 hops), and 5 MB content bounds. (85 tests)
 - **Increment 2 (Pluggable Connectors)**: `BaseConnector`, per-connector rate limiter with concurrency guard, exponential backoff with jitter on 429/503/transient errors, `RSSConnector` (feedparser byte parsing, defusedxml pre-screening, HTML sanitization, bozo tracking), `ArXivConnector` (export.arxiv.org official API, 1-connection 3-second rate limit, research signal labeling, PDF download blocking). (42 tests)
-- **Total Passing Tests**: 271 / 271 tests passing with zero regressions.
+- **Increment 3 (OECD Adapter, Staging Store, & Purge Job)**: `OECDExportAdapter` (CSV/JSON/XLSX export parsing, formula neutralization, zero web scraping, `DEC-P4-001`), `RawPayloadStagingStore` (atomic write to `.data/raw_feeds/`, permission 0600, path traversal rejection, metadata cataloging, `DEC-P4-002`), `purge_staged_feeds` (30-day retention boundary, dry-run mode, active-run and legal-hold protection, append-only audit trail). (23 tests)
+- **Total Passing Tests**: 294 / 294 tests passing with zero regressions.
 
 ---
 
-## 2. Incoming Agent Mission: Phase 4 Increment 3 Objectives
+## 2. Incoming Agent Mission: Phase 4 Increment 4 Objectives
 
-In Increment 3, you will implement:
-1. **OECD Export Adapter (`OECDAdapter`)**:
-   - Implements offline structured export and fixture-only parsing (`DEC-P4-001`, Option A).
-   - Zero live scraping or polling of undocumented OECD web/UI API endpoints.
-   - Standardized adapter interface so an authorized future API or bulk export can be plugged in seamlessly.
-2. **Raw Feed Payload Staging Store (`.data/raw_feeds/`)**:
-   - Stages raw retrieved feed payloads in `.data/raw_feeds/{year}/{month}/{manifest_id}.raw` (`DEC-P4-002`, Option A).
-   - Strictly gitignored to uphold copyright fair-use rules and prevent repository bloat (ADR-003, Rule 15).
-3. **30-Day Purge TTL Job**:
-   - Automated purge routine deleting staged raw payloads older than 30 days (`DEC-P4-002`).
-   - CLI / Makefile trigger (`make purge-raw-feeds`).
-   - Appends immutable audit record to `audit_logs` documenting each purge run.
-4. **Unit and Integration Tests**:
-   - Test OECD export parser against sanitized OECD exports.
-   - Test staging file writes and retrieval.
-   - Test 30-day purge TTL job logic and audit record creation.
+In Increment 4, you will implement:
+1. **Cryptographic Provenance Manifests (`IngestionManifest`)**:
+   - Hash chaining linking ingestion runs in a tamper-evident sequence (`SRC-002`, `AUD-004`).
+   - Every ingestion batch generates an immutable manifest with parent manifest SHA-256 hash.
+   - Verification utility validating integrity of the manifest chain from genesis to head.
+2. **XML Isolation & Containment (`<untrusted_source_content>`)**:
+   - Defense against indirect prompt injection (`SRC-003`, `SEC-001`, Rule 11).
+   - Strict sanitization of closing tag escapes (`</untrusted_source_content>`).
+   - Attribute validation (source_id, timestamp, sha256).
+   - Test suite verifying that adversarial instructions embedded in feed content cannot break containment.
+3. **End-to-End Ingestion Integration Tests & Final PR Package**:
+   - Integration test proving complete flow: fetch/parse -> staging -> deduplication check -> audit log -> manifest creation.
+   - PR #3 readiness and validation.
 
 ### Targeted Requirements from RTM ([`docs/REQUIREMENTS_TRACEABILITY.md`](REQUIREMENTS_TRACEABILITY.md))
-- **`SRC-001`**: Pluggable connectors for RSS news feeds, arXiv papers, regulatory dockets, and scheduled polling.
+- **`SRC-002`**: Cryptographic SHA-256 digest computation and persistence upon ingestion.
 - **`SRC-003`**: Mandatory structured XML containment (`<untrusted_source_content>`) prior to LLM processing.
-- **`SRC-005`**: Unstable endpoint resilience, timeouts, and failure fallbacks.
 - **`SEC-001`**: Adversarial prompt-injection defense test suite.
-- **`SEC-002`**: Read-only ingestion and extraction sandboxing.
-- **`SEC-004`**: SSRF prevention and URL sanitization (RFC 1918 blocking, loopback defense).
+- **`AUD-004`**: Tamper-evident append-only audit trail and manifest chaining.
 - **`SEC-005`**: Prompt template cryptographic digest integrity verification.
 - **`PRI-003`**: Whistleblower pseudonymization schemas.
 - **`OPS-002`**: Rate-limiting and backoff policies for web fetchers.

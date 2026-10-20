@@ -38,14 +38,21 @@ COLUMN_ALIASES: dict[str, tuple[str, ...]] = {
 
 def _find_field_value(row: dict[str, Any], field_key: str) -> Optional[str]:
     """Search a row dictionary for field keys matching known column aliases."""
-    aliases = COLUMN_ALIASES.get(field_key, (field_key,))
-    # Normalize row keys to lowercase stripped strings
+    raw_aliases = list(COLUMN_ALIASES.get(field_key, (field_key,)))
+    if field_key not in raw_aliases:
+        raw_aliases.append(field_key)
+
+    expanded: set[str] = set()
+    for a in raw_aliases:
+        expanded.add(a.lower())
+        expanded.add(a.lower().replace("_", " "))
+        expanded.add(a.lower().replace(" ", "_"))
+
     norm_row = {str(k).strip().lower(): v for k, v in row.items()}
-    for alias in aliases:
-        if alias in norm_row:
-            val = norm_row[alias]
-            if val is not None and str(val).strip():
-                return str(val).strip()
+    for k, v in norm_row.items():
+        if k in expanded or k.replace("_", " ") in expanded:
+            if v is not None and str(v).strip():
+                return str(v).strip()
     return None
 
 

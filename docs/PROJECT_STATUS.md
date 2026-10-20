@@ -4,7 +4,7 @@
 **Document Identifier:** STAT-001
 **Last Updated:** 2026-10-20
 **Current Milestone:** Phase 4 (Secure Ingestion Connectors, Cryptographic Provenance, & Source Containment)
-**Overall Status:** GREEN (Branch `feature/secure-ingestion-connectors` Active, ADR-008 Ratified, 271/271 Tests Passing, Increments 1 & 2 Complete)
+**Overall Status:** GREEN (Branch `feature/secure-ingestion-connectors` Active, ADR-008 & ADR-009 Ratified, 294/294 Tests Passing, Increments 1, 2, & 3 Complete)
 
 ---
 
@@ -55,13 +55,15 @@ Based on [`docs/REQUIREMENTS_TRACEABILITY.md`](REQUIREMENTS_TRACEABILITY.md):
     - `SRC-002`: Cryptographic SHA-256 digest computation and persistence upon ingestion (`compute_file_sha256`, `raw_import_records`).
     - `SRC-004`: Multi-source incident deduplication and human review queue (`DeduplicationEngine`, `dedup_candidates`).
     - `AUD-004`: Tamper-evident, append-only audit trail for all stage transitions (`AuditRepository`, `AuditLogModel`).
-  - `VERIFIED (Phase 4 Ingestion Connectors)`: 4 requirements
+  - `VERIFIED (Phase 4 Ingestion Connectors)`: 6 requirements
     - `SEC-004`: SSRF prevention, URL sanitization, 21 blocked IP ranges, and connection pinning.
     - `SRC-001`: Pluggable source connectors for RSS news feeds and arXiv research API.
     - `SRC-005`: Unstable endpoint resilience, exponential backoff, jitter, and failure fallbacks.
     - `OPS-002`: Per-connector rate-limiting and concurrency controls.
-  - `PLANNED (Phases 4–7)`: 42 requirements
-* **Total Verified**: 27 / 69 (39.1%)
+    - `GOV-001` (Partial): OECD export adapter support for manual official exports and fixtures without web scraping (`OECDExportAdapter`, `ADR-009`).
+    - `PRI-002`: Git hygiene and fair-use retention via raw feed payload staging store (`.data/raw_feeds/`) and automated 30-day purge TTL job.
+  - `PLANNED (Phases 4–7)`: 40 requirements
+* **Total Verified**: 29 / 69 (42.0%)
 
 ---
 

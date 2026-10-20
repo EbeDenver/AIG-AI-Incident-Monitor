@@ -160,4 +160,23 @@
   - Complete cryptographic auditability across all feed ingestion runs.
   - Zero live network dependencies during automated test execution.
 
+---
+
+### ADR-009: OECD Export-Only Adapter Architecture and Zero-Scraping Mandate
+* **Date**: 2026-10-20
+* **Status**: RATIFIED
+* **Deciders**: AI Guardians LLC Leadership, Antigravity AI
+* **Context**: The OECD AI Incidents Monitor (OECD.AI AIM) provides valuable public incident data. Scraping or polling undocumented OECD UI or internal API endpoints violates terms of service, introduces brittle external dependencies, and risks pipeline failures.
+* **Decision**: Adopt a strict export-only adapter architecture (`OECDExportAdapter`):
+  1. Ingestion is restricted to three official modes: `MANUAL_OFFICIAL_EXPORT` (operator upload), `RECORDED_TEST_FIXTURE` (sanitized fixtures), and `FUTURE_OFFICIAL_API_DISABLED` (disabled by default placeholder).
+  2. Zero live web scraping, undocumented API polling, or reverse engineering of dynamic UI calls.
+  3. Support CSV, JSON, and XLSX imports with formula injection defense (CWE-1236).
+  4. Preserve raw OECD records without overwriting original fields; treat OECD classifications as source metadata rather than proven legal or causal findings.
+  5. Missing OECD record IDs trigger a `requires_dedup_review` flag for human deduplication rather than inventing synthetic IDs.
+* **Consequences**:
+  - Guaranteed stability and defensibility of the OECD ingestion pipeline.
+  - Full decoupling from volatile OECD frontend website changes.
+  - Zero network dependencies for OECD data ingestion.
+
+
 

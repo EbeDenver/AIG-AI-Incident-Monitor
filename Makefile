@@ -9,7 +9,7 @@ ALEMBIC ?= $(VENV)/bin/alembic
 RUFF ?= $(VENV)/bin/ruff
 MYPY ?= $(VENV)/bin/mypy
 
-.PHONY: help test test-unit test-integration migrate migrate-down db-up db-down lint format typecheck clean
+.PHONY: help test test-unit test-integration migrate migrate-down db-up db-down lint format typecheck clean purge-raw-feeds purge-raw-feeds-dry-run import-oecd
 
 help:
 	@echo "Available Makefile targets:"
@@ -58,3 +58,13 @@ typecheck:
 clean:
 	rm -rf .pytest_cache/ .mypy_cache/ .ruff_cache/ htmlcov/ .coverage
 	find . -type d -name "__pycache__" -exec rm -rf {} +
+
+purge-raw-feeds:
+	$(PYTHON) -m ai_incident_monitor.ingestion.purge
+
+purge-raw-feeds-dry-run:
+	$(PYTHON) -m ai_incident_monitor.ingestion.purge --dry-run
+
+import-oecd:
+	$(PYTHON) -m ai_incident_monitor.ingestion.oecd_adapter --file $(FILE)
+

@@ -36,9 +36,11 @@ id_ed25519
 *.db-wal
 *.sqlite-wal
 
-# Out-of-tree Raw Source Cache & Crawled Content (Rule 9 / DEC-001)
+# Out-of-tree Raw Source Cache & Crawled Content (Rule 9 / DEC-001 / DEC-P4-002)
 # Raw copyrighted source articles must NOT be committed to Git.
 .data/
+.data/raw_feeds/
+!.data/raw_feeds/.gitkeep
 data/raw/
 data/cache/
 data/crawled/

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "OECD-2026-101",
+    "title": "Smart Grid Load Balancing Oscillation",
+    "date": "2026-06-01",
+    "url": "https://oecd.ai/en/incidents/OECD-2026-101",
+    "description": "Grid optimization agent caused localized power oscillations under rapid cloud transit.",
+    "oecd_principles": "Robustness, Security and Safety",
+    "ai_system": "GridOptimizer 2.1",
+    "harm_type": "Infrastructure Instability"
+  },
+  {
+    "id": "OECD-2026-102",
+    "title": "Algorithmic Hiring Assessment Disparity",
+    "date": "2026-06-15",
+    "url": "https://oecd.ai/en/incidents/OECD-2026-102",
+    "description": "Automated video interview scoring tool penalized candidates using non-standard accents.",
+    "oecd_principles": "Fairness and Human Rights",
+    "ai_system": "HireScreen Pro",
+    "harm_type": "Discriminatory Impact"
+  }
+]
