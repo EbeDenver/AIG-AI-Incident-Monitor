@@ -1,91 +1,74 @@
-# NEXT SESSION HANDOFF: Phase 4 Kickoff
-**Project:** AI Incident Monitor
-**Organization:** AI Guardians LLC
-**Document Identifier:** NEXT-001
-**Target Milestone:** Phase 4 (Ingestion Connectors, Cryptographic Provenance, & Prompt Injection Defense)
-**Parent Handoff:** Phase 3 (Relational Data Foundation, Dual-Engine Migrations, & Manual Import Engine)
-**Effective Date:** 2026-10-19
+# NEXT SESSION HANDOFF: Phase 5 Execution
+**Project:** AI Incident Monitor  
+**Organization:** AI Guardians LLC  
+**Document Identifier:** NEXT-001  
+**Target Milestone:** Phase 5 (AIG-ISI Severity Scoring Engine & Governance Mappings)  
+**Parent Handoff:** Phase 4 Secure Ingestion Completed on `feature/secure-ingestion-connectors` (PR #3)  
+**Effective Date:** 2026-10-20  
+**Current Branch:** `feature/secure-ingestion-connectors`  
 
 ---
 
-## 1. Incoming Agent Mission: Phase 4 Objectives
+## 1. Current State: Phase 4 Completed
 
-Welcome to Phase 4 of **AI Incident Monitor**. In this phase, you will build upon the approved Phase 3 data foundation (`feature/data-foundation-import` merged to `main`) to implement automated ingestion connectors, cryptographic raw payload provenance, SSRF defenses, and structured prompt-injection containment wrappers.
+All four increments of Phase 4 have been implemented and verified with 341 passing tests:
+- **Increment 1 (Security Core)**: SSRF defense, 21 blocked IP ranges, DNS resolution, connection pinning transport preserving TLS SNI and cert verification (`DEC-P4-003`), redirect inspector (max 3 hops), and 5 MB content bounds. (85 tests)
+- **Increment 2 (Pluggable Connectors)**: `BaseConnector`, per-connector rate limiter with concurrency guard, exponential backoff with jitter on 429/503/transient errors, `RSSConnector` (feedparser byte parsing, defusedxml pre-screening, HTML sanitization, bozo tracking), `ArXivConnector` (export.arxiv.org official API, 1-connection 3-second rate limit, research signal labeling, PDF download blocking). (42 tests)
+- **Increment 3 (OECD Adapter, Staging Store, & Purge Job)**: `OECDExportAdapter` (CSV/JSON/XLSX export parsing, formula neutralization, zero web scraping, `DEC-P4-001`, `ADR-009`), `RawPayloadStagingStore` (atomic write to `.data/raw_feeds/`, permission 0600, path traversal rejection, metadata cataloging, `DEC-P4-002`), `purge_staged_feeds` (30-day retention boundary, dry-run mode, active-run and legal-hold protection, append-only audit trail). (23 tests)
+- **Increment 4 (Manifests, Untrusted Content Envelope, & E2E Pipeline)**: `IngestionManifest` with sequential hash chaining (`ADR-010`), canonical JSON serialization, `make verify-provenance-chain`, `UntrustedSourceContentEnvelope` with escaped XML prompt serialization (`ADR-011`), HTML/CSS stripping, Unicode NFKC, CWE-1236 formula defense, prompt injection triage signals (`detect_prompt_injection_signals`), future LLM boundary contract, and 21 end-to-end integration tests. (47 tests)
+- **Total Passing Tests**: 341 / 341 tests passing with zero regressions.
+
+---
+
+## 2. Incoming Agent Mission: Phase 5 Objectives
+
+In Phase 5, you will implement:
+1. **AIG-ISI Multi-Dimensional Severity Engine**:
+   - Deterministic, explainable scoring across Harm, Autonomy, Reversibility, and Scope (`SEV-001`, `SEV-002`).
+   - Structural isolation from external regulatory classifications (OECD, NIST, EU) and media noteworthiness (`SEV-003`, `Rule 7`).
+   - Segregation of demonstrated Actual Harm vs potential counterfactual harm (`SEV-004`, `Rule 5`).
+   - Non-monetization of human dignity and physical harm (`SEV-005`, `Rule 8`).
+   - Mandatory human sign-off triggers for high-severity ratings (`SEV-006`, `Rule 13`).
+2. **Governance Framework Mappings**:
+   - OECD AI Principles mapper (`GOV-001`).
+   - NIST AI Risk Management Framework core functions mapper (`GOV-002`).
+   - EU AI Act screening classifier (Prohibited, High-Risk, GPAI) with strict jurisdictional distinction vs conceptual relevance (`GOV-003`, `GOV-004`, `Rule 9`, `Rule 10`).
+   - Preserving governance mappings as orthogonal tag layers (`GOV-005`, `Rule 7`).
+3. **Root Cause Analysis (RCA) Taxonomies**:
+   - Multi-tier taxonomy (Data, Model Architecture, Alignment/Safety, System Integration, Human Oversight, Malicious Exploitation) (`RCA-001`).
+   - Direct evidentiary linkage requirement (`RCA-002`, `Rule 4`).
+   - Epistemic flagging when technical postmortems are absent (`RCA-004`, `Rule 2`).
 
 ### Targeted Requirements from RTM ([`docs/REQUIREMENTS_TRACEABILITY.md`](REQUIREMENTS_TRACEABILITY.md))
-- **`SRC-001`**: Pluggable connectors for RSS news feeds, arXiv papers, regulatory dockets, and scheduled polling.
-- **`SRC-003`**: Mandatory structured XML containment (`<untrusted_source_content>`) prior to LLM processing.
-- **`SRC-005`**: Unstable endpoint resilience, timeouts, and failure fallbacks.
-- **`SEC-001`**: Adversarial prompt-injection defense test suite.
-- **`SEC-002`**: Read-only ingestion and extraction sandboxing.
-- **`SEC-004`**: SSRF prevention and URL sanitization (RFC 1918 blocking, loopback defense).
-- **`SEC-005`**: Prompt template cryptographic digest integrity verification.
-- **`PRI-003`**: Whistleblower pseudonymization schemas.
-- **`OPS-002`**: Rate-limiting and backoff policies for web fetchers.
+- **`SEV-001`**: AIG-ISI multi-dimensional scoring engine.
+- **`SEV-002`**: Human-readable evidentiary rationales per dimension.
+- **`SEV-003`**: Structural isolation of severity from governance frameworks.
+- **`SEV-006`**: High-severity human review triggers.
+- **`GOV-001`**: OECD AI Principles mapping.
+- **`GOV-002`**: NIST AI RMF core function mapping.
+- **`GOV-003`**: EU AI Act categorization screening.
+- **`GOV-004`**: Enforceable statutory applicability vs conceptual relevance.
+- **`GOV-005`**: Orthogonality of governance tags.
+- **`RCA-001`**: Multi-tier causal factor taxonomy.
+- **`RCA-002`**: Evidentiary anchoring for root-cause findings.
+- **`RCA-004`**: Epistemic labeling for unverified causal findings.
 
 ---
 
-## 2. Startup Verification Checklist
+## 3. Startup Verification Checklist for Phase 5
 
-Before writing any code in Phase 4:
 1. [ ] Check current branch and git status:
    ```bash
    git status
    git branch --show-current
    ```
-2. [ ] Verify `main` commit reflects the merged Phase 3 pull request.
-3. [ ] Confirm feature branch `feature/data-foundation-import` remains intact until deletion is authorized.
-4. [ ] Review the 17 non-negotiable constitutional rules in [`AGENTS.md`](../AGENTS.md).
-5. [ ] Read [`docs/PROJECT_STATUS.md`](PROJECT_STATUS.md) to confirm Phase 3 is green (144/144 tests passing).
-6. [ ] Run the complete test suite to verify baseline integrity:
+2. [ ] Verify PR #3 has been merged to `main` and branch is switched to `main` (or new feature branch `feature/aig-isi-scoring-engine`).
+3. [ ] Review the 17 non-negotiable constitutional rules in [`AGENTS.md`](../AGENTS.md).
+4. [ ] Run full test suite:
    ```bash
-   make test
-   # or: .venv/bin/pytest backend/tests
+   .venv/bin/pytest backend/tests
    ```
-
----
-
-## 3. Targeted Deliverables for Phase 4
-
-You will extend `backend/src/ai_incident_monitor/`:
-
-```
-backend/src/ai_incident_monitor/
-├── domain/                      # (Completed in Phase 2)
-├── db/                          # (Completed in Phase 3)
-├── repositories/                # (Completed in Phase 3)
-├── importers/                   # (Completed in Phase 3 manual CSV/JSON/XLSX)
-├── deduplication/               # (Completed in Phase 3 4-tier engine)
-└── ingestion/                   # (Targeted in Phase 4)
-    ├── __init__.py
-    ├── connectors/
-    │   ├── base.py              # BaseConnector abstract class with rate limiter & backoff
-    │   ├── rss.py               # Feedparser / RSS news connector with timeout
-    │   ├── arxiv.py             # arXiv API metadata connector
-    │   └── poller.py            # Poller orchestrator feeding into ImportRepository
-    └── security/
-        ├── ssrf.py              # SSRF URL filter and IP validator (RFC 1918 blocking)
-        ├── isolation.py         # Structured XML wrapper (<untrusted_source_content>)
-        └── prompt_digest.py     # Prompt template cryptographic integrity verifier
-backend/tests/
-├── unit/
-│   ├── test_connectors.py       # Mocked connector fetch tests
-│   ├── test_ssrf.py             # SSRF blocklist & DNS resolution tests
-│   └── test_prompt_isolation.py # XML containment & adversarial escape tests
-└── fixtures/
-    └── adversarial/             # Injection payload test fixtures (indirect prompt injection)
-```
-
----
-
-## 4. Key Implementation Rules for Phase 4
-
-1. **Copyright Compliance (ADR-003, Rule 16)**: Never write raw external news article bodies into tracked Git files or database columns. Store SHA-256 digests, canonical URLs, and fair-use quote spans only.
-2. **SSRF Defense (SEC-004)**: All outbound HTTP requests must resolve target hostnames before sending and explicitly reject:
-   - Loopback (`127.0.0.0/8`, `::1`)
-   - Private RFC 1918 ranges (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`)
-   - Link-local addresses (`169.254.0.0/16`, cloud metadata endpoints like `169.254.169.254`)
-   - Non-HTTP/HTTPS schemes (`file://`, `ftp://`, `gopher://`).
-3. **Prompt Injection Containment (SEC-001, Rule 11)**: External untrusted text must never be concatenated directly into instruction prompts. Wrap strictly inside `<untrusted_source_content source_id="...">` blocks.
-4. **Mocked Offline Tests**: All connector and fetcher tests must run strictly offline against mocked fixtures. Zero live outbound network requests allowed during CI test runs.
-5. **Epistemic Traceability**: Ingested records must automatically tag created claims with `EpistemicStatus.UNVERIFIED_ALLEGATION` until human review occurs (Rule 3, Rule 13).
+5. [ ] Verify provenance chain integrity:
+   ```bash
+   make verify-provenance-chain
+   ```

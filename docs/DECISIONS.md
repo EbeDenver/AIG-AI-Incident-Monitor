@@ -126,3 +126,97 @@
   - Zero network dependencies during test execution (140/140 unit and integration tests passing).
   - Ready for future automated connectors, Gemini analysis, and Cloudflare subdomain ingress (`incidents.aiguardiansllc.us`).
 
+---
+
+### ADR-008: Secure Ingestion Connectors, Cryptographic Provenance, and SSRF Defense
+* **Date**: 2026-10-20
+* **Status**: RATIFIED
+* **Deciders**: AI Guardians LLC Leadership, Antigravity AI
+* **Context**: Phase 4 extends the AI Incident Monitor to ingest external feeds (RSS, arXiv, OECD exports) while strictly observing constitutional rules (Rule 1, Rule 9, Rule 11, Rule 14, Rule 15, Rule 16). Ingesting external feeds introduces severe attack surfaces: Server-Side Request Forgery (SSRF) targeting internal networks and cloud metadata (`169.254.169.254`), DNS rebinding (TOCTOU) attacks bypassing initial DNS checks, TLS SNI mismatches, denial of service via oversized feeds and decompression bombs, copyright violations from storing full raw articles in Git, and untracked feed alteration.
+* **Decision**: Adopt a defense-in-depth architecture ratified across four core decisions:
+  1. **OECD Integration Architecture (DEC-P4-001, Option A)**:
+     - Utilize a pluggable OECD adapter operating strictly on offline structured exports, fixtures, and officially documented file formats.
+     - Zero live scraping, polling, or reverse-engineering of undocumented OECD web or UI API endpoints.
+     - The adapter interface is standardized so an authorized official API or approved bulk connector can be enabled in the future with zero changes to downstream pipeline contracts.
+  2. **Raw Feed Storage & Retention Policy (DEC-P4-002, Option A)**:
+     - Database persistence is strictly limited to metadata, canonical URLs, structured parsed fields, cryptographic provenance hashes (`SHA-256`), and minimal fair-use direct snippets.
+     - Full raw payloads are staged strictly in a gitignored local or object storage staging area (`.data/raw_feeds/`) governed by a configurable 30-day purge TTL.
+     - Zero raw feed payloads, full article bodies, or copyrighted text are committed to GitHub or permanently retained in the relational database.
+  3. **SSRF Defense and DNS-Rebinding Connection Pinning (DEC-P4-003, Option A with Constraints)**:
+     - Enforce a strict outbound URL policy: HTTPS only by default (HTTP permitted only in explicit local test environments), blocked non-HTTP schemes (`file://`, `gopher://`, `ftp://`), stripped userinfo credentials, and default port 443.
+     - Pre-flight DNS resolution and IP validation rejecting 21 blocked IP ranges: RFC 1918 private subnets, loopback, link-local, carrier-grade NAT, multicast, broadcast, documentation, benchmarking, IPv6 unique local, IPv6 link-local, IPv4-mapped IPv6, 6to4, Teredo, and cloud metadata endpoints (`169.254.169.254`, `metadata.google.internal`).
+     - Connection pinning: Establish TCP connections directly to the pre-validated IP address while preserving the original hostname for TLS SNI negotiation, certificate validation, and the HTTP `Host` header. Simplistic IP-replacement that breaks TLS certificate verification is explicitly prohibited.
+     - Validate every redirect hop independently up to a maximum of 3 hops; prohibit HTTPS-to-HTTP downgrades.
+     - Enforce strict content bounds: maximum 5 MB payload size and streaming decompression expansion ratio limits.
+  4. **Sequential Ingestion-Run Hash Chaining (DEC-P4-004, Option A)**:
+     - Ingestion manifests record a tamper-evident cryptographic hash chain where each run links to `previous_manifest_sha256`.
+     - The genesis manifest links to a deterministic 64-character zero-hash anchor (`0000000000000000000000000000000000000000000000000000000000000000`).
+     - This provides immutable audit traceability and sequence verification for all ingestion runs without distributed consensus or blockchain overhead.
+  5. **Decoupled & Deferred Scheduler**:
+     - Background scheduling (cron/daemon) is decoupled from the core ingestion pipeline and deferred. Phase 4 operations are invoked deterministically via CLI commands and Makefile targets.
+* **Consequences**:
+  - Full mitigation of SSRF, DNS rebinding, decompression bombs, and cloud metadata theft.
+  - Provable copyright compliance under fair-use doctrine.
+  - Complete cryptographic auditability across all feed ingestion runs.
+  - Zero live network dependencies during automated test execution.
+
+---
+
+### ADR-009: OECD Export-Only Adapter Architecture and Zero-Scraping Mandate
+* **Date**: 2026-10-20
+* **Status**: RATIFIED
+* **Deciders**: AI Guardians LLC Leadership, Antigravity AI
+* **Context**: The OECD AI Incidents Monitor (OECD.AI AIM) provides valuable public incident data. Scraping or polling undocumented OECD UI or internal API endpoints violates terms of service, introduces brittle external dependencies, and risks pipeline failures.
+* **Decision**: Adopt a strict export-only adapter architecture (`OECDExportAdapter`):
+  1. Ingestion is restricted to three official modes: `MANUAL_OFFICIAL_EXPORT` (operator upload), `RECORDED_TEST_FIXTURE` (sanitized fixtures), and `FUTURE_OFFICIAL_API_DISABLED` (disabled by default placeholder).
+  2. Zero live web scraping, undocumented API polling, or reverse engineering of dynamic UI calls.
+  3. Support CSV, JSON, and XLSX imports with formula injection defense (CWE-1236).
+  4. Preserve raw OECD records without overwriting original fields; treat OECD classifications as source metadata rather than proven legal or causal findings.
+  5. Missing OECD record IDs trigger a `requires_dedup_review` flag for human deduplication rather than inventing synthetic IDs.
+* **Consequences**:
+  - Guaranteed stability and defensibility of the OECD ingestion pipeline.
+  - Full decoupling from volatile OECD frontend website changes.
+  - Zero network dependencies for OECD data ingestion.
+
+---
+
+### ADR-010: Cryptographic Provenance Manifests and Sequential Hash-Chaining
+* **Date**: 2026-10-20
+* **Status**: RATIFIED
+* **Deciders**: AI Guardians LLC Leadership, Antigravity AI
+* **Context**: Ingestion runs require auditability and tamper evidence to prove that incident records, fair-use snippets, and diagnostic outcomes have not been secretly modified after ingestion.
+* **Decision**:
+  1. Implement `IngestionManifest` capturing 28 typed provenance attributes per ingestion run.
+  2. Use deterministic canonical JSON serialization (UTF-8, `sort_keys=True`, `separators=(',', ':')`, `ensure_ascii=False`) prior to computing the `manifest_sha256` digest.
+  3. Link manifests sequentially via `previous_manifest_sha256` within a designated `chain_scope` (default: `global_environment_default`). Genesis manifests have `previous_manifest_sha256 = None`.
+  4. Disallow self-links and forked chains.
+  5. Corrections or reprocessing append a new `SUPERSEDED` or `CORRECTION` manifest, preserving the historical trail.
+  6. Provide `verify_provenance_chain` CLI tool with diagnostic-only default mode and zero silent repair.
+  7. Formally document that this is an application-level audit chain, not a blockchain or non-repudiation ledger; privileged DBAs could rewrite history without external anchoring.
+* **Consequences**:
+  - Tamper-evident integrity across all ingestion runs.
+  - Clean separation of chain scopes across environments.
+  - Fully auditable lineage from source URL to normalized record ID.
+
+---
+
+### ADR-011: Untrusted Content Envelope and Prompt Injection Isolation Boundary
+* **Date**: 2026-10-20
+* **Status**: RATIFIED
+* **Deciders**: AI Guardians LLC Leadership, Antigravity AI
+* **Context**: All external web and feed content contains untrusted data that could attempt indirect prompt injection, script execution, or formula injection.
+* **Decision**:
+  1. Wrap all external parsed text in a typed `UntrustedSourceContentEnvelope` marked with `trust_level="UNTRUSTED_EXTERNAL"`.
+  2. The prompt serialization marker `<untrusted_source_content>` is an envelope for formatting and provenance only; internal XML entities and closing tags are strictly escaped to prevent delimiter breakout.
+  3. Enforce deterministic text normalization: HTML stripping, Unicode NFKC, removal of BiDi overrides and zero-width spaces, and CWE-1236 formula neutralization.
+  4. Deploy `detect_prompt_injection_signals` to triage active imperative override directives from objective reporting on prompt injection incidents, quarantining high-risk records.
+  5. Prohibit external source content from altering system prompts, tool definitions, permissions, connector policies, severity scores, publication state, or execution destinations.
+  6. Require explicit human-in-the-loop sign-off before any quarantined content can be evaluated by future LLM components.
+* **Consequences**:
+  - Full mitigation of indirect prompt injection delimiter escapes.
+  - Zero possibility of external content executing tools or overriding instructions.
+  - Robust display and export safety across spreadsheets, logs, and UI components.
+
+
+
+

@@ -1,0 +1,5 @@
+# DEMONSTRATION DATA — NOT A REAL INCIDENT — AI GUARDIANS TEST FIXTURE
+Incident ID,Title,Date,URL,Description,OECD Principles,AI System,Harm Type
+OECD-2026-001,Autonomous Drone Delivery Drift,2026-03-15,https://oecd.ai/en/incidents/OECD-2026-001,A delivery drone experienced compass bias in urban canyon.,Robustness and Security,QuadDelivery AI,Property Damage
+OECD-2026-002,Medical Diagnostics Confidence Inversion,2026-04-10,https://oecd.ai/en/incidents/OECD-2026-002,A radiology assistant reversed confidence probabilities on scan artifacts.,Transparency and Explainability,MedScanNet 4,Patient Misdiagnosis Risk
+,Uncataloged Warehouse Robotic Stoppage,2026-05-01,https://oecd.ai/en/incidents/unidentified,Automated mobile robot stopped unexpectedly due to sunlight reflection.,Safety,AMR-NavPro,Operational Disruption
