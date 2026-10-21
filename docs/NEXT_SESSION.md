@@ -1,94 +1,87 @@
-# NEXT SESSION HANDOFF: Phase 5 Planning
-**Project:** AI Incident Monitor  
-**Organization:** AI Guardians LLC  
-**Document Identifier:** NEXT-001  
-**Target Milestone:** Phase 5 (AIG-ISI Severity Scoring Engine & Governance Mappings) — **PLANNING ONLY**  
-**Parent Handoff:** Phase 4 Secure Ingestion Merged to `main` via PR #3 (Merge Commit `d2e9362133c968616ae21da25ba85b05c22fcfcf`)  
-**Effective Date:** 2026-10-20  
-**Current Branch:** `main`  
+# NEXT SESSION HANDOFF: Phase 5 Increment 2
+**Project:** AI Incident Monitor
+**Organization:** AI Guardians LLC
+**Document Identifier:** NEXT-001
+**Target Milestone:** Phase 5, Increment 2 (Governance Framework Mappings: OECD, NIST AI RMF, EU AI Act Screening)
+**Parent Handoff:** Phase 5, Increment 1 (AIG-ISI Multi-Dimensional Scoring Core) Completed on `feature/aig-isi-scoring-engine`
+**Effective Date:** 2026-10-20
+**Current Branch:** `feature/aig-isi-scoring-engine`
 
 ---
 
-> [!IMPORTANT]
-> **PHASE 5 EXECUTION POLICY: PLANNING-ONLY UNTIL SEPARATELY APPROVED**  
-> No code implementation, schema modification, or feature branch creation for Phase 5 may begin until the user has reviewed and explicitly approved the Phase 5 architecture, planning package, and ADRs.
+## 1. Current State: Phase 5 Increment 1 Completed
+
+Phase 5 Increment 1 (AIG-ISI Multi-Dimensional Scoring Core) has been fully implemented and verified:
+- **Branch**: `feature/aig-isi-scoring-engine`
+- **Test Suite Status**: **382 passed tests** (341 Phase 4 regression + 41 new scoring tests) with zero failures and zero regressions.
+- **Alembic Migrations**: Migration `002_aig_isi_severity_foundation.py` tested and verified through complete upgrade/downgrade/upgrade cycle.
+- **Provenance Integrity**: Verified via `make verify-provenance-chain`.
+
+### Deliverables Completed in Increment 1:
+1. **Deterministic Scoring Engine (`ai_incident_monitor.scoring`)**:
+   - Eight approved dimensions and weights totaling exactly 100: Human Impact and Dignity (25), Financial and Property Impact (15), Trust and Reputation (15), Privacy and Confidentiality (15), Rights and Fairness (10), Operational and Critical-Service (10), Scale and Reach (5), Societal and Environmental (5).
+   - Strict segregation of Actual Impact and Potential Impact into independent assessments.
+   - Discrete 0–5 scores or `null`/`UNKNOWN`. `UNKNOWN` is never coerced to zero.
+   - Exact mathematical formulation for lower bounds, upper bounds, score ranges, completeness, and provisional normalized scores.
+   - Five core severity tiers (Minimal, Moderate, Significant, Severe, Critical) and special status tiers (Unscored, Disputed, Superseded).
+   - Ten automated human-review workflow gates routing to `PENDING_REVIEW`.
+   - Explicit, auditable manual overrides with mandatory rationale, reviewer ID, and timestamp.
+2. **Relational Persistence**:
+   - `SeverityAssessmentModel` with foreign key to `incidents.id` (`ondelete="CASCADE"`).
+   - Typed `SeverityRepository` integrated with append-only `AuditRepository`.
+   - Alembic migration `002_aig_isi_severity_foundation.py`.
+3. **Methodology & Documentation Artifacts**:
+   - `frameworks/ai-guardians/aig-isi-1.0.yaml` (machine-readable spec).
+   - `docs/AIG_ISI_METHODOLOGY.md` (comprehensive methodology).
+   - `docs/AIG_ISI_CALIBRATION.md` and `frameworks/ai-guardians/calibration_fixtures.json` (6 canonical benchmarks).
+   - `docs/ER_DIAGRAM.md` (relational ER diagram).
+   - `docs/SCORING_FLOW.md` (scoring flow diagram).
+   - Ratified ADRs: `ADR-012` through `ADR-015` in `docs/DECISIONS.md`.
 
 ---
 
-## 1. Current State: Phase 4 Merged to `main`
-
-Phase 4 has been completed, peer-reviewed, and merged into `main`:
-- **Pull Request**: [#3](https://github.com/EbeDenver/AIG-AI-Incident-Monitor/pull/3) (`feat: Phase 4 secure ingestion connectors and provenance`)
-- **Merge Commit SHA**: `d2e9362133c968616ae21da25ba85b05c22fcfcf` (short: `d2e9362`)
-- **Test Results**: 341 passed tests (320 unit, 21 integration) with 0 failures and 0 regressions.
-- **Cryptographic Provenance**: Verified via `make verify-provenance-chain`.
-
-### Phase 4 Completed Deliverables:
-- **Increment 1 (Security Core)**: SSRF defense, 21 blocked IP ranges, DNS resolution pre-flight, connection pinning transport preserving TLS SNI and cert verification (`DEC-P4-003`, `ADR-008`), redirect inspector (max 3 hops), and 5 MB content bounds. (85 tests)
-- **Increment 2 (Pluggable Connectors)**: `BaseConnector`, per-connector rate limiter with concurrency guard, exponential backoff with jitter on 429/503/transient errors, `RSSConnector` (feedparser byte parsing, defusedxml pre-screening, HTML sanitization, bozo tracking), `ArXivConnector` (export.arxiv.org official API, 1-connection 3-second rate limit, research signal labeling, PDF download blocking). (42 tests)
-- **Increment 3 (OECD Adapter, Staging Store, & Purge Job)**: `OECDExportAdapter` (CSV/JSON/XLSX export parsing, formula neutralization, zero web scraping, `DEC-P4-001`, `ADR-009`), `RawPayloadStagingStore` (atomic write to `.data/raw_feeds/`, permission 0600, path traversal rejection, metadata cataloging, `DEC-P4-002`), `purge_staged_feeds` (30-day retention boundary, dry-run mode, active-run and legal-hold protection, append-only audit trail). (23 tests)
-- **Increment 4 (Manifests, Untrusted Content Envelope, & E2E Pipeline)**: `IngestionManifest` with sequential hash chaining (`ADR-010`), canonical JSON serialization, `make verify-provenance-chain`, `UntrustedSourceContentEnvelope` with escaped XML prompt serialization (`ADR-011`), HTML/CSS stripping, Unicode NFKC, CWE-1236 formula defense, prompt injection triage signals (`detect_prompt_injection_signals`), future LLM boundary contract, and 21 end-to-end integration tests. (47 tests)
-
-### Phase 4 Hard Boundaries Enforced:
-1. **No Live Production Scheduling**: All connectors and pipelines execute strictly on-demand (CLI or test invocations); no cron jobs, Celery, or background daemon processes exist.
-2. **No Web Scraping or Undocumented Polling**: OECD adapter strictly requires export files or fixtures (`DEC-P4-001`); zero dynamic UI scraping or undocumented endpoint reverse-engineering.
-3. **No LLM Execution or Tool Dispatch**: Untrusted external content is strictly wrapped in `<untrusted_source_content>` envelopes with prompt-injection triage flags; no LLM calls, agents, or scoring engines are invoked.
-4. **No Full Article Storage or Copyright Infringement**: Raw articles and payloads are excluded from Git; stored only in Gitignored staging (`.data/raw_feeds/`) with 30-day purge TTL; domain models store only short, fair-use quotation spans with cryptographic offsets (`PRI-002`, `ADR-003`).
-5. **No Bypassing SecureHTTPClient**: Direct use of raw `requests`, `urllib`, or `httpx` is prohibited; all connectors must route through `SecureHTTPClient`.
-6. **Application-Level Manifest Chain**: Ingestion manifests provide cryptographic provenance hash chaining across runs without requiring external ledger infrastructure.
+## 2. Hard Boundaries Maintained in Phase 5 Increment 1
+- Zero Gemini, LLM, or generative-AI calls.
+- Zero live or scheduled external retrieval.
+- Zero web scraping or undocumented API polling.
+- Zero dashboard or public UI.
+- Zero Substack, email, webhook, or publishing features.
+- Zero Cloudflare deployment or domain configuration.
+- Zero OECD, NIST AI RMF, or EU AI Act mapping execution yet (Increment 2).
+- Zero automated legal or regulatory noncompliance determinations.
+- Code remains on `feature/aig-isi-scoring-engine` under Draft PR until reviewed.
 
 ---
 
-## 2. Incoming Agent Mission: Phase 5 Objectives (Planning Only)
+## 3. Incoming Agent Mission: Phase 5 Increment 2 Objectives
 
-When authorized, Phase 5 will implement:
-1. **AIG-ISI Multi-Dimensional Severity Engine**:
-   - Deterministic, explainable scoring across Harm, Autonomy, Reversibility, and Scope (`SEV-001`, `SEV-002`).
-   - Structural isolation from external regulatory classifications (OECD, NIST, EU) and media noteworthiness (`SEV-003`, `Rule 7`).
-   - Segregation of demonstrated Actual Harm vs potential counterfactual harm (`SEV-004`, `Rule 5`).
-   - Non-monetization of human dignity and physical harm (`SEV-005`, `Rule 8`).
-   - Mandatory human sign-off triggers for high-severity ratings (`SEV-006`, `Rule 13`).
-2. **Governance Framework Mappings**:
-   - OECD AI Principles mapper (`GOV-001`).
-   - NIST AI Risk Management Framework core functions mapper (`GOV-002`).
-   - EU AI Act screening classifier (Prohibited, High-Risk, GPAI) with strict jurisdictional distinction vs conceptual relevance (`GOV-003`, `GOV-004`, `Rule 9`, `Rule 10`).
-   - Preserving governance mappings as orthogonal tag layers (`GOV-005`, `Rule 7`).
-3. **Root Cause Analysis (RCA) Taxonomies**:
-   - Multi-tier taxonomy (Data, Model Architecture, Alignment/Safety, System Integration, Human Oversight, Malicious Exploitation) (`RCA-001`).
-   - Direct evidentiary linkage requirement (`RCA-002`, `Rule 4`).
-   - Epistemic flagging when technical postmortems are absent (`RCA-004`, `Rule 2`).
-
-### Targeted Requirements from RTM ([`docs/REQUIREMENTS_TRACEABILITY.md`](REQUIREMENTS_TRACEABILITY.md))
-- **`SEV-001`**: AIG-ISI multi-dimensional scoring engine.
-- **`SEV-002`**: Human-readable evidentiary rationales per dimension.
-- **`SEV-003`**: Structural isolation of severity from governance frameworks.
-- **`SEV-006`**: High-severity human review triggers.
-- **`GOV-001`**: OECD AI Principles mapping.
-- **`GOV-002`**: NIST AI RMF core function mapping.
-- **`GOV-003`**: EU AI Act categorization screening.
-- **`GOV-004`**: Enforceable statutory applicability vs conceptual relevance.
-- **`GOV-005`**: Orthogonality of governance tags.
-- **`RCA-001`**: Multi-tier causal factor taxonomy.
-- **`RCA-002`**: Evidentiary anchoring for root-cause findings.
-- **`RCA-004`**: Epistemic labeling for unverified causal findings.
+In Increment 2, the team will implement **Governance Framework Mappings**:
+1. **OECD AI Principles Mapper (`GOV-001`)**:
+   - Mapping incidents against OECD Principles: P1.1 (Inclusive Growth), P1.2 (Human-Centered Values & Fairness), P1.3 (Transparency & Explainability), P1.4 (Robustness, Security, Safety), P1.5 (Accountability).
+2. **NIST AI RMF Core Functions Mapper (`GOV-002`)**:
+   - Categorization across NIST AI 100-1 functions: `GOVERN`, `MAP`, `MEASURE`, `MANAGE`.
+3. **EU AI Act Screening Classifier (`GOV-003`, `GOV-004`, `Rule 10`, `Rule 11`)**:
+   - Screening for Prohibited Practices (Article 5), High-Risk AI Systems (Annex III), and General Purpose AI (Article 53).
+   - Strict jurisdictional nexus evaluation (`EU_ESTABLISHED`, `EU_DEPLOYED`, `AFFECTS_EU_PERSONS`, `NO_EU_NEXUS`, `UNKNOWN`).
+   - Absolute prohibition against unadjudicated violation claims without judicial dockets (`LGL-001`).
+4. **Orthogonality Preservation (`GOV-005`, `Rule 8`)**:
+   - Ensuring governance mappings remain completely decoupled metadata tags that do not alter AIG-ISI severity scores.
 
 ---
 
-## 3. Startup Verification Checklist for Next Agent
+## 4. Startup Verification Checklist for Next Increment
 
 1. [ ] Check current branch and git status:
    ```bash
    git status
    git branch --show-current
    ```
-2. [ ] Confirm repository is on `main` and clean (merge commit `d2e9362` present).
-3. [ ] Review the 17 non-negotiable constitutional rules in [`AGENTS.md`](../AGENTS.md).
-4. [ ] Run full test suite:
+2. [ ] Confirm 382 tests passing:
    ```bash
    .venv/bin/pytest backend/tests
    ```
-5. [ ] Verify provenance chain integrity:
+3. [ ] Confirm provenance chain validity:
    ```bash
    make verify-provenance-chain
    ```
-6. [ ] **Wait for explicit user approval before writing Phase 5 code or creating feature branches.**
+4. [ ] Review approved ADRs in `docs/DECISIONS.md` (`ADR-012` through `ADR-015`).

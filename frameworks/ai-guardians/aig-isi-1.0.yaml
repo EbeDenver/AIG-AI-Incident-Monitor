@@ -1,0 +1,223 @@
+# ==============================================================================
+# AI GUARDIANS INCIDENT SEVERITY INDEX (AIG-ISI)
+# Specification Version: 1.0.0
+# Governing Body: AI Guardians LLC
+# Effective Date: 2026-10-20
+# Schema Identifier: aig-isi-1.0
+# ==============================================================================
+
+framework:
+  name: "AI Guardians Incident Severity Index"
+  acronym: "AIG-ISI"
+  version: "1.0.0"
+  publisher: "AI Guardians LLC"
+  nature: "Analytical Safety Metric"
+  status: "ACTIVE_RATIFIED"
+  disclaimer: >
+    The AIG-ISI is a proprietary analytical risk and impact methodology developed
+    by AI Guardians LLC. It is an engineering safety metric, not a legal finding,
+    actuarial liability determination, or regulatory compliance ruling.
+
+principles:
+  zero_fabrication: true
+  unknown_is_not_zero: true
+  separate_actual_and_potential: true
+  non_monetization_of_dignity: true
+  orthogonal_confidence: true
+  mandatory_human_review_for_high_severity: true
+
+dimensions:
+  - id: "human_impact"
+    name: "Human Impact and Dignity"
+    weight: 25
+    description: >
+      Direct consequences to human physical integrity, life, bodily safety,
+      psychological well-being, and dignity.
+    anchors:
+      0: "No physical injury, psychological trauma, or dignity violation."
+      1: "Minor, transient emotional distress or negligible physical discomfort."
+      2: "Documented moderate psychological distress or minor injury treated with first aid."
+      3: "Significant psychological trauma or reversible physical injuries requiring medical treatment."
+      4: "Severe, life-altering physical injury, permanent disability, or severe psychological trauma."
+      5: "Loss of life, multiple fatalities, or catastrophic physical devastation."
+
+  - id: "financial_property"
+    name: "Financial and Property Impact"
+    weight: 15
+    description: >
+      Direct, verifiable economic, property, or operational financial losses.
+      Strictly isolated from physical harm or loss of life per non-monetization rules.
+    anchors:
+      0: "Zero financial or physical property loss."
+      1: "Negligible financial loss (< $10,000 USD) or trivial property damage."
+      2: "Moderate financial loss ($10,000 - $100,000 USD) or localized property damage."
+      3: "Substantial economic loss ($100,000 - $1,000,000 USD) or major equipment loss."
+      4: "Severe financial loss ($1,000,000 - $10,000,000 USD) or large facility damage."
+      5: "Catastrophic financial loss (> $10,000,000 USD) or systemic economic disruption."
+
+  - id: "trust_reputation"
+    name: "Trust and Reputational Impact"
+    weight: 15
+    description: >
+      Erosion of user trust, institutional credibility, market confidence,
+      or public faith in AI systems and governing institutions.
+    anchors:
+      0: "No measurable erosion of trust or reputational fallout."
+      1: "Localized complaints or minor negative commentary with negligible reach."
+      2: "Moderate user dissatisfaction, formal customer complaints, or regional press coverage."
+      3: "Substantial reputational damage, national news coverage, or public stakeholder backlash."
+      4: "Severe institutional crisis, loss of major enterprise partnerships, or widespread boycotts."
+      5: "Catastrophic collapse of institutional trust, regulatory sanction, or enterprise failure."
+
+  - id: "privacy_confidentiality"
+    name: "Privacy and Confidentiality Impact"
+    weight: 15
+    description: >
+      Unauthorized disclosure, exfiltration, or exploitation of personal data,
+      confidential trade secrets, or protected communications.
+    anchors:
+      0: "Zero privacy compromise or data exposure."
+      1: "Inadvertent exposure of non-sensitive public metadata (< 100 records)."
+      2: "Exposure of standard personal information (names, emails) affecting < 1,000 persons."
+      3: "Breach of sensitive personal data (financial, medical, credentials) affecting 1,000 - 50,000 persons."
+      4: "Extensive compromise of highly sensitive personal data (> 50,000 persons) or critical trade secrets."
+      5: "Catastrophic mass data leak (> 1,000,000 persons) or systemic intelligence exfiltration."
+
+  - id: "rights_fairness"
+    name: "Rights, Fairness, and Access Impact"
+    weight: 10
+    description: >
+      Infringement upon civil liberties, algorithmic discrimination, biased denials
+      of essential services, or suppression of legal and constitutional rights.
+    anchors:
+      0: "No disparate impact, discrimination, or infringement of civil rights."
+      1: "Isolated, non-systemic unfairness with immediate administrative correction."
+      2: "Documented algorithmic bias affecting a small group with modest service disparity."
+      3: "Systemic bias causing substantive denial of credit, housing, employment, or academic access."
+      4: "Severe, systemic civil rights violations, unlawful detention, or widespread discrimination."
+      5: "Catastrophic deprivation of fundamental human rights or democratic subversion."
+
+  - id: "operational_critical_service"
+    name: "Operational and Critical-Service Impact"
+    weight: 10
+    description: >
+      Disruption of critical infrastructure, emergency services, healthcare delivery,
+      supply chains, or mission-critical enterprise workflows.
+    anchors:
+      0: "Zero operational downtime or service interruption."
+      1: "Trivial glitch with redundant failover and zero user impact."
+      2: "Minor operational disruption (< 1 hour) affecting non-critical workflows."
+      3: "Significant disruption (1 - 12 hours) of enterprise operations or localized service delivery."
+      4: "Severe, extended outage of vital infrastructure (transport, power, hospitals) (> 12 hours)."
+      5: "Catastrophic, prolonged failure of national critical infrastructure or emergency networks."
+
+  - id: "scale_reach"
+    name: "Scale, Reach, and Propagation"
+    weight: 5
+    description: >
+      Geographic, population, and systemic velocity of the incident across organizations,
+      borders, and supply-chain dependencies.
+    anchors:
+      0: "Single isolated individual or internal test harness."
+      1: "Single organization, localized workgroup (< 50 individuals)."
+      2: "Multi-team or regional customer base (50 - 5,000 individuals)."
+      3: "National reach or multi-organization supply-chain dependency (5,000 - 100,000 individuals)."
+      4: "Multi-national reach or cross-sector deployment (100,000 - 1,000,000 individuals)."
+      5: "Global systemic reach impacting > 1,000,000 individuals across international borders."
+
+  - id: "societal_environmental"
+    name: "Societal and Environmental Impact"
+    weight: 5
+    description: >
+      Broader macroeconomic externalities, cultural damage, scientific integrity,
+      or direct ecological/physical environment harms.
+    anchors:
+      0: "No societal, democratic, or ecological repercussions."
+      1: "Trivial localized resource consumption or isolated misinformation correction."
+      2: "Moderate environmental footprint or localized pollution/disinformation spillover."
+      3: "Substantial societal disruption, polluted information ecosystem, or localized toxic release."
+      4: "Severe environmental contamination or major disruption to democratic elections/institutions."
+      5: "Catastrophic environmental catastrophe or irreversible damage to societal institutions."
+
+calculations:
+  total_weight: 100
+  score_range_per_dimension:
+    min: 0
+    max: 5
+  formulas:
+    dimension_contribution: "s_i * (w_i / 5.0)"
+    lower_bound: "sum(s_i * (w_i / 5.0) for evaluated i)"
+    upper_bound: "lower_bound + sum(w_i for unknown i)"
+    completeness: "sum(w_i for evaluated i) / total_weight"
+    provisional_normalized_score: "if completeness > 0 then (lower_bound / sum(w_i for evaluated i)) * 100.0 else null"
+
+severity_tiers:
+  minimal:
+    range: [0.0, 19.999]
+    label: "Tier 1 — Minimal"
+    description: "Trivial or negligible impact with swift recovery and no lasting consequences."
+  moderate:
+    range: [20.0, 39.999]
+    label: "Tier 2 — Moderate"
+    description: "Localized, manageable impact requiring standard remediation and stakeholder notice."
+  significant:
+    range: [40.0, 59.999]
+    label: "Tier 3 — Significant"
+    description: "Substantial impact across multiple dimensions requiring executive oversight."
+  severe:
+    range: [60.0, 79.999]
+    label: "Tier 4 — Severe"
+    description: "High-magnitude impact involving serious harm, extensive disruption, or major rights loss."
+  critical:
+    range: [80.0, 100.0]
+    label: "Tier 5 — Critical"
+    description: "Catastrophic harm, loss of life, systemic failure, or critical infrastructure collapse."
+  special_statuses:
+    unscored: "Completeness is 0% or insufficient to compute a valid provisional score."
+    disputed: "Material incident facts, causal attribution, or impact scores are contested."
+    superseded: "Assessment has been replaced by a newer versioned assessment record."
+
+confidence_levels:
+  high: "Corroborated by primary direct evidence, official admissions, or verified telemetry."
+  medium: "Supported by reputable investigative journalism, secondary analysis, or uncontested filings."
+  low: "Single-source reporting, uncorroborated allegations, or preliminary press accounts."
+  insufficient: "Hearsay, speculative claims, or anonymous rumors lacking evidentiary anchors."
+
+human_review_states:
+  draft: "Initial machine-generated or analyst-drafted scoring assessment."
+  pending_review: "Awaiting formal review and gate verification by an authenticated human editor."
+  approved: "Signed off by an authorized human reviewer after verifying all dimensions and evidence."
+  rejected: "Rejected by human reviewer due to inadequate evidence, misclassification, or errors."
+  superseded: "Historical approved record replaced by a newer approved revision."
+
+human_review_gates:
+  - id: "TIER_4_OR_5"
+    condition: "actual_tier in ['SEVERE', 'CRITICAL'] or potential_tier in ['SEVERE', 'CRITICAL']"
+    description: "Assessments evaluated as Severe or Critical require mandatory human sign-off."
+  - id: "LOW_CONFIDENCE"
+    condition: "confidence in ['LOW', 'INSUFFICIENT']"
+    description: "Low or insufficient confidence requires human evidentiary corroboration."
+  - id: "LOW_COMPLETENESS"
+    condition: "completeness < 0.70"
+    description: "Completeness below 70% requires human review to confirm data availability."
+  - id: "ACTUAL_VS_POTENTIAL_DIVERGENCE"
+    condition: "abs(actual_score - potential_score) >= 20.0 or actual_tier != potential_tier"
+    description: "Major variance between actual and potential severity triggers review."
+  - id: "OVERRIDE_PRESENT"
+    condition: "len(overrides) > 0"
+    description: "Manual adjustments to scores or tiers require explicit human justification."
+  - id: "SERIOUS_INJURY_OR_DEATH"
+    condition: "human_impact_score >= 4"
+    description: "Severe bodily harm or loss of life triggers emergency human review."
+  - id: "CRITICAL_INFRASTRUCTURE"
+    condition: "operational_critical_service_score >= 4"
+    description: "Disruption of critical infrastructure triggers priority review."
+  - id: "SERIOUS_PRIVACY_IMPACT"
+    condition: "privacy_confidentiality_score >= 4"
+    description: "Mass compromise of sensitive personal data triggers human review."
+  - id: "SERIOUS_RIGHTS_IMPACT"
+    condition: "rights_fairness_score >= 4"
+    description: "Systemic bias or severe civil rights violations trigger human review."
+  - id: "MATERIALLY_DISPUTED_FACTS"
+    condition: "has_materially_disputed_facts == true"
+    description: "Contested facts or contradictory claims trigger epistemic dispute review."

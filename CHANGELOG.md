@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Phase 5 Increment 1] - 2026-10-20
+
+### Added
+- **AIG-ISI Multi-Dimensional Scoring Engine (`ai_incident_monitor.scoring`)**:
+  - Deterministic implementation of AI Guardians Incident Severity Index version 1.0.0 (`ADR-012`).
+  - Strict segregation of Actual Impact Severity and Potential Impact Severity into independent evaluations.
+  - Eight approved dimensions totaling exactly 100 weight: Human Impact and Dignity (25), Financial and Property Impact (15), Trust and Reputational Impact (15), Privacy and Confidentiality Impact (15), Rights, Fairness, and Access Impact (10), Operational and Critical-Service Impact (10), Scale, Reach, and Propagation (5), Societal and Environmental Impact (5).
+  - Explicit dimension scoring ($0..5$ or `null`/`UNKNOWN`), guaranteeing `UNKNOWN` is never coerced to zero.
+  - Pure mathematical calculation engine for weighted contributions, lower evidence bounds, upper uncertainty bounds, score ranges, completeness percentages, and provisional normalized scores.
+  - Five core severity tiers (Minimal 0–19, Moderate 20–39, Significant 40–59, Severe 60–79, Critical 80–100) and special status tiers (Unscored, Disputed, Superseded).
+  - Orthogonal confidence levels (HIGH, MEDIUM, LOW, INSUFFICIENT) with strict floor protection for high human-impact claims.
+  - Ten automated human-review workflow gates (`TIER_4_OR_5`, `LOW_CONFIDENCE`, `LOW_COMPLETENESS`, `ACTUAL_VS_POTENTIAL_DIVERGENCE`, `OVERRIDE_PRESENT`, `SERIOUS_INJURY_OR_DEATH`, `CRITICAL_INFRASTRUCTURE`, `SERIOUS_PRIVACY_IMPACT`, `SERIOUS_RIGHTS_IMPACT`, `MATERIALLY_DISPUTED_FACTS`).
+  - Explicit, auditable manual override subsystem (`ScoreOverride`) requiring substantive rationale, reviewer ID, timestamp, and triggering mandatory review hold.
+- **Relational Persistence Layer & Alembic Migration**:
+  - `SeverityAssessmentModel` mapping full AIG-ISI records, dimension breakdowns, gates, and overrides.
+  - Alembic migration `002_aig_isi_severity_foundation.py` with dual-engine PostgreSQL 16 and SQLite batch support.
+  - Typed `SeverityRepository` integrated with append-only `AuditRepository` for full lifecycle traceability.
+- **Methodology & Calibration Artifacts**:
+  - Machine-readable specification: `frameworks/ai-guardians/aig-isi-1.0.yaml`.
+  - Comprehensive methodology documentation: `docs/AIG_ISI_METHODOLOGY.md`.
+  - Calibration guide and 6 canonical archetypes: `docs/AIG_ISI_CALIBRATION.md` and `frameworks/ai-guardians/calibration_fixtures.json`.
+  - Relational ER diagram: `docs/ER_DIAGRAM.md`.
+  - Scoring flow diagram: `docs/SCORING_FLOW.md`.
+- **Testing & Verification**:
+  - 41 new unit and calibration tests in `backend/tests/unit/scoring/` covering mathematical invariants, tier boundaries, review gates, overrides, repository persistence, and calibration archetypes.
+  - Full test suite: **382 / 382 passed tests** with zero failures and zero regressions.
+
+### Hard Boundaries Enforced in Phase 5 Increment 1
+- Zero Gemini, LLM, or generative-AI calls.
+- Zero live or scheduled external retrieval.
+- Zero web scraping or undocumented API polling.
+- Zero dashboard or public UI.
+- Zero Substack, email, webhook, or publishing features.
+- Zero Cloudflare deployment or domain configuration.
+- Zero OECD, NIST AI RMF, or EU AI Act mapping execution yet (Increment 2).
+- Zero automated legal or regulatory noncompliance determinations.
+
 ## [Phase 4] - 2026-10-20
 
 ### Merged

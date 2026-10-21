@@ -18,6 +18,7 @@ from ai_incident_monitor.db.models.import_record import (
 )
 from ai_incident_monitor.db.models.incident import IncidentModel
 from ai_incident_monitor.db.models.review import HumanReviewRecordModel
+from ai_incident_monitor.db.models.severity import SeverityAssessmentModel
 from ai_incident_monitor.db.models.source import SourceReferenceModel
 from ai_incident_monitor.db.models.uncertainty import (
     DisputedFactModel,
@@ -37,6 +38,7 @@ __all__ = [
     "IncidentModel",
     "QuoteSpanModel",
     "RawImportRecordModel",
+    "SeverityAssessmentModel",
     "SourceReferenceModel",
     "TimestampMixin",
     "UncertaintyRecordModel",
