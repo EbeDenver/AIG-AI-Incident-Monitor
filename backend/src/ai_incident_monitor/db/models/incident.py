@@ -14,6 +14,10 @@ from ai_incident_monitor.db.models.common import TimestampMixin
 if TYPE_CHECKING:
     from ai_incident_monitor.db.models.causality import AIInvolvementAssessmentModel
     from ai_incident_monitor.db.models.claim import ClaimRecordModel
+    from ai_incident_monitor.db.models.governance import (
+        EULegalRelevanceScreenModel,
+        IncidentFrameworkMappingModel,
+    )
     from ai_incident_monitor.db.models.severity import SeverityAssessmentModel
     from ai_incident_monitor.db.models.uncertainty import UncertaintyRecordModel
 
@@ -60,6 +64,16 @@ class IncidentModel(Base, TimestampMixin):
     )
     severity_assessments: Mapped[list[SeverityAssessmentModel]] = relationship(
         "SeverityAssessmentModel",
+        back_populates="incident",
+        cascade="all, delete-orphan",
+    )
+    framework_mappings: Mapped[list[IncidentFrameworkMappingModel]] = relationship(
+        "IncidentFrameworkMappingModel",
+        back_populates="incident",
+        cascade="all, delete-orphan",
+    )
+    eu_legal_screens: Mapped[list[EULegalRelevanceScreenModel]] = relationship(
+        "EULegalRelevanceScreenModel",
         back_populates="incident",
         cascade="all, delete-orphan",
     )

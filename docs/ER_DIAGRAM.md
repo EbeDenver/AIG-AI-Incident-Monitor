@@ -2,19 +2,20 @@
 **Project:** AI Incident Monitor
 **Organization:** AI Guardians LLC
 **Document Identifier:** DOC-ERD-001
-**Milestone:** Phase 5 Increment 1 (AIG-ISI Severity Foundation)
+**Milestone:** Phase 5 Increment 2A (Governance Reference Library & Relational Data Foundation)
 **Status:** ACTIVE
 
 ---
 
 ## 1. Relational Database Schema Overview
 
-The AI Incident Monitor persistence foundation comprises 15 relational tables managed via SQLAlchemy 2.0 ORM and Alembic migrations:
+The AI Incident Monitor persistence foundation comprises 21 relational tables managed via SQLAlchemy 2.0 ORM and Alembic migrations:
 - **Core Entities**: `incidents`, `claims`, `evidence_records`, `source_references`, `quote_spans`, `claim_evidence_links`
 - **Epistemic & Causal Layer**: `causal_assessments`, `ai_involvement_assessments`, `uncertainty_records`, `disputed_facts`
 - **Assessment & Severity Layer**: `severity_assessments`
+- **Governance Framework Mapping Layer (Migration 003)**: `framework_reference_sets`, `framework_controls`, `incident_framework_mappings`, `eu_legal_relevance_screens`, `mapping_evidence_links`, `governance_audit_logs`
 - **Ingestion & Deduplication Layer**: `raw_import_records`, `dedup_candidates`
-- **Governance & Audit Trail**: `human_review_records`, `audit_logs`
+- **Governance & Audit Trail**: `human_review_records`, `audit_logs`, `governance_audit_logs`
 
 ---
 
@@ -27,6 +28,8 @@ erDiagram
     incidents ||--o{ uncertainty_records : "has"
     incidents ||--o{ severity_assessments : "evaluated_by"
     incidents ||--o{ dedup_candidates : "matched_in"
+    incidents ||--o{ incident_framework_mappings : "mapped_to"
+    incidents ||--o{ eu_legal_relevance_screens : "screened_by"
 
     claims ||--o{ claim_evidence_links : "grounded_by"
     claims ||--o{ causal_assessments : "specifies"
@@ -34,10 +37,24 @@ erDiagram
 
     evidence_records ||--o{ claim_evidence_links : "supports"
     evidence_records ||--o{ quote_spans : "contains"
+    evidence_records ||--o{ mapping_evidence_links : "corroborates"
     source_references ||--o{ evidence_records : "published_in"
 
     severity_assessments ||--o{ human_review_records : "governed_by"
     severity_assessments ||--o| severity_assessments : "supersedes"
+
+    framework_reference_sets ||--o{ framework_controls : "contains"
+    framework_reference_sets ||--o{ incident_framework_mappings : "defines"
+    framework_reference_sets ||--o{ eu_legal_relevance_screens : "defines"
+    framework_reference_sets ||--o| framework_reference_sets : "supersedes"
+
+    framework_controls ||--o{ incident_framework_mappings : "referenced_by"
+
+    incident_framework_mappings ||--o{ mapping_evidence_links : "grounded_by"
+    incident_framework_mappings ||--o| incident_framework_mappings : "supersedes"
+
+    eu_legal_relevance_screens ||--o{ mapping_evidence_links : "grounded_by"
+    eu_legal_relevance_screens ||--o| eu_legal_relevance_screens : "supersedes"
 
     raw_import_records ||--o{ incidents : "ingested_into"
 
@@ -78,6 +95,125 @@ erDiagram
         string superseded_by_id
         datetime created_at
         datetime updated_at
+    }
+
+    framework_reference_sets {
+        string id PK
+        string framework_code
+        string framework_name
+        string version
+        string source_url
+        string publisher
+        datetime retrieved_at
+        datetime verified_at
+        string verified_by
+        string content_hash
+        text license_notes
+        string status
+        string supersedes_reference_set_id FK
+        json metadata_json
+        datetime created_at
+        datetime updated_at
+    }
+
+    framework_controls {
+        string id PK
+        string reference_set_id FK
+        string external_identifier
+        string parent_identifier
+        string title
+        text description
+        string control_level
+        string framework_function
+        string category
+        string subcategory
+        string article_number
+        date effective_date
+        text applicability_notes
+        string source_locator
+        string status
+        json metadata_json
+        datetime created_at
+        datetime updated_at
+    }
+
+    incident_framework_mappings {
+        string id PK
+        string incident_id FK
+        string framework_code
+        string reference_set_id FK
+        string framework_control_id FK
+        string mapping_level
+        string applicability
+        string confidence
+        string mapping_status
+        text rationale
+        json known_facts
+        json unknowns
+        json disputed_facts
+        json evidence_ids
+        text recommended_control_or_follow_up
+        string generated_by
+        string reviewed_by
+        datetime generated_at
+        datetime reviewed_at
+        string supersedes_mapping_id
+        string superseded_by_id
+        datetime created_at
+        datetime updated_at
+    }
+
+    eu_legal_relevance_screens {
+        string id PK
+        string incident_id FK
+        string reference_set_id FK
+        string territorial_nexus
+        string ai_system_relevance
+        json actor_roles
+        string risk_class
+        string serious_incident_relevance
+        json potentially_relevant_articles
+        json operational_obligations
+        text applicability_date_assessment
+        json missing_facts
+        string confidence
+        string status
+        text disclaimer_text
+        string generated_by
+        string reviewed_by
+        datetime generated_at
+        datetime reviewed_at
+        string supersedes_screen_id
+        string superseded_by_id
+        datetime created_at
+        datetime updated_at
+    }
+
+    mapping_evidence_links {
+        string id PK
+        string incident_framework_mapping_id FK
+        string eu_legal_relevance_screen_id FK
+        string evidence_id FK
+        string claim_type
+        text relevance_note
+        datetime created_at
+    }
+
+    governance_audit_logs {
+        string id PK
+        string entity_type
+        string entity_id
+        string transition_type
+        string actor_id
+        boolean is_human
+        string actor_role
+        datetime timestamp_utc
+        string before_state_digest
+        string after_state_digest
+        string event_hash
+        string previous_event_hash
+        json details_json
+        datetime created_at
     }
 
     claims {

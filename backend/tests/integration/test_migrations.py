@@ -31,11 +31,15 @@ def temp_alembic_config() -> Generator[tuple[Config, str, Path], None, None]:
 
 
 def test_alembic_upgrade_downgrade_cycle(temp_alembic_config: tuple[Config, str, Path]) -> None:
-    """Verify that Alembic migrations upgrade to head, downgrade to base, and re-upgrade cleanly."""
+    """Verify that Alembic migrations upgrade to head, downgrade to base, and re-upgrade cleanly.
+
+    Also tests Binding Correction 10: downgrade from 003 removes only 003 objects and preserves
+    all earlier layers.
+    """
     alembic_cfg, db_url, db_path = temp_alembic_config
     engine = create_engine(db_url)
 
-    expected_tables = {
+    foundation_tables = {
         "audit_logs",
         "human_review_records",
         "incidents",
@@ -54,31 +58,59 @@ def test_alembic_upgrade_downgrade_cycle(temp_alembic_config: tuple[Config, str,
         "alembic_version",
     }
 
-    # 1. Upgrade to head
+    governance_tables = {
+        "framework_reference_sets",
+        "framework_controls",
+        "incident_framework_mappings",
+        "eu_legal_relevance_screens",
+        "mapping_evidence_links",
+        "governance_audit_logs",
+    }
+
+    all_expected_tables = foundation_tables | governance_tables
+
+    # 1. Upgrade to 002 (Phase 5 Increment 1 state)
+    command.upgrade(alembic_cfg, "002")
+    inspector_002 = inspect(engine)
+    tables_002 = set(inspector_002.get_table_names())
+    assert foundation_tables.issubset(tables_002)
+    assert len(governance_tables.intersection(tables_002)) == 0, "003 tables should not exist yet"
+
+    # 2. Upgrade to head (003)
     command.upgrade(alembic_cfg, "head")
+    inspector_head = inspect(engine)
+    created_tables = set(inspector_head.get_table_names())
+    assert all_expected_tables.issubset(created_tables), f"Missing tables: {all_expected_tables - created_tables}"
 
-    inspector = inspect(engine)
-    created_tables = set(inspector.get_table_names())
-    assert expected_tables.issubset(created_tables), f"Missing tables: {expected_tables - created_tables}"
-
-    # Verify foreign key check passes
+    # Verify foreign key check passes on head
     with engine.connect() as conn:
         fk_violations = conn.execute(text("PRAGMA foreign_key_check;")).fetchall()
         assert len(fk_violations) == 0, f"Foreign key check violations: {fk_violations}"
 
-    # 2. Downgrade to base
-    command.downgrade(alembic_cfg, "base")
+    # 3. Test selective downgrade: 003 -> 002 (Binding Correction 10)
+    # Must remove ONLY objects created by migration 003, leaving earlier records intact
+    command.downgrade(alembic_cfg, "002")
+    inspector_down_to_002 = inspect(engine)
+    tables_after_002_down = set(inspector_down_to_002.get_table_names())
+    assert foundation_tables.issubset(tables_after_002_down), "Prior foundation tables must remain intact"
+    for gov_table in governance_tables:
+        assert gov_table not in tables_after_002_down, f"Table {gov_table} must be dropped by 003 downgrade"
 
+    # 4. Downgrade from 002 to base
+    command.downgrade(alembic_cfg, "base")
     inspector_after_down = inspect(engine)
     tables_after_down = set(inspector_after_down.get_table_names())
-    # Only alembic_version might remain or be empty; data tables must be dropped
     data_tables_remaining = tables_after_down - {"alembic_version"}
-    assert len(data_tables_remaining) == 0, f"Tables remained after downgrade: {data_tables_remaining}"
+    assert len(data_tables_remaining) == 0, f"Tables remained after downgrade to base: {data_tables_remaining}"
 
-    # 3. Re-upgrade to head (idempotency verification)
+    # 5. Re-upgrade to head (idempotency verification)
     command.upgrade(alembic_cfg, "head")
     inspector_reup = inspect(engine)
     recreated_tables = set(inspector_reup.get_table_names())
-    assert expected_tables.issubset(recreated_tables)
+    assert all_expected_tables.issubset(recreated_tables)
+
+    with engine.connect() as conn:
+        fk_violations = conn.execute(text("PRAGMA foreign_key_check;")).fetchall()
+        assert len(fk_violations) == 0, f"Foreign key check violations on re-upgrade: {fk_violations}"
 
     engine.dispose()

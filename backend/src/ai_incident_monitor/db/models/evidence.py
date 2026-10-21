@@ -20,6 +20,7 @@ from ai_incident_monitor.db.models.common import TimestampMixin
 
 if TYPE_CHECKING:
     from ai_incident_monitor.db.models.claim import ClaimRecordModel
+    from ai_incident_monitor.db.models.governance import MappingEvidenceLinkModel
     from ai_incident_monitor.db.models.source import SourceReferenceModel
 
 
@@ -65,6 +66,11 @@ class EvidenceRecordModel(Base, TimestampMixin):
     )
     claim_links: Mapped[list[ClaimEvidenceLinkModel]] = relationship(
         "ClaimEvidenceLinkModel",
+        back_populates="evidence",
+        cascade="all, delete-orphan",
+    )
+    governance_links: Mapped[list[MappingEvidenceLinkModel]] = relationship(
+        "MappingEvidenceLinkModel",
         back_populates="evidence",
         cascade="all, delete-orphan",
     )

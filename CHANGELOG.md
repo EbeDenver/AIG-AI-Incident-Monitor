@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Phase 5 Increment 2A] - 2026-10-21
+
+### Added
+- **Governance Reference Library (`frameworks/`)**:
+  - Cryptographic manifest `frameworks/manifest.json` registering official reference files with SHA-256 hashes computed over raw UTF-8 file bytes (`compute_file_sha256`) and canonical JSON manifest hashing (`compute_manifest_hash`).
+  - OECD AI Principles reference definition `frameworks/oecd/oecd-principles-2024.yaml` (Principles 1.1–1.5) with official OECD legal locators.
+  - NIST AI RMF 1.0 reference definition `frameworks/nist/nist-ai-rmf-1.0.yaml` (Functions GOVERN, MAP, MEASURE, MANAGE, 19 categories, 4 subcategories) with NIST SP 1270 locators.
+  - Regulation (EU) 2024/1689 reference definition `frameworks/eu-ai-act/eu-ai-act-2024-1689.yaml` (Prohibited Practices, High-Risk systems, GPAI obligations, serious incidents, definitions) with neutral official citations and zero unadjudicated legal conclusions.
+- **Domain Schemas & Zero-Dependency Reference Loader (`ai_incident_monitor.governance`)**:
+  - Controlled vocabularies (`enums.py`) for framework codes, control levels, OECD/NIST/EU applicability categories, territorial nexus, risk classes, and audit event types.
+  - Strict Pydantic v2 models (`models.py`) with `extra='forbid'`, `frozen=True`, anti-fabrication field validators, immutable statutory disclaimers, and audit event models.
+  - Standalone pure-Python deterministic block YAML parser and manifest verification loader (`reference_loader.py`).
+- **Relational Persistence Layer & Alembic Migration 003**:
+  - Six relational models in `db/models/governance.py`: `FrameworkReferenceSetModel`, `FrameworkControlModel`, `IncidentFrameworkMappingModel`, `EULegalRelevanceScreenModel`, `MappingEvidenceLinkModel`, `GovernanceAuditLogModel`.
+  - Migration `003_governance_framework_mappings.py` supporting PostgreSQL 16 and SQLite 3 with verified clean downgrade dropping only 003 tables.
+- **Typed Governance Repository (`GovernanceRepository`)**:
+  - Full CRUD operations for reference sets, controls, mappings, EU legal screens, and evidence links.
+  - Hard immutability enforcement preventing in-place mutation of approved mappings or screens (`ImmutabilityViolationError`).
+  - Non-destructive supersession workflow.
+  - Append-only cryptographic audit trail with chained `event_hash = SHA256(canonical(event) + previous_hash)`.
+- **Testing & Quality Assurance**:
+  - 50 new automated tests (49 unit tests in `backend/tests/unit/governance/` + 1 full migration upgrade/downgrade test).
+  - Total test suite: **432 / 432 passed tests** with zero failures and zero warnings (satisfying requirement of at least 430 total tests).
+  - Cryptographic provenance chain verified via `make verify-provenance-chain` (`is_valid: true`).
+
+### Hard Boundaries Enforced in Phase 5 Increment 2A
+- Zero OECD or NIST mapping engines implemented (reserved for Increment 2B).
+- Zero EU AI Act rule evaluators or classification engines implemented (reserved for Increment 2C).
+- Zero LLM, Gemini, or generative AI calls.
+- Zero live external network calls, scrapers, or RSS background fetching.
+- Zero UI, Substack, dashboard, or public publishing components.
+- Zero unadjudicated legal violation determinations (Constitutional Rule 10/11).
+- All requirements traceability statuses remain `PLANNED` until formal acceptance review.
+
 ## [Phase 5 Increment 1] - 2026-10-20
 
 ### Merged
