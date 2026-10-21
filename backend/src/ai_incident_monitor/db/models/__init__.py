@@ -12,6 +12,14 @@ from ai_incident_monitor.db.models.evidence import (
     EvidenceRecordModel,
     QuoteSpanModel,
 )
+from ai_incident_monitor.db.models.governance import (
+    EULegalRelevanceScreenModel,
+    FrameworkControlModel,
+    FrameworkReferenceSetModel,
+    GovernanceAuditLogModel,
+    IncidentFrameworkMappingModel,
+    MappingEvidenceLinkModel,
+)
 from ai_incident_monitor.db.models.import_record import (
     DedupCandidateModel,
     RawImportRecordModel,
@@ -33,9 +41,15 @@ __all__ = [
     "ClaimRecordModel",
     "DedupCandidateModel",
     "DisputedFactModel",
+    "EULegalRelevanceScreenModel",
     "EvidenceRecordModel",
+    "FrameworkControlModel",
+    "FrameworkReferenceSetModel",
+    "GovernanceAuditLogModel",
     "HumanReviewRecordModel",
+    "IncidentFrameworkMappingModel",
     "IncidentModel",
+    "MappingEvidenceLinkModel",
     "QuoteSpanModel",
     "RawImportRecordModel",
     "SeverityAssessmentModel",

@@ -2,9 +2,9 @@
 **Project:** AI Incident Monitor
 **Organization:** AI Guardians LLC
 **Document Identifier:** STAT-001
-**Last Updated:** 2026-10-20
-**Current Milestone:** Phase 5 (AIG-ISI Severity Scoring Engine & Governance Mappings) — INCREMENT 1 MERGED TO MAIN
-**Overall Status:** GREEN (PR #4 Merged to main at 19db6c3, ADR-012..015 Ratified, 382/382 Tests Passing, Increment 2 Planning Only)
+**Last Updated:** 2026-10-21
+**Current Milestone:** Phase 5 (AIG-ISI Severity Scoring Engine & Governance Mappings) — INCREMENT 2A COMPLETED (Branch: `phase5-inc2a-reference-foundation`)
+**Overall Status:** GREEN (Phase 5 Increment 2A Complete, 432/432 Tests Passing, 0 Failures, Provenance Chain Valid)
 
 ---
 
@@ -16,7 +16,7 @@
 | **Phase 2** | **Core Schemas & Epistemic Models** | Pydantic v2 models, epistemic typing, 29 golden fixtures, 89 tests | **COMPLETED** | **2026-10-19** |
 | **Phase 3** | **Data Foundation & Manual Import Engine** | SQLAlchemy 2.0 ORM, dual-engine Alembic, repositories, CSV/JSON/XLSX import, CWE-1236 sanitizer, 4-tier dedup, append-only audit, 144 tests | **COMPLETED** | **2026-10-19** |
 | **Phase 4** | **Secure Ingestion Connectors & Provenance** | SSRF defense, RSS/arXiv connectors, OECD adapter, raw staging store, 30-day purge, manifest hash chaining, XML containment, 197 tests | **COMPLETED** | **2026-10-20** |
-| **Phase 5** | **AIG-ISI Scoring & Governance Map** | AIG-ISI engine, factor rationales, OECD/NIST/EU Act mappers | **IN PROGRESS (Inc 1 Merged)** | Target: Phase 5 |
+| **Phase 5** | **AIG-ISI Scoring & Governance Map** | AIG-ISI engine, factor rationales, OECD/NIST/EU Act mappers | **IN PROGRESS (Inc 1 Merged, Inc 2A Complete)** | Target: Phase 5 |
 | **Phase 6** | Editorial Pipeline & Human Review | Substack generator, neutral tone linter, HITL review CLI | Planned | Phase 6 Session |
 | **Phase 7** | End-to-End Harness & Observability | Orchestration, telemetry, multi-Mac test suite, monitoring, Cloudflare deployment prep | Planned | Phase 7 Session |
 
@@ -139,4 +139,12 @@ Phase 4 delivered in 4 increments, fully verified and merged via PR #3:
 
 Phase 5 Increment 1 delivered, verified, and merged to `main` via PR #4 (`19db6c3`):
 - [x] **Increment 1 (Verified & Merged to main)**: AIG-ISI multi-dimensional scoring core, 8 weighted dimensions (100 total), mathematical bounds, 5 severity tiers, 10 automated review gates, auditable score overrides, relational persistence (`SeverityAssessmentModel`, `SeverityRepository`), Alembic migration `002_aig_isi_severity_foundation.py`, machine-readable spec `aig-isi-1.0.yaml`, calibration guide with 6 archetypes, 41 scoring unit/calibration tests (382 total tests passing).
-- [ ] **Increment 2 (Planning Only)**: Governance framework mappings (OECD AI Principles `GOV-001`, NIST AI RMF `GOV-002`, EU AI Act Informational Screening `GOV-003`, `GOV-004`, `Rule 10`, `Rule 11`, orthogonality preservation `GOV-005`).
+- [x] **Increment 2A (Verified on `phase5-inc2a-reference-foundation`)**: Reference Library & Relational Data Foundation:
+  - Reference Library: Canonical reference files for OECD (`frameworks/oecd/oecd-principles-2024.yaml`), NIST AI RMF (`frameworks/nist/nist-ai-rmf-1.0.yaml`), and EU AI Act (`frameworks/eu-ai-act/eu-ai-act-2024-1689.yaml`), anchored by `frameworks/manifest.json` with SHA-256 integrity digests over raw UTF-8 bytes.
+  - Domain Schemas: Strict Pydantic v2 schemas (`extra='forbid'`, `frozen=True`) with anti-fabrication validations and statutory legal disclaimers.
+  - Standalone Loader: Zero-dependency pure-Python block YAML parser and canonical JSON manifest validator (`reference_loader.py`).
+  - Relational Schema: Alembic migration `003_governance_framework_mappings.py` adding 6 relational tables (`framework_reference_sets`, `framework_controls`, `incident_framework_mappings`, `eu_legal_relevance_screens`, `mapping_evidence_links`, `governance_audit_logs`) with verified clean downgrade.
+  - Typed Governance Repository: `GovernanceRepository` enforcing in-place mutation prevention on approved records (`ImmutabilityViolationError`), supersession versioning, and cryptographic audit hash chaining.
+  - Automated Verification: 50 new tests (49 unit + 1 migration upgrade/downgrade), bringing repository test suite to 432 passed tests (exceeding requirement of at least 430 total tests) with 0 failures and 0 warnings.
+- [ ] **Increment 2B (Planned - Awaiting User Approval)**: Deterministic mapping engines for OECD AI Principles and NIST AI RMF.
+- [ ] **Increment 2C (Planned - Awaiting User Approval)**: EU AI Act informational regulatory screening engine.

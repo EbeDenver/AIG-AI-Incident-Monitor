@@ -1,0 +1,448 @@
+framework_code: NIST_AI_RMF
+framework_name: "NIST Artificial Intelligence Risk Management Framework"
+version: "1.0.0"
+source_url: "https://doi.org/10.6028/NIST.AI.100-1"
+publisher: "National Institute of Standards and Technology (NIST)"
+retrieved_at_utc: "2023-01-26T00:00:00Z"
+verified_at_utc: "2026-10-20T00:00:00Z"
+verified_by: "AIG-Lead-Governance-Analyst"
+license_notes: "NIST AI 100-1 — US Government Work / Public Domain"
+status: "ACTIVE"
+controls:
+  # Functions
+  - external_identifier: "NIST-GOVERN"
+    parent_identifier: null
+    title: "Govern"
+    description: "Cultivate and implement a culture of risk management within organizations designing, developing, deploying, evaluating, or acquiring AI systems."
+    control_level: "FUNCTION"
+    framework_function: "GOVERN"
+    category: null
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Foundational cross-cutting governance, organizational policies, risk tolerances, and leadership accountability."
+    source_locator: "NIST AI 100-1 Section 5.1"
+    status: "ACTIVE"
+    metadata:
+      function_code: "GOVERN"
+
+  - external_identifier: "NIST-MAP"
+    parent_identifier: null
+    title: "Map"
+    description: "Establish context, understand capabilities and risks, and categorize AI systems within their intended operational environment."
+    control_level: "FUNCTION"
+    framework_function: "MAP"
+    category: null
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Pre-deployment framing, context recognition, user characterization, and anticipated benefits and harms."
+    source_locator: "NIST AI 100-1 Section 5.2"
+    status: "ACTIVE"
+    metadata:
+      function_code: "MAP"
+
+  - external_identifier: "NIST-MEASURE"
+    parent_identifier: null
+    title: "Measure"
+    description: "Analyze, assess, evaluate, test, and monitor AI system risks and trustworthiness characteristics using rigorous TEVV processes."
+    control_level: "FUNCTION"
+    framework_function: "MEASURE"
+    category: null
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Testing, evaluation, verification, and validation (TEVV), bias analysis, security testing, and ongoing metrics."
+    source_locator: "NIST AI 100-1 Section 5.3"
+    status: "ACTIVE"
+    metadata:
+      function_code: "MEASURE"
+
+  - external_identifier: "NIST-MANAGE"
+    parent_identifier: null
+    title: "Manage"
+    description: "Prioritize, allocate resources to, treat, mitigate, monitor, and recover from mapped and measured AI risks."
+    control_level: "FUNCTION"
+    framework_function: "MANAGE"
+    category: null
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Risk treatment, mitigation plans, incident response, rollback mechanisms, and ongoing risk monitoring."
+    source_locator: "NIST AI 100-1 Section 5.4"
+    status: "ACTIVE"
+    metadata:
+      function_code: "MANAGE"
+
+  # GOVERN Categories
+  - external_identifier: "NIST-GOVERN-1"
+    parent_identifier: "NIST-GOVERN"
+    title: "Policies, processes, procedures, and practices"
+    description: "Policies, processes, procedures, and practices across the AI lifecycle are established, transparent, and implemented."
+    control_level: "CATEGORY"
+    framework_function: "GOVERN"
+    category: "GOVERN 1"
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Governance policies, organizational structures, and regulatory compliance alignment."
+    source_locator: "NIST AI 100-1 Table 1"
+    status: "ACTIVE"
+    metadata:
+      category_code: "GOVERN 1"
+
+  - external_identifier: "NIST-GOVERN-2"
+    parent_identifier: "NIST-GOVERN"
+    title: "Accountability and roles"
+    description: "Accountability structures are in place so that roles and responsibilities are clear."
+    control_level: "CATEGORY"
+    framework_function: "GOVERN"
+    category: "GOVERN 2"
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Clear human roles, decision ownership, and escalation channels."
+    source_locator: "NIST AI 100-1 Table 1"
+    status: "ACTIVE"
+    metadata:
+      category_code: "GOVERN 2"
+
+  - external_identifier: "NIST-GOVERN-3"
+    parent_identifier: "NIST-GOVERN"
+    title: "Workforce diversity and competencies"
+    description: "Workforce diversity, equity, inclusion, and accessibility are prioritized in mapping, measuring, and managing AI risks."
+    control_level: "CATEGORY"
+    framework_function: "GOVERN"
+    category: "GOVERN 3"
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Interdisciplinary teams and competency development."
+    source_locator: "NIST AI 100-1 Table 1"
+    status: "ACTIVE"
+    metadata:
+      category_code: "GOVERN 3"
+
+  - external_identifier: "NIST-GOVERN-4"
+    parent_identifier: "NIST-GOVERN"
+    title: "Organizational culture and risk tolerance"
+    description: "Organizational practices foster a culture of risk management and establish clear risk tolerance."
+    control_level: "CATEGORY"
+    framework_function: "GOVERN"
+    category: "GOVERN 4"
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Transparent reporting of safety risks and psychological safety."
+    source_locator: "NIST AI 100-1 Table 1"
+    status: "ACTIVE"
+    metadata:
+      category_code: "GOVERN 4"
+
+  - external_identifier: "NIST-GOVERN-5"
+    parent_identifier: "NIST-GOVERN"
+    title: "Stakeholder consultation and feedback"
+    description: "Processes are in place for robust engagement with external stakeholders about AI system risks."
+    control_level: "CATEGORY"
+    framework_function: "GOVERN"
+    category: "GOVERN 5"
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Community and user consultation, particularly with affected groups."
+    source_locator: "NIST AI 100-1 Table 1"
+    status: "ACTIVE"
+    metadata:
+      category_code: "GOVERN 5"
+
+  - external_identifier: "NIST-GOVERN-6"
+    parent_identifier: "NIST-GOVERN"
+    title: "Third-party risk and supply chain"
+    description: "Policies and procedures are in place to address risks from third-party AI systems and components."
+    control_level: "CATEGORY"
+    framework_function: "GOVERN"
+    category: "GOVERN 6"
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Supply chain risks, pre-trained base models, and vendor integrations."
+    source_locator: "NIST AI 100-1 Table 1"
+    status: "ACTIVE"
+    metadata:
+      category_code: "GOVERN 6"
+
+  # MAP Categories
+  - external_identifier: "NIST-MAP-1"
+    parent_identifier: "NIST-MAP"
+    title: "Context is established and understood"
+    description: "Context of the AI system is understood, documented, and reviewed periodically."
+    control_level: "CATEGORY"
+    framework_function: "MAP"
+    category: "MAP 1"
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Operational environment, assumptions, and deployment domain."
+    source_locator: "NIST AI 100-1 Table 2"
+    status: "ACTIVE"
+    metadata:
+      category_code: "MAP 1"
+
+  - external_identifier: "NIST-MAP-2"
+    parent_identifier: "NIST-MAP"
+    title: "AI system categorization"
+    description: "Categorization of the AI system is completed and documented."
+    control_level: "CATEGORY"
+    framework_function: "MAP"
+    category: "MAP 2"
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "System task type, architectural modality, and autonomy level."
+    source_locator: "NIST AI 100-1 Table 2"
+    status: "ACTIVE"
+    metadata:
+      category_code: "MAP 2"
+
+  - external_identifier: "NIST-MAP-3"
+    parent_identifier: "NIST-MAP"
+    title: "AI capabilities, targeted usage, and goals"
+    description: "AI capabilities, targeted usage, and business/mission goals are mapped."
+    control_level: "CATEGORY"
+    framework_function: "MAP"
+    category: "MAP 3"
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Intended use vs foreseeable misuse characterization."
+    source_locator: "NIST AI 100-1 Table 2"
+    status: "ACTIVE"
+    metadata:
+      category_code: "MAP 3"
+
+  - external_identifier: "NIST-MAP-4"
+    parent_identifier: "NIST-MAP"
+    title: "Risks and impacts are mapped"
+    description: "Risks and impacts to individuals, groups, organizations, and society are mapped."
+    control_level: "CATEGORY"
+    framework_function: "MAP"
+    category: "MAP 4"
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Direct harms, negative externalities, and systemic impacts."
+    source_locator: "NIST AI 100-1 Table 2"
+    status: "ACTIVE"
+    metadata:
+      category_code: "MAP 4"
+
+  - external_identifier: "NIST-MAP-5"
+    parent_identifier: "NIST-MAP"
+    title: "Impacts across the lifecycle are characterized"
+    description: "Likelihood and impact of risks throughout the AI lifecycle are characterized."
+    control_level: "CATEGORY"
+    framework_function: "MAP"
+    category: "MAP 5"
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Lifecycle stage mapping from data gathering through decommissioning."
+    source_locator: "NIST AI 100-1 Table 2"
+    status: "ACTIVE"
+    metadata:
+      category_code: "MAP 5"
+
+  # MEASURE Categories
+  - external_identifier: "NIST-MEASURE-1"
+    parent_identifier: "NIST-MEASURE"
+    title: "Appropriate methods and metrics identified"
+    description: "Appropriate methods and metrics for measuring AI risks and trustworthiness are identified and applied."
+    control_level: "CATEGORY"
+    framework_function: "MEASURE"
+    category: "MEASURE 1"
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Quantitative and qualitative metrics selection."
+    source_locator: "NIST AI 100-1 Table 3"
+    status: "ACTIVE"
+    metadata:
+      category_code: "MEASURE 1"
+
+  - external_identifier: "NIST-MEASURE-2"
+    parent_identifier: "NIST-MEASURE"
+    title: "AI system is evaluated and tested (TEVV)"
+    description: "AI system is evaluated and tested against established metrics throughout the lifecycle."
+    control_level: "CATEGORY"
+    framework_function: "MEASURE"
+    category: "MEASURE 2"
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Benchmarking, red-teaming, adversarial stress-testing, and bias evaluation."
+    source_locator: "NIST AI 100-1 Table 3"
+    status: "ACTIVE"
+    metadata:
+      category_code: "MEASURE 2"
+
+  - external_identifier: "NIST-MEASURE-3"
+    parent_identifier: "NIST-MEASURE"
+    title: "Feedback mechanisms are established"
+    description: "Feedback mechanisms are established to track AI system performance and emergent risks."
+    control_level: "CATEGORY"
+    framework_function: "MEASURE"
+    category: "MEASURE 3"
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Monitoring drift, field failure tracking, and incident telemetry."
+    source_locator: "NIST AI 100-1 Table 3"
+    status: "ACTIVE"
+    metadata:
+      category_code: "MEASURE 3"
+
+  - external_identifier: "NIST-MEASURE-4"
+    parent_identifier: "NIST-MEASURE"
+    title: "Measurement approaches are documented"
+    description: "Approaches for measuring AI risks are documented, tracked, and independently reviewed."
+    control_level: "CATEGORY"
+    framework_function: "MEASURE"
+    category: "MEASURE 4"
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Auditability of test procedures and evaluation transparency."
+    source_locator: "NIST AI 100-1 Table 3"
+    status: "ACTIVE"
+    metadata:
+      category_code: "MEASURE 4"
+
+  # MANAGE Categories
+  - external_identifier: "NIST-MANAGE-1"
+    parent_identifier: "NIST-MANAGE"
+    title: "AI risks based on assessments are prioritized and treated"
+    description: "AI risks based on assessments from the MAP and MEASURE functions are prioritized, treated, and managed."
+    control_level: "CATEGORY"
+    framework_function: "MANAGE"
+    category: "MANAGE 1"
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Remediation plan execution, defensive filtering, and mitigation implementation."
+    source_locator: "NIST AI 100-1 Table 4"
+    status: "ACTIVE"
+    metadata:
+      category_code: "MANAGE 1"
+
+  - external_identifier: "NIST-MANAGE-2"
+    parent_identifier: "NIST-MANAGE"
+    title: "Mitigation strategies for identified risks are designed and implemented"
+    description: "Strategies to maximize AI benefits and minimize negative impacts are planned, prepared, and implemented."
+    control_level: "CATEGORY"
+    framework_function: "MANAGE"
+    category: "MANAGE 2"
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Guardrails, runtime intervention, and human fallback mechanisms."
+    source_locator: "NIST AI 100-1 Table 4"
+    status: "ACTIVE"
+    metadata:
+      category_code: "MANAGE 2"
+
+  - external_identifier: "NIST-MANAGE-3"
+    parent_identifier: "NIST-MANAGE"
+    title: "Third-party and supply chain risks are managed"
+    description: "Risks from third-party AI systems and components are monitored and managed on an ongoing basis."
+    control_level: "CATEGORY"
+    framework_function: "MANAGE"
+    category: "MANAGE 3"
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Third-party model updates, API deprecation, and upstream failure monitoring."
+    source_locator: "NIST AI 100-1 Table 4"
+    status: "ACTIVE"
+    metadata:
+      category_code: "MANAGE 3"
+
+  - external_identifier: "NIST-MANAGE-4"
+    parent_identifier: "NIST-MANAGE"
+    title: "Risk treatments are monitored and adjusted"
+    description: "Risk treatments are monitored for effectiveness and adjusted as needed."
+    control_level: "CATEGORY"
+    framework_function: "MANAGE"
+    category: "MANAGE 4"
+    subcategory: null
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Continuous post-incident learning, post-mortems, and iterative refinement."
+    source_locator: "NIST AI 100-1 Table 4"
+    status: "ACTIVE"
+    metadata:
+      category_code: "MANAGE 4"
+
+  # Subcategories
+  - external_identifier: "NIST-GOVERN-1.1"
+    parent_identifier: "NIST-GOVERN-1"
+    title: "Legal and regulatory requirements are understood and managed"
+    description: "Legal and other requirements regarding AI risks are understood, integrated, and managed across the AI lifecycle."
+    control_level: "SUBCATEGORY"
+    framework_function: "GOVERN"
+    category: "GOVERN 1"
+    subcategory: "GOVERN 1.1"
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Directly implicated where statutory or regulatory compliance gaps contributed to an incident."
+    source_locator: "NIST AI 100-1 Appendix A"
+    status: "ACTIVE"
+    metadata:
+      subcategory_code: "GOVERN 1.1"
+
+  - external_identifier: "NIST-MAP-1.1"
+    parent_identifier: "NIST-MAP-1"
+    title: "Intended purpose and operational context are documented"
+    description: "Intended purpose, deployment context, and potential benefits of the AI system are documented."
+    control_level: "SUBCATEGORY"
+    framework_function: "MAP"
+    category: "MAP 1"
+    subcategory: "MAP 1.1"
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Implicated when system was deployed in unexamined or unsupported contexts."
+    source_locator: "NIST AI 100-1 Appendix A"
+    status: "ACTIVE"
+    metadata:
+      subcategory_code: "MAP 1.1"
+
+  - external_identifier: "NIST-MEASURE-2.1"
+    parent_identifier: "NIST-MEASURE-2"
+    title: "Test, evaluation, verification, and validation (TEVV) approaches are implemented"
+    description: "Rigorous test, evaluation, verification, and validation (TEVV) approaches are implemented prior to deployment."
+    control_level: "SUBCATEGORY"
+    framework_function: "MEASURE"
+    category: "MEASURE 2"
+    subcategory: "MEASURE 2.1"
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Directly implicated in pre-release testing oversights, unvalidated updates, or failure to benchmark."
+    source_locator: "NIST AI 100-1 Appendix A"
+    status: "ACTIVE"
+    metadata:
+      subcategory_code: "MEASURE 2.1"
+
+  - external_identifier: "NIST-MANAGE-1.1"
+    parent_identifier: "NIST-MANAGE-1"
+    title: "Risk treatments are prioritized according to impact and likelihood"
+    description: "Risk treatments are prioritized based on risk assessments and impact analysis."
+    control_level: "SUBCATEGORY"
+    framework_function: "MANAGE"
+    category: "MANAGE 1"
+    subcategory: "MANAGE 1.1"
+    article_number: null
+    effective_date: "2023-01-26"
+    applicability_notes: "Directly implicated where known vulnerabilities were deprioritized or unaddressed."
+    source_locator: "NIST AI 100-1 Appendix A"
+    status: "ACTIVE"
+    metadata:
+      subcategory_code: "MANAGE 1.1"

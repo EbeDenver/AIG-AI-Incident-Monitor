@@ -1,0 +1,544 @@
+framework_code: EU_AI_ACT
+framework_name: "Regulation (EU) 2024/1689 (Artificial Intelligence Act)"
+version: "2024/1689"
+source_url: "http://data.europa.eu/eli/reg/2024/1689/oj"
+publisher: "Publications Office of the European Union"
+retrieved_at_utc: "2024-07-12T00:00:00Z"
+verified_at_utc: "2026-10-20T00:00:00Z"
+verified_by: "AIG-Lead-Governance-Analyst"
+license_notes: "Official Journal of the European Union, L 2024/1689, 12.7.2024 (EUR-Lex open reuse)"
+status: "ACTIVE"
+controls:
+  # Foundational Scope & Definitions
+  - external_identifier: "EU-ART-2"
+    parent_identifier: null
+    title: "Scope and Territorial Nexus"
+    description: "Statutory scope applying to providers placing on the market or putting into service AI systems in the Union, deployers located within the Union, and providers or deployers located in a third country where output produced by the system is used in the Union."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 2"
+    effective_date: "2026-08-02"
+    applicability_notes: "Evaluates territorial or market nexus predicates required for statutory applicability."
+    source_locator: "Regulation (EU) 2024/1689, Article 2"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "2"
+
+  - external_identifier: "EU-ART-3.1"
+    parent_identifier: null
+    title: "AI System Definition"
+    description: "A machine-based system designed to operate with varying levels of autonomy and that may exhibit adaptiveness after deployment, and that, for explicit or implicit objectives, infers, from the input it receives, how to generate outputs such as predictions, content, recommendations, or decisions that can influence physical or virtual environments."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 3(1)"
+    effective_date: "2025-02-02"
+    applicability_notes: "Evaluates whether the technology meets the statutory definition of an AI system."
+    source_locator: "Regulation (EU) 2024/1689, Article 3(1)"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "3(1)"
+
+  - external_identifier: "EU-ART-3.49"
+    parent_identifier: null
+    title: "Serious Incident Definition"
+    description: "An incident or malfunctioning of an AI system that directly or indirectly leads to the death of a person or serious damage to health, serious and irreversible disruption of the management or operation of critical infrastructure, infringement of fundamental rights obligations under Union law, or serious damage to property or the environment."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 3(49)"
+    effective_date: "2026-08-02"
+    applicability_notes: "Evaluates conceptual correspondence to serious incident harm thresholds."
+    source_locator: "Regulation (EU) 2024/1689, Article 3(49)"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "3(49)"
+
+  # Prohibited AI Practices (Article 5)
+  - external_identifier: "EU-ART-5"
+    parent_identifier: null
+    title: "Prohibited AI Practices"
+    description: "Practices involving AI systems that are unacceptable as contravening Union values, such as violating fundamental rights."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 5"
+    effective_date: "2025-02-02"
+    applicability_notes: "Article 5 parent classification covering prohibited practices."
+    source_locator: "Regulation (EU) 2024/1689, Article 5"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "5"
+
+  - external_identifier: "EU-ART-5.1.a"
+    parent_identifier: "EU-ART-5"
+    title: "Subliminal, Manipulative, or Deceptive Techniques"
+    description: "AI systems deploying subliminal techniques beyond a person's consciousness or purposeful manipulative or deceptive techniques to materially distort behavior and impair informed decision-making causing significant harm."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 5(1)(a)"
+    effective_date: "2025-02-02"
+    applicability_notes: "Screening criterion for cognitive manipulation and behavioral distortion."
+    source_locator: "Regulation (EU) 2024/1689, Article 5(1)(a)"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "5(1)(a)"
+
+  - external_identifier: "EU-ART-5.1.b"
+    parent_identifier: "EU-ART-5"
+    title: "Exploitation of Vulnerabilities"
+    description: "AI systems that exploit vulnerabilities of a natural person or specific group due to age, disability, or specific social or economic situation to materially distort behavior causing significant harm."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 5(1)(b)"
+    effective_date: "2025-02-02"
+    applicability_notes: "Screening criterion for exploitation of children, disabled individuals, or distressed populations."
+    source_locator: "Regulation (EU) 2024/1689, Article 5(1)(b)"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "5(1)(b)"
+
+  - external_identifier: "EU-ART-5.1.c"
+    parent_identifier: "EU-ART-5"
+    title: "Social Scoring"
+    description: "AI systems evaluating or classifying natural persons or groups based on their social behaviour or known, inferred, or predicted personal characteristics leading to detrimental or unfavourable treatment."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 5(1)(c)"
+    effective_date: "2025-02-02"
+    applicability_notes: "Screening criterion for general-purpose social credit or cross-context behavioral scoring."
+    source_locator: "Regulation (EU) 2024/1689, Article 5(1)(c)"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "5(1)(c)"
+
+  - external_identifier: "EU-ART-5.1.d"
+    parent_identifier: "EU-ART-5"
+    title: "Predictive Policing / Criminal Offence Profiling"
+    description: "AI systems making risk assessments of natural persons in order to assess or predict the likelihood of a natural person committing a criminal offence based solely on profiling or personality traits."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 5(1)(d)"
+    effective_date: "2025-02-02"
+    applicability_notes: "Screening criterion for individual recidivism or criminal profiling algorithms."
+    source_locator: "Regulation (EU) 2024/1689, Article 5(1)(d)"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "5(1)(d)"
+
+  - external_identifier: "EU-ART-5.1.e"
+    parent_identifier: "EU-ART-5"
+    title: "Untargeted Facial Image Scraping"
+    description: "AI systems that create or expand facial recognition databases through the untargeted scraping of facial images from the internet or CCTV footage."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 5(1)(e)"
+    effective_date: "2025-02-02"
+    applicability_notes: "Screening criterion for mass facial image harvesting and biometric dataset building."
+    source_locator: "Regulation (EU) 2024/1689, Article 5(1)(e)"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "5(1)(e)"
+
+  - external_identifier: "EU-ART-5.1.f"
+    parent_identifier: "EU-ART-5"
+    title: "Emotion Recognition in Workplace and Education"
+    description: "AI systems inferring emotions of a natural person in the workplace and educational institutions, except where intended for medical or safety reasons."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 5(1)(f)"
+    effective_date: "2025-02-02"
+    applicability_notes: "Screening criterion for workplace worker surveillance or student emotion analysis."
+    source_locator: "Regulation (EU) 2024/1689, Article 5(1)(f)"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "5(1)(f)"
+
+  - external_identifier: "EU-ART-5.1.g"
+    parent_identifier: "EU-ART-5"
+    title: "Biometric Categorization for Sensitive Traits"
+    description: "AI systems for biometric categorization that categorise individually natural persons based on their biometric data to deduce or infer race, political opinions, trade union membership, religious beliefs, sex life or sexual orientation."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 5(1)(g)"
+    effective_date: "2025-02-02"
+    applicability_notes: "Screening criterion for inferring protected demographic or philosophical attributes."
+    source_locator: "Regulation (EU) 2024/1689, Article 5(1)(g)"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "5(1)(g)"
+
+  - external_identifier: "EU-ART-5.1.h"
+    parent_identifier: "EU-ART-5"
+    title: "Real-Time Remote Biometric Identification in Public Spaces"
+    description: "The use of real-time remote biometric identification systems in publicly accessible spaces for law enforcement purposes, subject to narrow statutory exceptions."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 5(1)(h)"
+    effective_date: "2025-02-02"
+    applicability_notes: "Screening criterion for live public facial recognition deployments."
+    source_locator: "Regulation (EU) 2024/1689, Article 5(1)(h)"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "5(1)(h)"
+
+  # High-Risk AI Systems (Article 6 & Annex III)
+  - external_identifier: "EU-ART-6"
+    parent_identifier: null
+    title: "Classification Rules for High-Risk AI Systems"
+    description: "Rules classifying AI systems as high-risk if they are safety components of products subject to Union harmonisation legislation (Annex I) or fall under critical areas listed in Annex III."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 6"
+    effective_date: "2026-08-02"
+    applicability_notes: "Parent classification for high-risk systems under Article 6."
+    source_locator: "Regulation (EU) 2024/1689, Article 6"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "6"
+
+  - external_identifier: "EU-ANNEX-III.1"
+    parent_identifier: "EU-ART-6"
+    title: "High-Risk AI: Biometrics"
+    description: "Remote biometric identification systems, biometric categorization, and emotion recognition systems not prohibited under Article 5."
+    control_level: "ANNEX"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Annex III.1"
+    effective_date: "2026-08-02"
+    applicability_notes: "Screening criterion for post-remote biometric identification and verification."
+    source_locator: "Regulation (EU) 2024/1689, Annex III, Point 1"
+    status: "ACTIVE"
+    metadata:
+      annex_ref: "III.1"
+
+  - external_identifier: "EU-ANNEX-III.2"
+    parent_identifier: "EU-ART-6"
+    title: "High-Risk AI: Critical Infrastructure"
+    description: "AI systems intended to be used as safety components in the management and operation of critical digital infrastructure, road traffic, or the supply of water, gas, heating or electricity."
+    control_level: "ANNEX"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Annex III.2"
+    effective_date: "2026-08-02"
+    applicability_notes: "Screening criterion for systems controlling power grids, municipal water, or transport."
+    source_locator: "Regulation (EU) 2024/1689, Annex III, Point 2"
+    status: "ACTIVE"
+    metadata:
+      annex_ref: "III.2"
+
+  - external_identifier: "EU-ANNEX-III.3"
+    parent_identifier: "EU-ART-6"
+    title: "High-Risk AI: Education and Vocational Training"
+    description: "AI systems intended to determine access, admission, assignment, or evaluate learning outcomes of students in educational and vocational institutions."
+    control_level: "ANNEX"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Annex III.3"
+    effective_date: "2026-08-02"
+    applicability_notes: "Screening criterion for automated grading, admissions filtering, and proctoring."
+    source_locator: "Regulation (EU) 2024/1689, Annex III, Point 3"
+    status: "ACTIVE"
+    metadata:
+      annex_ref: "III.3"
+
+  - external_identifier: "EU-ANNEX-III.4"
+    parent_identifier: "EU-ART-6"
+    title: "High-Risk AI: Employment and Worker Management"
+    description: "AI systems intended to be used for recruitment, job advertisement targeting, screening applications, evaluating candidates, making promotion or termination decisions, and task allocation/monitoring."
+    control_level: "ANNEX"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Annex III.4"
+    effective_date: "2026-08-02"
+    applicability_notes: "Screening criterion for resume screeners, interview scoring, and automated workplace monitoring."
+    source_locator: "Regulation (EU) 2024/1689, Annex III, Point 4"
+    status: "ACTIVE"
+    metadata:
+      annex_ref: "III.4"
+
+  - external_identifier: "EU-ANNEX-III.5"
+    parent_identifier: "EU-ART-6"
+    title: "High-Risk AI: Essential Public and Private Services"
+    description: "AI systems intended to evaluate eligibility for public assistance, evaluate creditworthiness of natural persons, establish credit scores, and risk assessment/pricing for health and life insurance."
+    control_level: "ANNEX"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Annex III.5"
+    effective_date: "2026-08-02"
+    applicability_notes: "Screening criterion for welfare screening, credit decisioning, and insurance underwriting."
+    source_locator: "Regulation (EU) 2024/1689, Annex III, Point 5"
+    status: "ACTIVE"
+    metadata:
+      annex_ref: "III.5"
+
+  - external_identifier: "EU-ANNEX-III.6"
+    parent_identifier: "EU-ART-6"
+    title: "High-Risk AI: Law Enforcement"
+    description: "AI systems intended to be used by law enforcement authorities for individual risk assessments, polygraphs, evidence evaluation, profiling during investigation, or crime analytics."
+    control_level: "ANNEX"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Annex III.6"
+    effective_date: "2026-08-02"
+    applicability_notes: "Screening criterion for law enforcement tools, evidence evaluation, and risk scores."
+    source_locator: "Regulation (EU) 2024/1689, Annex III, Point 6"
+    status: "ACTIVE"
+    metadata:
+      annex_ref: "III.6"
+
+  - external_identifier: "EU-ANNEX-III.7"
+    parent_identifier: "EU-ART-6"
+    title: "High-Risk AI: Migration, Asylum, and Border Control"
+    description: "AI systems intended for polygraphs, examining applications for asylum or visas, assessing risks of natural persons entering a Member State, or biometric verification."
+    control_level: "ANNEX"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Annex III.7"
+    effective_date: "2026-08-02"
+    applicability_notes: "Screening criterion for automated border processing and asylum decision support."
+    source_locator: "Regulation (EU) 2024/1689, Annex III, Point 7"
+    status: "ACTIVE"
+    metadata:
+      annex_ref: "III.7"
+
+  - external_identifier: "EU-ANNEX-III.8"
+    parent_identifier: "EU-ART-6"
+    title: "High-Risk AI: Administration of Justice and Democratic Processes"
+    description: "AI systems intended to assist judicial authorities in researching and interpreting facts and the law, or systems intended to influence the outcome of elections or voting behaviour."
+    control_level: "ANNEX"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Annex III.8"
+    effective_date: "2026-08-02"
+    applicability_notes: "Screening criterion for court decision-making support and voter targeting algorithms."
+    source_locator: "Regulation (EU) 2024/1689, Annex III, Point 8"
+    status: "ACTIVE"
+    metadata:
+      annex_ref: "III.8"
+
+  # Transparency Obligations (Article 50)
+  - external_identifier: "EU-ART-50"
+    parent_identifier: null
+    title: "Transparency Obligations for Certain AI Systems"
+    description: "Transparency obligations for providers and deployers of AI systems interacting with natural persons, generating synthetic media, or publishing text on matters of public interest."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 50"
+    effective_date: "2026-08-02"
+    applicability_notes: "Parent classification for general transparency duties."
+    source_locator: "Regulation (EU) 2024/1689, Article 50"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "50"
+
+  - external_identifier: "EU-ART-50.1"
+    parent_identifier: "EU-ART-50"
+    title: "Notification of AI Interaction"
+    description: "Providers shall ensure that AI systems intended to interact directly with natural persons are designed and developed in such a way that the natural persons are informed that they are interacting with an AI system."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 50(1)"
+    effective_date: "2026-08-02"
+    applicability_notes: "Screening criterion for conversational agents, customer service bots, and synthetic avatars."
+    source_locator: "Regulation (EU) 2024/1689, Article 50(1)"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "50(1)"
+
+  - external_identifier: "EU-ART-50.2"
+    parent_identifier: "EU-ART-50"
+    title: "Labeling of Synthetic Media and Deepfakes"
+    description: "Providers and deployers of an AI system that generates or manipulates image, audio or video content constituting a deep fake shall disclose that the content has been artificially generated or manipulated."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 50(2)"
+    effective_date: "2026-08-02"
+    applicability_notes: "Screening criterion for synthetic voice, cloned likeness, and deepfake generation."
+    source_locator: "Regulation (EU) 2024/1689, Article 50(2)"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "50(2)"
+
+  - external_identifier: "EU-ART-50.4"
+    parent_identifier: "EU-ART-50"
+    title: "Disclosure of AI-Generated Public Text"
+    description: "Deployers of an AI system that generates or manipulates text published with the purpose of informing the public on matters of public interest shall disclose that the text has been artificially generated or manipulated."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 50(4)"
+    effective_date: "2026-08-02"
+    applicability_notes: "Screening criterion for automated news articles and public informational publications."
+    source_locator: "Regulation (EU) 2024/1689, Article 50(4)"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "50(4)"
+
+  # General Purpose AI (Articles 51–53)
+  - external_identifier: "EU-ART-51"
+    parent_identifier: null
+    title: "General-Purpose AI Models with Systemic Risk"
+    description: "Classification of general-purpose AI models that have high impact capabilities or where the cumulative amount of computation used for its training measured in floating point operations is greater than 10^25."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 51"
+    effective_date: "2025-08-02"
+    applicability_notes: "Screening criterion for frontier foundation models exceeding systemic risk thresholds."
+    source_locator: "Regulation (EU) 2024/1689, Article 51"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "51"
+
+  - external_identifier: "EU-ART-53"
+    parent_identifier: null
+    title: "Obligations for Providers of General-Purpose AI Models"
+    description: "Obligations for providers of GPAI models regarding technical documentation, copyright policy, and model evaluation summaries."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 53"
+    effective_date: "2025-08-02"
+    applicability_notes: "Screening criterion for foundation model provider governance."
+    source_locator: "Regulation (EU) 2024/1689, Article 53"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "53"
+
+  # Governance, Monitoring & Incident Reporting
+  - external_identifier: "EU-ART-10"
+    parent_identifier: null
+    title: "Data and Data Governance"
+    description: "Requirements that high-risk training, validation, and testing data sets be subject to appropriate data governance and management practices."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 10"
+    effective_date: "2026-08-02"
+    applicability_notes: "Screening criterion for training dataset bias, data provenance, and labeling errors."
+    source_locator: "Regulation (EU) 2024/1689, Article 10"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "10"
+
+  - external_identifier: "EU-ART-12"
+    parent_identifier: null
+    title: "Record-Keeping and Technical Logging"
+    description: "Requirements for high-risk AI systems to technically allow for the automatic recording of events (logs) over the lifecycle."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 12"
+    effective_date: "2026-08-02"
+    applicability_notes: "Screening criterion for auditability, telemetry preservation, and logging gaps."
+    source_locator: "Regulation (EU) 2024/1689, Article 12"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "12"
+
+  - external_identifier: "EU-ART-14"
+    parent_identifier: null
+    title: "Human Oversight"
+    description: "Requirements for high-risk AI systems to be designed and developed in such a way that they can be effectively overseen by natural persons during the period in which they are in use."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 14"
+    effective_date: "2026-08-02"
+    applicability_notes: "Screening criterion for runaway autonomy, automation bias, or lack of human override."
+    source_locator: "Regulation (EU) 2024/1689, Article 14"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "14"
+
+  - external_identifier: "EU-ART-15"
+    parent_identifier: null
+    title: "Accuracy, Robustness, and Cybersecurity"
+    description: "Requirements that high-risk AI systems be resilient regarding errors, faults, inconsistencies, and malicious third-party manipulation."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 15"
+    effective_date: "2026-08-02"
+    applicability_notes: "Screening criterion for cybersecurity breaches, prompt injection, and model evasion."
+    source_locator: "Regulation (EU) 2024/1689, Article 15"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "15"
+
+  - external_identifier: "EU-ART-72"
+    parent_identifier: null
+    title: "Post-Market Monitoring by Providers"
+    description: "Requirements for providers of high-risk AI systems to establish and document a post-market monitoring system to continuously evaluate performance."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 72"
+    effective_date: "2026-08-02"
+    applicability_notes: "Screening criterion for failure to detect or monitor deployed system risks."
+    source_locator: "Regulation (EU) 2024/1689, Article 72"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "72"
+
+  - external_identifier: "EU-ART-73"
+    parent_identifier: null
+    title: "Reporting of Serious Incidents"
+    description: "Obligation for providers of high-risk AI systems to report any serious incident to the market surveillance authorities of the Member States."
+    control_level: "ARTICLE"
+    framework_function: null
+    category: null
+    subcategory: null
+    article_number: "Article 73"
+    effective_date: "2026-08-02"
+    applicability_notes: "Screening criterion for regulatory incident notification duties."
+    source_locator: "Regulation (EU) 2024/1689, Article 73"
+    status: "ACTIVE"
+    metadata:
+      article_ref: "73"
