@@ -2,22 +2,25 @@
 **Project:** AI Incident Monitor
 **Organization:** AI Guardians LLC
 **Document Identifier:** NEXT-001
-**Target Milestone:** Phase 5, Increment 2 (Governance Framework Mappings: OECD, NIST AI RMF, EU AI Act Screening)
-**Parent Handoff:** Phase 5, Increment 1 (AIG-ISI Multi-Dimensional Scoring Core) Completed on `feature/aig-isi-scoring-engine`
+**Target Milestone:** Phase 5, Increment 2 (Governance Framework Mappings: OECD, NIST AI RMF, EU AI Act Screening) — PLANNING ONLY UNTIL SEPARATELY AUTHORIZED
+**Parent Handoff:** Phase 5, Increment 1 (AIG-ISI Multi-Dimensional Scoring Core) Merged into `main` via PR #4 (`19db6c35fc1ad854d40b0386f4508f04af571c63`)
 **Effective Date:** 2026-10-20
-**Current Branch:** `feature/aig-isi-scoring-engine`
+**Current Branch:** `main` (synchronized with `origin/main` at `19db6c35fc1ad854d40b0386f4508f04af571c63`)
+**Feature Branch Status:** `feature/aig-isi-scoring-engine` preserved intact
 
 ---
 
-## 1. Current State: Phase 5 Increment 1 Completed
+## 1. Current State: Phase 5 Increment 1 Merged into Main
 
-Phase 5 Increment 1 (AIG-ISI Multi-Dimensional Scoring Core) has been fully implemented and verified:
-- **Branch**: `feature/aig-isi-scoring-engine`
-- **Test Suite Status**: **382 passed tests** (341 Phase 4 regression + 41 new scoring tests) with zero failures and zero regressions.
-- **Alembic Migrations**: Migration `002_aig_isi_severity_foundation.py` tested and verified through complete upgrade/downgrade/upgrade cycle.
-- **Provenance Integrity**: Verified via `make verify-provenance-chain`.
+Phase 5 Increment 1 (AIG-ISI Multi-Dimensional Scoring Core) has been reviewed, approved, and merged into `main`:
+- **Merged PR**: [#4](https://github.com/EbeDenver/AIG-AI-Incident-Monitor/pull/4) (`feat: Phase 5 Increment 1 AIG-ISI multi-dimensional scoring core`)
+- **Merge Commit SHA**: `19db6c35fc1ad854d40b0386f4508f04af571c63` (short: `19db6c3`)
+- **Main Branch Status**: Fully synchronized with `origin/main`
+- **Post-Merge Test Suite Status**: **382 passed tests** (341 Phase 4 regression + 41 new scoring tests) in ~10s with zero failures and zero regressions.
+- **Alembic Migrations**: Migration `002_aig_isi_severity_foundation.py` verified through complete upgrade/downgrade/upgrade cycle.
+- **Provenance Integrity**: Verified via `make verify-provenance-chain` (`is_valid: true`).
 
-### Deliverables Completed in Increment 1:
+### Deliverables Landed on Main in Increment 1:
 1. **Deterministic Scoring Engine (`ai_incident_monitor.scoring`)**:
    - Eight approved dimensions and weights totaling exactly 100: Human Impact and Dignity (25), Financial and Property Impact (15), Trust and Reputation (15), Privacy and Confidentiality (15), Rights and Fairness (10), Operational and Critical-Service (10), Scale and Reach (5), Societal and Environmental (5).
    - Strict segregation of Actual Impact and Potential Impact into independent assessments.
@@ -40,22 +43,25 @@ Phase 5 Increment 1 (AIG-ISI Multi-Dimensional Scoring Core) has been fully impl
 
 ---
 
-## 2. Hard Boundaries Maintained in Phase 5 Increment 1
+## 2. Hard Boundaries & Scope Safeguards
+
+The following boundaries must be strictly maintained:
+- **Phase 5 Increment 2 is PLANNING ONLY until separately authorized by the user.**
+- Do not create a branch, write code, modify schemas, or install packages for Increment 2 without explicit user approval.
 - Zero Gemini, LLM, or generative-AI calls.
 - Zero live or scheduled external retrieval.
 - Zero web scraping or undocumented API polling.
 - Zero dashboard or public UI.
 - Zero Substack, email, webhook, or publishing features.
 - Zero Cloudflare deployment or domain configuration.
-- Zero OECD, NIST AI RMF, or EU AI Act mapping execution yet (Increment 2).
 - Zero automated legal or regulatory noncompliance determinations.
-- Code remains on `feature/aig-isi-scoring-engine` under Draft PR until reviewed.
+- The feature branch `feature/aig-isi-scoring-engine` is preserved intact.
 
 ---
 
-## 3. Incoming Agent Mission: Phase 5 Increment 2 Objectives
+## 3. Scope for Future Increment 2 (Governance Framework Mappings)
 
-In Increment 2, the team will implement **Governance Framework Mappings**:
+When authorized, Increment 2 will implement:
 1. **OECD AI Principles Mapper (`GOV-001`)**:
    - Mapping incidents against OECD Principles: P1.1 (Inclusive Growth), P1.2 (Human-Centered Values & Fairness), P1.3 (Transparency & Explainability), P1.4 (Robustness, Security, Safety), P1.5 (Accountability).
 2. **NIST AI RMF Core Functions Mapper (`GOV-002`)**:
@@ -69,19 +75,15 @@ In Increment 2, the team will implement **Governance Framework Mappings**:
 
 ---
 
-## 4. Startup Verification Checklist for Next Increment
+## 4. Mac Mini Resume Instructions
 
-1. [ ] Check current branch and git status:
-   ```bash
-   git status
-   git branch --show-current
-   ```
-2. [ ] Confirm 382 tests passing:
-   ```bash
-   .venv/bin/pytest backend/tests
-   ```
-3. [ ] Confirm provenance chain validity:
-   ```bash
-   make verify-provenance-chain
-   ```
-4. [ ] Review approved ADRs in `docs/DECISIONS.md` (`ADR-012` through `ADR-015`).
+To synchronize and verify this state on another workstation (e.g. Mac mini):
+
+```bash
+cd /path/to/AIG-AI-Incident-Monitor
+git switch main
+git pull --ff-only origin main
+git status --short
+.venv/bin/pytest backend/tests
+make verify-provenance-chain
+```

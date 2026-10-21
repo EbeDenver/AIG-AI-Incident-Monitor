@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Phase 5 Increment 1] - 2026-10-20
 
+### Merged
+- Pull Request [#4](https://github.com/EbeDenver/AIG-AI-Incident-Monitor/pull/4): `feat: Phase 5 Increment 1 AIG-ISI multi-dimensional scoring core`
+- Merge Commit SHA: `19db6c35fc1ad854d40b0386f4508f04af571c63` (short: `19db6c3`)
+- Merged into: `main` from `feature/aig-isi-scoring-engine`
+
 ### Added
 - **AIG-ISI Multi-Dimensional Scoring Engine (`ai_incident_monitor.scoring`)**:
   - Deterministic implementation of AI Guardians Incident Severity Index version 1.0.0 (`ADR-012`).

@@ -3,8 +3,8 @@
 **Organization:** AI Guardians LLC
 **Document Identifier:** STAT-001
 **Last Updated:** 2026-10-20
-**Current Milestone:** Phase 5 (AIG-ISI Severity Scoring Engine & Governance Mappings) — INCREMENT 1 COMPLETED
-**Overall Status:** GREEN (Branch `feature/aig-isi-scoring-engine`, ADR-012..015 Ratified, 382/382 Tests Passing, Increment 1 Completed)
+**Current Milestone:** Phase 5 (AIG-ISI Severity Scoring Engine & Governance Mappings) — INCREMENT 1 MERGED TO MAIN
+**Overall Status:** GREEN (PR #4 Merged to main at 19db6c3, ADR-012..015 Ratified, 382/382 Tests Passing, Increment 2 Planning Only)
 
 ---
 
@@ -16,7 +16,7 @@
 | **Phase 2** | **Core Schemas & Epistemic Models** | Pydantic v2 models, epistemic typing, 29 golden fixtures, 89 tests | **COMPLETED** | **2026-10-19** |
 | **Phase 3** | **Data Foundation & Manual Import Engine** | SQLAlchemy 2.0 ORM, dual-engine Alembic, repositories, CSV/JSON/XLSX import, CWE-1236 sanitizer, 4-tier dedup, append-only audit, 144 tests | **COMPLETED** | **2026-10-19** |
 | **Phase 4** | **Secure Ingestion Connectors & Provenance** | SSRF defense, RSS/arXiv connectors, OECD adapter, raw staging store, 30-day purge, manifest hash chaining, XML containment, 197 tests | **COMPLETED** | **2026-10-20** |
-| **Phase 5** | **AIG-ISI Scoring & Governance Map** | AIG-ISI engine, factor rationales, OECD/NIST/EU Act mappers | **IN PROGRESS (Inc 1 Done)** | Target: Phase 5 |
+| **Phase 5** | **AIG-ISI Scoring & Governance Map** | AIG-ISI engine, factor rationales, OECD/NIST/EU Act mappers | **IN PROGRESS (Inc 1 Merged)** | Target: Phase 5 |
 | **Phase 6** | Editorial Pipeline & Human Review | Substack generator, neutral tone linter, HITL review CLI | Planned | Phase 6 Session |
 | **Phase 7** | End-to-End Harness & Observability | Orchestration, telemetry, multi-Mac test suite, monitoring, Cloudflare deployment prep | Planned | Phase 7 Session |
 
@@ -66,8 +66,14 @@ Based on [`docs/REQUIREMENTS_TRACEABILITY.md`](REQUIREMENTS_TRACEABILITY.md):
     - `OPS-002`: Per-connector rate-limiting and concurrency controls (`ConnectorRateLimiter`).
     - `GOV-001` (Partial): OECD export adapter support for manual official exports and fixtures without web scraping (`OECDExportAdapter`, `ADR-009`).
     - `PRI-002`: Git hygiene and fair-use retention via raw feed payload staging store (`.data/raw_feeds/`) and automated 30-day purge TTL job.
-  - `PLANNED (Phases 5–7)`: 36 requirements
-* **Total Verified**: 33 / 69 (47.8%)
+  - `VERIFIED (Phase 5 Increment 1 Scoring Foundation)`: 5 requirements
+    - `SEV-001`: Deterministic, explainable multi-dimensional AIG-ISI scoring across 8 dimensions (`ai_incident_monitor.scoring.engine`).
+    - `SEV-002`: Explicit, human-readable evidentiary rationales per dimension alongside composite score (`DimensionScore.rationale`, `ScoreOverride.rationale`).
+    - `SEV-003`: Structural isolation of AIG-ISI from external regulatory classifications (`ADR-012`).
+    - `SEV-006`: Automated review holds for high-severity assessments (`ReviewGate.TIER_4_OR_5`, `ReviewStatus.PENDING_REVIEW`).
+    - `TST-002`: Deterministic golden-fixture test suite validating AIG-ISI severity scoring repeatability across model versions (`calibration_fixtures.json`, `test_calibration_benchmarks.py`).
+  - `PLANNED (Phases 5–7)`: 31 requirements
+* **Total Verified**: 38 / 69 (55.1%)
 
 ---
 
@@ -109,6 +115,13 @@ All Phase 3 deliverables have been implemented, tested, and verified on `feature
   - `ADR-006`: Pydantic v2 core epistemic schemas and golden fixtures ratified.
   - `ADR-007`: Relational data foundation, dual-engine migrations, and manual ingestion ratified.
   - `ADR-008`: Secure ingestion connectors, cryptographic provenance, and SSRF defense ratified (`DEC-P4-001` through `DEC-P4-004`).
+  - `ADR-009`: OECD Official Export Adapter without web scraping ratified.
+  - `ADR-010`: Cryptographic Ingestion Manifests and Sequential Hash Chaining ratified.
+  - `ADR-011`: Structured XML Source Containment and LLM Isolation ratified.
+  - `ADR-012`: AIG-ISI Scoring Methodology and Mathematical Formulation ratified.
+  - `ADR-013`: Orthogonal Evidence Confidence and Uncertainty Bounds ratified.
+  - `ADR-014`: Ten Automated Review Workflow Gates and Override Governance ratified.
+  - `ADR-015`: Relational Schema and Audit Trail for Severity Assessments ratified.
 
 ---
 
@@ -119,3 +132,11 @@ Phase 4 delivered in 4 increments, fully verified and merged via PR #3:
 - [x] **Increment 2 (Verified)**: Base connector framework, per-connector rate limiter, exponential backoff with jitter, RSS/Atom connector with HTML sanitization & bozo handling, arXiv connector with strict single-connection policy. (42 tests)
 - [x] **Increment 3 (Verified)**: OECD export adapter (DEC-P4-001, ADR-009), raw feed staging store (`.data/raw_feeds/`, DEC-P4-002), 30-day purge TTL job with audit logging. (23 tests)
 - [x] **Increment 4 (Verified)**: Ingestion run manifests, sequential cryptographic hash chaining (DEC-P4-004, ADR-010), genesis null anchor, XML containment wrapper (`<untrusted_source_content>`, ADR-011), adversarial prompt-injection triage detector, future LLM contract, and 21 end-to-end integration tests. (47 tests)
+
+---
+
+## 7. Phase 5 Delivery Increments & Tracking
+
+Phase 5 Increment 1 delivered, verified, and merged to `main` via PR #4 (`19db6c3`):
+- [x] **Increment 1 (Verified & Merged to main)**: AIG-ISI multi-dimensional scoring core, 8 weighted dimensions (100 total), mathematical bounds, 5 severity tiers, 10 automated review gates, auditable score overrides, relational persistence (`SeverityAssessmentModel`, `SeverityRepository`), Alembic migration `002_aig_isi_severity_foundation.py`, machine-readable spec `aig-isi-1.0.yaml`, calibration guide with 6 archetypes, 41 scoring unit/calibration tests (382 total tests passing).
+- [ ] **Increment 2 (Planning Only)**: Governance framework mappings (OECD AI Principles `GOV-001`, NIST AI RMF `GOV-002`, EU AI Act Informational Screening `GOV-003`, `GOV-004`, `Rule 10`, `Rule 11`, orthogonality preservation `GOV-005`).
