@@ -1,9 +1,9 @@
 # AI Guardians Incident Severity Index (AIG-ISI) Methodology Specification
-**Version:** 1.0.0  
-**Effective Date:** 2026-10-20  
-**Author:** AI Guardians LLC  
-**Document Identifier:** METH-AIG-ISI-001  
-**Status:** RATIFIED & ACTIVE  
+**Version:** 1.0.0
+**Effective Date:** 2026-10-20
+**Author:** AI Guardians LLC
+**Document Identifier:** METH-AIG-ISI-001
+**Status:** RATIFIED & ACTIVE
 
 ---
 
@@ -139,7 +139,7 @@ If all 8 dimensions are evaluated, $\text{completeness} = 1.0$ (100%).
 
 ### 4.5 Provisional Normalized Score
 The provisional normalized score rescales the observed contributions over the evaluated weight space:
-$$\text{provisional\_normalized\_score} = \begin{cases} 
+$$\text{provisional\_normalized\_score} = \begin{cases}
 \left( \frac{\text{lower\_bound}}{\sum_{i \in E} w_i} \right) \times 100.0 & \text{if } \sum_{i \in E} w_i > 0 \\
 \text{null} & \text{if } \sum_{i \in E} w_i = 0
 \end{cases}$$

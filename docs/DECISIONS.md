@@ -1,8 +1,8 @@
 # ARCHITECTURAL DECISION RECORDS (ADRs)
-**Project:** AI Incident Monitor  
-**Organization:** AI Guardians LLC  
-**Document Identifier:** ADR-000  
-**Status:** ACTIVE REGISTRY  
+**Project:** AI Incident Monitor
+**Organization:** AI Guardians LLC
+**Document Identifier:** ADR-000
+**Status:** ACTIVE REGISTRY
 
 ---
 
@@ -280,8 +280,3 @@
 * **Consequences**:
   - Full auditability and historical reconstruction.
   - Zero regression risk across methodology updates.
-
-
-
-
-

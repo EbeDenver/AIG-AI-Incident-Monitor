@@ -1,9 +1,9 @@
 # AIG-ISI Scoring Flow and Review Gate Architecture
-**Project:** AI Incident Monitor  
-**Organization:** AI Guardians LLC  
-**Document Identifier:** DOC-FLOW-001  
-**Milestone:** Phase 5 Increment 1 (AIG-ISI Severity Foundation)  
-**Status:** ACTIVE  
+**Project:** AI Incident Monitor
+**Organization:** AI Guardians LLC
+**Document Identifier:** DOC-FLOW-001
+**Milestone:** Phase 5 Increment 1 (AIG-ISI Severity Foundation)
+**Status:** ACTIVE
 
 ---
 
@@ -20,7 +20,7 @@ flowchart TD
     subgraph DualEngine["2. Segregated Evaluation"]
         B --> C["Actual Impact Engine"]
         B --> D["Potential Impact Engine"]
-        
+
         C --> C1["Lower Bound (Unknown=0)"]
         C --> C2["Upper Bound (Unknown=5)"]
         C --> C3["Completeness % (Evaluated Weight / 100)"]
@@ -36,7 +36,7 @@ flowchart TD
 
     subgraph Gates["3. Human Review Gatekeeper"]
         C5 & D5 --> G{"Evaluate 10 Review Gates"}
-        
+
         G -->|Tier 4 or 5| H["TRIGGER: TIER_4_OR_5"]
         G -->|Confidence Low| I["TRIGGER: LOW_CONFIDENCE"]
         G -->|Completeness < 70%| J["TRIGGER: LOW_COMPLETENESS"]

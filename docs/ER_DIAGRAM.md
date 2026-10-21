@@ -1,9 +1,9 @@
 # Relational Entity-Relationship (ER) Diagram
-**Project:** AI Incident Monitor  
-**Organization:** AI Guardians LLC  
-**Document Identifier:** DOC-ERD-001  
-**Milestone:** Phase 5 Increment 1 (AIG-ISI Severity Foundation)  
-**Status:** ACTIVE  
+**Project:** AI Incident Monitor
+**Organization:** AI Guardians LLC
+**Document Identifier:** DOC-ERD-001
+**Milestone:** Phase 5 Increment 1 (AIG-ISI Severity Foundation)
+**Status:** ACTIVE
 
 ---
 

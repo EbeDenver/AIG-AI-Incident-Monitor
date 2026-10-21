@@ -1,9 +1,9 @@
 # AI Guardians Incident Severity Index (AIG-ISI) Calibration & Baseline Guide
-**Version:** 1.0.0  
-**Effective Date:** 2026-10-20  
-**Author:** AI Guardians LLC  
-**Document Identifier:** CAL-AIG-ISI-001  
-**Status:** RATIFIED & ACTIVE  
+**Version:** 1.0.0
+**Effective Date:** 2026-10-20
+**Author:** AI Guardians LLC
+**Document Identifier:** CAL-AIG-ISI-001
+**Status:** RATIFIED & ACTIVE
 
 ---
 

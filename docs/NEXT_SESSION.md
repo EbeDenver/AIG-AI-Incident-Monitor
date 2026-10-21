@@ -1,11 +1,11 @@
 # NEXT SESSION HANDOFF: Phase 5 Increment 2
-**Project:** AI Incident Monitor  
-**Organization:** AI Guardians LLC  
-**Document Identifier:** NEXT-001  
-**Target Milestone:** Phase 5, Increment 2 (Governance Framework Mappings: OECD, NIST AI RMF, EU AI Act Screening)  
-**Parent Handoff:** Phase 5, Increment 1 (AIG-ISI Multi-Dimensional Scoring Core) Completed on `feature/aig-isi-scoring-engine`  
-**Effective Date:** 2026-10-20  
-**Current Branch:** `feature/aig-isi-scoring-engine`  
+**Project:** AI Incident Monitor
+**Organization:** AI Guardians LLC
+**Document Identifier:** NEXT-001
+**Target Milestone:** Phase 5, Increment 2 (Governance Framework Mappings: OECD, NIST AI RMF, EU AI Act Screening)
+**Parent Handoff:** Phase 5, Increment 1 (AIG-ISI Multi-Dimensional Scoring Core) Completed on `feature/aig-isi-scoring-engine`
+**Effective Date:** 2026-10-20
+**Current Branch:** `feature/aig-isi-scoring-engine`
 
 ---
 
