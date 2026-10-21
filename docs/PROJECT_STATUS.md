@@ -3,8 +3,8 @@
 **Organization:** AI Guardians LLC
 **Document Identifier:** STAT-001
 **Last Updated:** 2026-10-20
-**Current Milestone:** Phase 4 (Secure Ingestion Connectors, Cryptographic Provenance, & Source Containment)
-**Overall Status:** GREEN (Branch `feature/secure-ingestion-connectors` Active, ADR-008..011 Ratified, 341/341 Tests Passing, Increments 1–4 Complete)
+**Current Milestone:** Phase 4 (Secure Ingestion Connectors, Cryptographic Provenance, & Source Containment) — MERGED TO MAIN
+**Overall Status:** GREEN (PR #3 Merged to main at d2e9362, ADR-008..011 Ratified, 341/341 Tests Passing, Phase 5 Planning-Only)
 
 ---
 
@@ -114,9 +114,8 @@ All Phase 3 deliverables have been implemented, tested, and verified on `feature
 
 ## 6. Phase 4 Delivery Increments & Tracking
 
-Phase 4 executes in 5 sequential increments:
+Phase 4 delivered in 4 increments, fully verified and merged via PR #3:
 - [x] **Increment 1 (Verified)**: URL policy, DNS resolution, connection pinning transport (SSRF defense, 21 blocked IP ranges, SNI preservation), redirect inspector, content limits. (85 tests)
 - [x] **Increment 2 (Verified)**: Base connector framework, per-connector rate limiter, exponential backoff with jitter, RSS/Atom connector with HTML sanitization & bozo handling, arXiv connector with strict single-connection policy. (42 tests)
-- [ ] **Increment 3 (Planned)**: OECD export adapter (DEC-P4-001), raw feed staging store (`.data/raw_feeds/`), 30-day purge TTL job (DEC-P4-002).
-- [ ] **Increment 4 (Planned)**: Ingestion run manifests, sequential cryptographic hash chaining (DEC-P4-004), genesis zero-hash anchor.
-- [ ] **Increment 5 (Planned)**: XML containment wrapper (`<untrusted_source_content>`), prompt template SHA-256 verifier, golden adversarial injection test suite, end-to-end integration tests.
+- [x] **Increment 3 (Verified)**: OECD export adapter (DEC-P4-001, ADR-009), raw feed staging store (`.data/raw_feeds/`, DEC-P4-002), 30-day purge TTL job with audit logging. (23 tests)
+- [x] **Increment 4 (Verified)**: Ingestion run manifests, sequential cryptographic hash chaining (DEC-P4-004, ADR-010), genesis null anchor, XML containment wrapper (`<untrusted_source_content>`, ADR-011), adversarial prompt-injection triage detector, future LLM contract, and 21 end-to-end integration tests. (47 tests)
