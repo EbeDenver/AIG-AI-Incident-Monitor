@@ -3,8 +3,8 @@
 **Organization:** AI Guardians LLC
 **Document Identifier:** STAT-001
 **Last Updated:** 2026-10-20
-**Current Milestone:** Phase 4 (Secure Ingestion Connectors, Cryptographic Provenance, & Source Containment) — MERGED TO MAIN
-**Overall Status:** GREEN (PR #3 Merged to main at d2e9362, ADR-008..011 Ratified, 341/341 Tests Passing, Phase 5 Planning-Only)
+**Current Milestone:** Phase 5 (AIG-ISI Severity Scoring Engine & Governance Mappings) — INCREMENT 1 COMPLETED
+**Overall Status:** GREEN (Branch `feature/aig-isi-scoring-engine`, ADR-012..015 Ratified, 382/382 Tests Passing, Increment 1 Completed)
 
 ---
 
@@ -16,7 +16,7 @@
 | **Phase 2** | **Core Schemas & Epistemic Models** | Pydantic v2 models, epistemic typing, 29 golden fixtures, 89 tests | **COMPLETED** | **2026-10-19** |
 | **Phase 3** | **Data Foundation & Manual Import Engine** | SQLAlchemy 2.0 ORM, dual-engine Alembic, repositories, CSV/JSON/XLSX import, CWE-1236 sanitizer, 4-tier dedup, append-only audit, 144 tests | **COMPLETED** | **2026-10-19** |
 | **Phase 4** | **Secure Ingestion Connectors & Provenance** | SSRF defense, RSS/arXiv connectors, OECD adapter, raw staging store, 30-day purge, manifest hash chaining, XML containment, 197 tests | **COMPLETED** | **2026-10-20** |
-| **Phase 5** | AIG-ISI Scoring & Governance Map | AIG-ISI engine, factor rationales, OECD/NIST/EU Act mappers | Planned | Phase 5 Session |
+| **Phase 5** | **AIG-ISI Scoring & Governance Map** | AIG-ISI engine, factor rationales, OECD/NIST/EU Act mappers | **IN PROGRESS (Inc 1 Done)** | Target: Phase 5 |
 | **Phase 6** | Editorial Pipeline & Human Review | Substack generator, neutral tone linter, HITL review CLI | Planned | Phase 6 Session |
 | **Phase 7** | End-to-End Harness & Observability | Orchestration, telemetry, multi-Mac test suite, monitoring, Cloudflare deployment prep | Planned | Phase 7 Session |
 

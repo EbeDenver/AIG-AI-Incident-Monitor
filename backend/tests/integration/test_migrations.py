@@ -50,6 +50,7 @@ def test_alembic_upgrade_downgrade_cycle(temp_alembic_config: tuple[Config, str,
         "dedup_candidates",
         "disputed_facts",
         "quote_spans",
+        "severity_assessments",
         "alembic_version",
     }
 

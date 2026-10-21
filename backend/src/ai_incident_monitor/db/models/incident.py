@@ -14,6 +14,7 @@ from ai_incident_monitor.db.models.common import TimestampMixin
 if TYPE_CHECKING:
     from ai_incident_monitor.db.models.causality import AIInvolvementAssessmentModel
     from ai_incident_monitor.db.models.claim import ClaimRecordModel
+    from ai_incident_monitor.db.models.severity import SeverityAssessmentModel
     from ai_incident_monitor.db.models.uncertainty import UncertaintyRecordModel
 
 
@@ -54,6 +55,11 @@ class IncidentModel(Base, TimestampMixin):
     )
     uncertainties: Mapped[list[UncertaintyRecordModel]] = relationship(
         "UncertaintyRecordModel",
+        back_populates="incident",
+        cascade="all, delete-orphan",
+    )
+    severity_assessments: Mapped[list[SeverityAssessmentModel]] = relationship(
+        "SeverityAssessmentModel",
         back_populates="incident",
         cascade="all, delete-orphan",
     )

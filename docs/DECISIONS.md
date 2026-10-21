@@ -217,6 +217,71 @@
   - Zero possibility of external content executing tools or overriding instructions.
   - Robust display and export safety across spreadsheets, logs, and UI components.
 
+---
+
+### ADR-012: Deterministic AIG-ISI Multi-Dimensional Scoring Engine Architecture
+* **Date**: 2026-10-20
+* **Status**: RATIFIED
+* **Deciders**: AI Guardians LLC Leadership, Antigravity AI
+* **Context**: Scoring incident severity via unstructured LLM generation yields non-deterministic, drifting metrics that obscure evidentiary justification, monetize human life, and conflate actual materialized harm with counterfactual potential.
+* **Decision**:
+  1. Codify AIG-ISI v1.0.0 as a deterministic multi-dimensional scoring engine across eight approved dimensions totaling 100 weight: Human Impact (25), Financial and Property (15), Trust and Reputation (15), Privacy and Confidentiality (15), Rights and Fairness (10), Operational and Critical-Service (10), Scale and Reach (5), Societal and Environmental (5).
+  2. Separate Actual Impact Severity from Potential Impact Severity into independent assessment records.
+  3. Dimension scores are discrete integers $0..5$ or explicit `null` (`UNKNOWN`). `UNKNOWN` is never coerced to zero.
+  4. Implement exact mathematical formulations for lower evidence bound, upper uncertainty bound, completeness, and provisional normalized score.
+  5. Codify five core severity tiers (Minimal 0–19, Moderate 20–39, Significant 40–59, Severe 60–79, Critical 80–100) and three special status tiers (Unscored, Disputed, Superseded).
+  6. Confidence levels (HIGH, MEDIUM, LOW, INSUFFICIENT) remain strictly orthogonal to severity.
+* **Consequences**:
+  - Mathematical repeatability across all environments.
+  - Transparent factor-by-factor evidentiary rationales.
+  - Zero monetization of human life or dignity.
+
+---
+
+### ADR-013: Orthogonal Governance Mappings and Jurisdictional Isolation
+* **Date**: 2026-10-20
+* **Status**: RATIFIED
+* **Deciders**: AI Guardians LLC Leadership, Antigravity AI
+* **Context**: AI governance frameworks (OECD, NIST AI RMF, EU AI Act) serve fundamentally different legal and policy roles. Public trackers conflate voluntary ethical guidelines with enforceable statutory obligations.
+* **Decision**:
+  1. Preserved as orthogonal metadata layers that do not feed into or alter AIG-ISI severity scores (`Rule 8`, `GOV-005`).
+  2. Differentiate between statutory jurisdictional applicability and conceptual relevance (`Rule 10`, `GOV-004`).
+  3. Strictly ban unadjudicated claims of statutory violations without an authoritative judicial or regulatory docket citation (`Rule 11`, `LGL-001`).
+* **Consequences**:
+  - Clear separation of technical safety severity from regulatory compliance.
+  - Zero legal exposure from unwarranted statutory violation claims.
+
+---
+
+### ADR-014: Human-in-the-Loop Review State Machine & High-Severity Gatekeeper
+* **Date**: 2026-10-20
+* **Status**: RATIFIED
+* **Deciders**: AI Guardians LLC Leadership, Antigravity AI
+* **Context**: Constitutional Rules 12 and 13 strictly ban automated models from approving their own outputs or authorizing publication. High-severity assessments require enhanced scrutiny.
+* **Decision**:
+  1. Enforce five lifecycle review states: `DRAFT`, `PENDING_REVIEW`, `APPROVED`, `REJECTED`, `SUPERSEDED`.
+  2. Implement 10 automated review gates routing assessments to mandatory human sign-off (`TIER_4_OR_5`, `LOW_CONFIDENCE`, `LOW_COMPLETENESS`, `ACTUAL_VS_POTENTIAL_DIVERGENCE`, `OVERRIDE_PRESENT`, `SERIOUS_INJURY_OR_DEATH`, `CRITICAL_INFRASTRUCTURE`, `SERIOUS_PRIVACY_IMPACT`, `SERIOUS_RIGHTS_IMPACT`, `MATERIALLY_DISPUTED_FACTS`).
+  3. Support explicit, auditable manual overrides with mandatory justification and reviewer ID. Overrides cannot be silent and permanently require human approval.
+* **Consequences**:
+  - Strict human primacy in the loop (`is_human=True`).
+  - Total prevention of autonomous self-publishing.
+
+---
+
+### ADR-015: Append-Only Assessment Versioning and Golden Calibration Suite
+* **Date**: 2026-10-20
+* **Status**: RATIFIED
+* **Deciders**: AI Guardians LLC Leadership, Antigravity AI
+* **Context**: Assessment methodology evolutions or new factual disclosures must not silently overwrite historical assessments.
+* **Decision**:
+  1. Assessment records are strictly immutable (`frozen=True`) with explicit version headers (`AIG-ISI-1.0.0`).
+  2. Re-scoring an incident creates an append-only new record referencing `supersedes_assessment_id`.
+  3. Maintain a golden calibration benchmark suite of synthetic incidents spanning all tiers and gate conditions to verify engine stability.
+* **Consequences**:
+  - Full auditability and historical reconstruction.
+  - Zero regression risk across methodology updates.
+
+
 
 
 

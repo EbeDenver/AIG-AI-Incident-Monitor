@@ -1,0 +1,131 @@
+[
+  {
+    "case_id": "CASE-01",
+    "title": "Trivial Output Glitch",
+    "archetype": "Minimal Trivial Glitch",
+    "expected_tier": "MINIMAL",
+    "expected_score": 2.0,
+    "expected_bounds": [2.0, 2.0],
+    "completeness_pct": 100.0,
+    "actual_scores": {
+      "human_impact": 0,
+      "financial_property": 0,
+      "trust_reputation": 0,
+      "privacy_confidentiality": 0,
+      "rights_fairness": 0,
+      "operational_critical_service": 1,
+      "scale_reach": 0,
+      "societal_environmental": 0
+    },
+    "review_gates_triggered": []
+  },
+  {
+    "case_id": "CASE-02",
+    "title": "Regional E-Commerce Outage",
+    "archetype": "Moderate Outage",
+    "expected_tier": "MINIMAL",
+    "expected_score": 18.0,
+    "expected_bounds": [18.0, 18.0],
+    "completeness_pct": 100.0,
+    "actual_scores": {
+      "human_impact": 0,
+      "financial_property": 2,
+      "trust_reputation": 2,
+      "privacy_confidentiality": 0,
+      "rights_fairness": 0,
+      "operational_critical_service": 2,
+      "scale_reach": 2,
+      "societal_environmental": 0
+    },
+    "review_gates_triggered": []
+  },
+  {
+    "case_id": "CASE-03",
+    "title": "Algorithmic Tenant Screening Disparate Impact",
+    "archetype": "Significant Bias / Rights Impact",
+    "expected_tier": "MODERATE",
+    "expected_score": 39.0,
+    "expected_bounds": [39.0, 39.0],
+    "completeness_pct": 100.0,
+    "actual_scores": {
+      "human_impact": 2,
+      "financial_property": 2,
+      "trust_reputation": 3,
+      "privacy_confidentiality": 1,
+      "rights_fairness": 3,
+      "operational_critical_service": 0,
+      "scale_reach": 3,
+      "societal_environmental": 2
+    },
+    "review_gates_triggered": []
+  },
+  {
+    "case_id": "CASE-04",
+    "title": "Deepfake Bank Wire Fraud",
+    "archetype": "Severe Financial Impersonation",
+    "expected_tier": "SIGNIFICANT",
+    "expected_score": 50.0,
+    "expected_bounds": [50.0, 50.0],
+    "completeness_pct": 100.0,
+    "actual_scores": {
+      "human_impact": 1,
+      "financial_property": 5,
+      "trust_reputation": 4,
+      "privacy_confidentiality": 3,
+      "rights_fairness": 0,
+      "operational_critical_service": 2,
+      "scale_reach": 3,
+      "societal_environmental": 2
+    },
+    "review_gates_triggered": []
+  },
+  {
+    "case_id": "CASE-05",
+    "title": "Autonomous Clinical Triage Failure",
+    "archetype": "Critical Hospital Network Failure",
+    "expected_tier": "CRITICAL",
+    "expected_score": 80.0,
+    "expected_bounds": [80.0, 80.0],
+    "completeness_pct": 100.0,
+    "actual_scores": {
+      "human_impact": 5,
+      "financial_property": 3,
+      "trust_reputation": 5,
+      "privacy_confidentiality": 2,
+      "rights_fairness": 4,
+      "operational_critical_service": 5,
+      "scale_reach": 3,
+      "societal_environmental": 4
+    },
+    "review_gates_triggered": [
+      "TIER_4_OR_5",
+      "SERIOUS_INJURY_OR_DEATH",
+      "CRITICAL_INFRASTRUCTURE",
+      "SERIOUS_RIGHTS_IMPACT"
+    ]
+  },
+  {
+    "case_id": "CASE-06",
+    "title": "Unconfirmed Single-Source Whistleblower Report",
+    "archetype": "Incomplete / Low Confidence",
+    "expected_tier": "SIGNIFICANT",
+    "expected_score": 50.91,
+    "expected_bounds": [28.0, 73.0],
+    "completeness_pct": 55.0,
+    "actual_scores": {
+      "human_impact": 3,
+      "financial_property": null,
+      "trust_reputation": 2,
+      "privacy_confidentiality": null,
+      "rights_fairness": null,
+      "operational_critical_service": 3,
+      "scale_reach": 1,
+      "societal_environmental": null
+    },
+    "review_gates_triggered": [
+      "LOW_COMPLETENESS",
+      "LOW_CONFIDENCE",
+      "TIER_4_OR_5"
+    ]
+  }
+]
