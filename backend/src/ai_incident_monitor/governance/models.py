@@ -361,6 +361,10 @@ class IncidentFactContext(BaseModel):
     sensitive_domains: list[SensitiveDomain] = Field(default_factory=list)
     fact_tags: list[str] = Field(default_factory=list)
     system_context: dict[str, Any] = Field(default_factory=dict)
+    incident_date: Optional[date] = Field(
+        default=None,
+        description="Verified or reported date of incident occurrence if established",
+    )
 
 
 class ConfidenceFactorBreakdown(BaseModel):

@@ -317,3 +317,31 @@
   - Epistemically unassailable and legally hedged foundation for EU AI Act governance screening.
   - Zero risk of unreviewed, automated, or ungrounded legal assertions escaping to external reports.
   - Clean separation of foundation (2C-1) from deterministic rule evaluators (2C-2) and conceptual scoping/linter (2C-3).
+
+---
+
+### ADR-018: EU AI Act Core Deterministic Fact Evaluators & Epistemic Void Inquiries
+* **Date**: 2026-10-22
+* **Status**: RATIFIED
+* **Deciders**: AI Guardians LLC Leadership, Antigravity AI
+* **Context**: Following foundation delivery in Phase 5 Increment 2C-1, informational screening requires inspectable, deterministic, offline evaluators to analyze core factual predicates under Regulation (EU) 2024/1689: territorial nexus (Art. 2), AI system technical characteristics (Art. 3(1)), operator role attribution (Art. 3(2)–(8)), timeline alignment against statutory effective dates, and systematic identification of factual voids. All evaluations must strictly preserve epistemic modesty, generate non-leading follow-up questions, and remain entirely free of legal or compliance conclusion language (`Safety Rule 7`, `LGL-001`, `Constitutional Rule 10`).
+* **Decision**:
+  1. **Rule Family A (Territorial & Market Nexus — Art. 2)**:
+     Implement deterministic rules (`RULE-EU-NEXUS-01`..`04`) identifying positive establishment in an EU Member State, placing on the market or putting into service in the EU, or third-country outputs utilized in the Union (`POSSIBLE_EU_NEXUS`), while explicitly distinguishing positive evidence of exclusively foreign deployment (`OUTSIDE_APPARENT_TERRITORIAL_SCOPE`), absence of EU evidence (`NO_EU_NEXUS_EVIDENCE`), and factual voids (`INSUFFICIENT_NEXUS_INFORMATION`).
+  2. **Rule Family B (AI-System Context — Art. 3(1))**:
+     Implement deterministic rules (`RULE-EU-AISYS-01`..`03`) evaluating machine-based inferencing and varying autonomy (`MEETS_DEFINITION`), identifying complex statistical or heuristic architectures with ambiguous autonomy (`BORDERLINE_OR_UNCLEAR`), and classifying classical procedural scripts or static databases lacking inferencing as outside scope (`OUTSIDE_DEFINITION`).
+  3. **Rule Family C (Actor Role Context — Art. 3(2)–(8))**:
+     Implement deterministic operator attribution rules (`RULE-EU-ROLE-01`..`04`) for `PROVIDER`, `DEPLOYER`, `IMPORTER`, `DISTRIBUTOR`, and `GPAI_MODEL_PROVIDER`. Enforce an orthogonal epistemic confidence model: `IDENTIFIED_FROM_EVIDENCE` (corroborated primary records), `POSSIBLE_FROM_EVIDENCE` (single source), `DISPUTED` (contested roles in evidence or tags), or `UNKNOWN`.
+  4. **Temporal Alignment Evaluator**:
+     Implement `RULE-EU-TEMPORAL-01` comparing incident occurrence date against statutory effective dates recorded in reference metadata (`2026-08-02`, `2025-02-02`, etc.). Explicitly emit `TEMPORAL_CONTEXT_REQUIRES_REVIEW` if an incident predates statutory application, preventing retroactive distortion.
+  5. **Rule Family E (Missing Facts & Non-Leading Questions)**:
+     Implement `RULE-EU-QUESTIONS-01` analyzing evaluated factual gaps and generating neutral, non-leading inquiries and missing fact statements across nexus, autonomy, operator relationships, and timeline.
+  6. **Deterministic Rule Provenance Tracing**:
+     Every evaluation emits fine-grained `EUScreenRuleTraceSchema` records capturing `rule_id`, `rule_version`, `reference_set_id`, and `matched_condition_ids` for relational persistence in `eu_screen_rule_traces`.
+  7. **Strict Non-Judicial Phrasing**:
+     Every generated observation, question, missing fact statement, and composite rationale is programmatically validated against `validate_no_legal_language`, ensuring zero presence of prohibited terms (`violation`, `breach`, `illegal`, `unlawful`, `compliant`, `noncompliant`, `statutory duty`).
+* **Consequences**:
+  - Purely deterministic, inspectable, reproducible factual screening decoupled from generative LLMs.
+  - Transparent epistemic void tracking and neutral investigator inquiry generation.
+  - Complete compliance with Safety Rule 7 and Constitutional Rules 10 & 11.
+  - Strict preservation of the boundary separating 2C-2 (core fact evaluators) from 2C-3 (conceptual scoping, Article 5, Annex III, GPAI obligations, and output linter).

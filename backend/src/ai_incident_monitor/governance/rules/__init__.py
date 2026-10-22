@@ -1,5 +1,26 @@
-"""Governance framework mapping rule registries for OECD and NIST AI RMF."""
+"""Governance framework mapping and screening rule registries for OECD, NIST AI RMF, and EU AI Act."""
 
+from ai_incident_monitor.governance.rules.eu_fact_rules import (
+    ALL_EU_AISYS_RULES,
+    ALL_EU_NEXUS_RULES,
+    ALL_EU_ROLE_RULES,
+    BaseEUFactRule,
+    EUAISystemBorderlineRule,
+    EUAISystemMeetsDefinitionRule,
+    EUAISystemOutsideDefinitionRule,
+    EUActorRoleDeployerRule,
+    EUActorRoleGPAIProviderRule,
+    EUActorRoleImporterDistributorRule,
+    EUActorRoleProviderRule,
+    EUEstablishmentNexusRule,
+    EUMarketPlacementNexusRule,
+    EUMissingFactsQuestionsRule,
+    EUNexusAbsenceInsufficiencyRule,
+    EUOutputUsedNexusRule,
+    EUTemporalAlignmentRule,
+    EUFactEvaluationResult,
+    evaluate_eu_fact_context,
+)
 from ai_incident_monitor.governance.rules.nist_rules import (
     ALL_NIST_RULES,
     BaseNISTRule,
@@ -30,8 +51,12 @@ from ai_incident_monitor.governance.rules.oecd_rules import (
 __all__ = [
     "ALL_OECD_RULES",
     "ALL_NIST_RULES",
+    "ALL_EU_NEXUS_RULES",
+    "ALL_EU_AISYS_RULES",
+    "ALL_EU_ROLE_RULES",
     "BaseOECDRule",
     "BaseNISTRule",
+    "BaseEUFactRule",
     "OECDFairnessPrivacyRule",
     "OECDTransparencyExplainabilityRule",
     "OECDRobustnessSecuritySafetyRule",
@@ -50,4 +75,20 @@ __all__ = [
     "NISTMap11SubcategoryRule",
     "NISTMeasure21SubcategoryRule",
     "NISTManage11SubcategoryRule",
+    "EUEstablishmentNexusRule",
+    "EUMarketPlacementNexusRule",
+    "EUOutputUsedNexusRule",
+    "EUNexusAbsenceInsufficiencyRule",
+    "EUAISystemMeetsDefinitionRule",
+    "EUAISystemBorderlineRule",
+    "EUAISystemOutsideDefinitionRule",
+    "EUActorRoleProviderRule",
+    "EUActorRoleDeployerRule",
+    "EUActorRoleImporterDistributorRule",
+    "EUActorRoleGPAIProviderRule",
+    "EUTemporalAlignmentRule",
+    "EUMissingFactsQuestionsRule",
+    "EUFactEvaluationResult",
+    "evaluate_eu_fact_context",
 ]
+

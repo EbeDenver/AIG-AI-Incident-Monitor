@@ -166,3 +166,51 @@ All mappings and review actions are stored in relational persistence (Migration 
 * **Cryptographic Audit Trail:** All state transitions generate immutable entries in `governance_audit_logs`, where:
   $$\text{event\_hash}_n = \text{SHA256}\left(\text{canonical\_json}(\text{payload}_n) \,\|\, \text{event\_hash}_{n-1}\right)$$
   ensuring tamper-evident, chronologically verifiable provenance across the entire lifecycle.
+
+---
+
+## 6. Regulation (EU) 2024/1689 Core Deterministic Fact Evaluators
+
+Phase 5 Increment 2C-2 introduces deterministic, offline fact evaluators for preliminary informational screening under the EU AI Act. Evaluators operate strictly on verified incident facts without generative inference or legal determinations:
+
+### 6.1 Rule Family A: Territorial and Market Nexus (Article 2)
+
+* **`RULE-EU-NEXUS-01` (EU Establishment):** Evaluates whether the AI system provider or deployer is established, incorporated, or located in an EU Member State (`POSSIBLE_EU_NEXUS`).
+* **`RULE-EU-NEXUS-02` (Market Placement / Putting into Service):** Evaluates commercial distribution, marketing, or operational deployment within EU territory (`POSSIBLE_EU_NEXUS`).
+* **`RULE-EU-NEXUS-03` (Third-Country Output Used in the Union):** Evaluates scenarios where an external AI system's outputs (predictions, recommendations, content, decisions) are used in the EU or affect persons located in the EU (`POSSIBLE_EU_NEXUS`).
+* **`RULE-EU-NEXUS-04` (Absence / Foreign Scope / Insufficiency):** Evaluates absence of nexus:
+  * Exclusively non-EU deployment $\rightarrow$ `OUTSIDE_APPARENT_TERRITORIAL_SCOPE`
+  * Zero EU nexus indicators in evidence $\rightarrow$ `NO_EU_NEXUS_EVIDENCE`
+  * Inadequate geographic information $\rightarrow$ `INSUFFICIENT_NEXUS_INFORMATION`
+
+### 6.2 Rule Family B: AI System Definitional Context (Article 3(1))
+
+* **`RULE-EU-AISYS-01` (Meets AI System Definition):** Factual evidence documents machine-based inferencing from inputs to generate outputs influencing physical/virtual environments with varying autonomy (`MEETS_DEFINITION`).
+* **`RULE-EU-AISYS-02` (Borderline / Unclear Autonomy):** Algorithmic scoring, heuristic rules, or expert systems with ambiguous degrees of autonomous inference (`BORDERLINE_OR_UNCLEAR`).
+* **`RULE-EU-AISYS-03` (Classical Software / Non-AI):** Deterministic procedural scripts, static databases, or traditional business rules lacking inferencing mechanisms (`OUTSIDE_DEFINITION`).
+
+### 6.3 Rule Family C: Actor Role Attribution (Article 3(2)–(8))
+
+* **`RULE-EU-ROLE-01` (Provider):** Developed, trained, branded, or placed AI system on market under own trademark (`PROVIDER`).
+* **`RULE-EU-ROLE-02` (Deployer):** Utilized AI system under own authority in operational/professional activity (`DEPLOYER`).
+* **`RULE-EU-ROLE-03` (Importer / Distributor):** Supply chain intermediaries (`IMPORTER`, `DISTRIBUTOR`).
+* **`RULE-EU-ROLE-04` (GPAI Model Provider):** Upstream foundation model provision (`GPAI_MODEL_PROVIDER`).
+* **Actor Role Confidence Resolution:**
+  * `IDENTIFIED_FROM_EVIDENCE`: Corroborated primary records directly attribute operator roles.
+  * `POSSIBLE_FROM_EVIDENCE`: Single uncorroborated source or contextual inference.
+  * `DISPUTED`: Contested roles across evidence sources or disputed claims.
+  * `UNKNOWN`: Missing or unestablished role attribution.
+
+### 6.4 Temporal Alignment Evaluator
+
+* **`RULE-EU-TEMPORAL-01`:** Compares verified incident occurrence dates against statutory effective dates recorded in reference metadata (`2026-08-02`, `2025-02-02`):
+  * Incident date on or after statutory effective date $\rightarrow$ `REFERENCE_METADATA_ALIGNS`
+  * Incident date predates statutory application $\rightarrow$ `TEMPORAL_CONTEXT_REQUIRES_REVIEW`
+  * Incident date unknown $\rightarrow$ `INCIDENT_DATE_UNKNOWN`
+  * Statutory effective date missing or ambiguous $\rightarrow$ `EFFECTIVE_DATE_UNCERTAIN`
+
+### 6.5 Rule Family E: Missing Facts & Neutral Follow-Up Questions
+
+* **`RULE-EU-QUESTIONS-01`:** Analyzes evaluated epistemic voids across nexus, technical autonomy, actor roles, and occurrence timing. Generates neutral, non-leading inquiries and missing fact statements for human investigators.
+* **Strict Non-Judicial Phrasing:** All questions, missing facts, and rationales are validated against `validate_no_legal_language`, ensuring strict exclusion of legal violation terminology.
+
