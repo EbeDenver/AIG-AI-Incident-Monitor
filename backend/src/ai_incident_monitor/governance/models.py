@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 import re
 from typing import Any, Optional
 
@@ -13,6 +13,11 @@ from ai_incident_monitor.governance.enums import (
     FrameworkCode,
     FrameworkStatus,
     GovernanceAuditEventType,
+    GovernanceConfidence,
+    MappingStatus,
+    NISTApplicability,
+    OECDApplicability,
+    SensitiveDomain,
 )
 
 # Immutable statutory disclaimer mandated by Constitutional Rules 10 & 11 and LGL-001
@@ -286,3 +291,179 @@ class GovernanceAuditEvent(BaseModel):
         if not SHA256_HEX_REGEX.match(v):
             raise ValueError(f"Invalid hash '{v}': must be 64-character lowercase hex.")
         return v
+
+
+# ------------------------------------------------------------------------------
+# Increment 2B: Governance Mapping Engine Schemas
+# ------------------------------------------------------------------------------
+
+PROHIBITED_LEGAL_TERMS: frozenset[str] = frozenset({
+    "violation",
+    "violations",
+    "breach",
+    "breaches",
+    "illegal",
+    "unlawful",
+    "compliant",
+    "noncompliant",
+    "non-compliant",
+    "statutory duty",
+    "statutory duties",
+})
+
+PROHIBITED_LEGAL_REGEX = re.compile(
+    r"\b(violation|violations|breach|breaches|illegal|unlawful|compliant|noncompliant|non-compliant|statutory\s+dut(?:y|ies))\b",
+    re.IGNORECASE,
+)
+
+
+def validate_no_legal_language(text: Optional[str], field_name: str = "text") -> None:
+    """Validate that text does not contain prohibited legal determination terminology per Safety Rule 7."""
+    if not text:
+        return
+    match = PROHIBITED_LEGAL_REGEX.search(text)
+    if match:
+        raise ValueError(
+            f"Prohibited legal determination language detected in {field_name}: '{match.group(0)}'. "
+            "Governance mapping rationales must remain non-judicial relevance observations only."
+        )
+
+
+class IncidentFactContext(BaseModel):
+    """Structured incident context and evidence payload passed into the governance mapping engine."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    incident_id: str = Field(min_length=1, max_length=64)
+    title: str = Field(min_length=1, max_length=255)
+    summary: str = Field(default="")
+    claims: list[dict[str, Any]] = Field(default_factory=list)
+    evidence_records: list[dict[str, Any]] = Field(default_factory=list)
+    known_facts: list[str] = Field(default_factory=list)
+    unknowns: list[str] = Field(default_factory=list)
+    disputed_facts: list[str] = Field(default_factory=list)
+    sensitive_domains: list[SensitiveDomain] = Field(default_factory=list)
+    fact_tags: list[str] = Field(default_factory=list)
+    system_context: dict[str, Any] = Field(default_factory=dict)
+
+
+class ConfidenceFactorBreakdown(BaseModel):
+    """Factor-by-factor breakdown of confidence calculation."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    score: float = Field(ge=0.0, le=100.0)
+    level: GovernanceConfidence
+    evidence_count: int = Field(ge=0)
+    directness_score: float = Field(ge=0.0)
+    corroboration_score: float = Field(ge=0.0)
+    specificity_score: float = Field(ge=0.0)
+    unknowns_penalty: float = Field(ge=0.0)
+    disputed_penalty: float = Field(ge=0.0)
+    granularity_penalty: float = Field(ge=0.0)
+    rationale: str = Field(min_length=1)
+
+
+class ReviewGateEvaluation(BaseModel):
+    """Evaluation result for review state machine routing."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    status: MappingStatus
+    gate_triggers: list[str] = Field(default_factory=list)
+    requires_human_review: bool
+    reason: str
+
+
+class MappingRuleMetadata(BaseModel):
+    """Typed metadata describing a deterministic governance mapping rule."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    rule_id: str = Field(min_length=1, max_length=64)
+    rule_version: str = Field(min_length=1, max_length=30)
+    framework_code: FrameworkCode
+    target_identifier: str = Field(min_length=1, max_length=64)
+    target_level: ControlLevel
+    title: str = Field(min_length=1, max_length=255)
+    description: str = Field(min_length=1)
+    prerequisite_fact_keys: list[str] = Field(default_factory=list)
+    applicability: str
+    parent_category_identifier: Optional[str] = None
+    parent_function_identifier: Optional[str] = None
+
+
+class MappingCandidate(BaseModel):
+    """Structured candidate governance mapping generated deterministically by the mapping engine."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    incident_id: str = Field(min_length=1, max_length=64)
+    framework_code: FrameworkCode
+    reference_set_id: str = Field(min_length=1, max_length=64)
+    reference_set_version: str = Field(min_length=1, max_length=30)
+    framework_control_id: Optional[str] = Field(default=None, max_length=64)
+    target_identifier: str = Field(min_length=1, max_length=64)
+    mapping_level: ControlLevel
+    applicability: str
+    confidence: GovernanceConfidence
+    mapping_status: MappingStatus = MappingStatus.CANDIDATE
+    rule_id: str = Field(min_length=1, max_length=64)
+    rule_version: str = Field(min_length=1, max_length=30)
+    rationale: str = Field(min_length=1)
+    evidence_ids: list[str] = Field(min_length=1)
+    known_facts: list[str] = Field(default_factory=list)
+    unknowns: list[str] = Field(default_factory=list)
+    disputed_facts: list[str] = Field(default_factory=list)
+    recommended_control_or_follow_up: Optional[str] = None
+    parent_category_identifier: Optional[str] = None
+    parent_function_identifier: Optional[str] = None
+    review_gate_triggers: list[str] = Field(default_factory=list)
+    confidence_breakdown: Optional[ConfidenceFactorBreakdown] = None
+    generated_by: str = Field(default="DeterministicGovernanceEngine/1.0", max_length=64)
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    @field_validator("evidence_ids")
+    @classmethod
+    def validate_evidence_ids_non_empty(cls, v: list[str]) -> list[str]:
+        if not v:
+            raise ValueError("Safety Rule 1: Every mapping must contain one or more evidence references.")
+        return v
+
+    @field_validator("rationale")
+    @classmethod
+    def validate_rationale_legal_language(cls, v: str) -> str:
+        validate_no_legal_language(v, field_name="rationale")
+        return v
+
+    @field_validator("known_facts", "unknowns", "disputed_facts")
+    @classmethod
+    def validate_facts_legal_language(cls, v: list[str]) -> list[str]:
+        for item in v:
+            validate_no_legal_language(item, field_name="fact_item")
+        return v
+
+    @field_validator("recommended_control_or_follow_up")
+    @classmethod
+    def validate_follow_up_legal_language(cls, v: Optional[str]) -> Optional[str]:
+        validate_no_legal_language(v, field_name="recommended_control_or_follow_up")
+        return v
+
+    @model_validator(mode="after")
+    def validate_nist_hierarchy_and_references(self) -> MappingCandidate:
+        if self.framework_code == FrameworkCode.NIST_AI_RMF:
+            if self.mapping_level == ControlLevel.SUBCATEGORY:
+                if not self.parent_category_identifier:
+                    raise ValueError(
+                        f"NIST subcategory mapping '{self.target_identifier}' must store parent_category_identifier."
+                    )
+                if not self.parent_function_identifier:
+                    raise ValueError(
+                        f"NIST subcategory mapping '{self.target_identifier}' must store parent_function_identifier."
+                    )
+            elif self.mapping_level == ControlLevel.CATEGORY:
+                if not self.parent_function_identifier:
+                    raise ValueError(
+                        f"NIST category mapping '{self.target_identifier}' must store parent_function_identifier."
+                    )
+        return self

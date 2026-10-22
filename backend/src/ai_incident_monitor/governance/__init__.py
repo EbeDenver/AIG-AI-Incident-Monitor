@@ -1,5 +1,7 @@
 """Governance framework mapping and reference library package."""
 
+from ai_incident_monitor.governance.confidence import calculate_mapping_confidence
+from ai_incident_monitor.governance.engine import GovernanceMappingEngine
 from ai_incident_monitor.governance.enums import (
     ControlLevel,
     EUActorRole,
@@ -15,15 +17,24 @@ from ai_incident_monitor.governance.enums import (
     MappingStatus,
     NISTApplicability,
     OECDApplicability,
+    SensitiveDomain,
 )
+from ai_incident_monitor.governance.mapping_service import GovernanceMappingService
 from ai_incident_monitor.governance.models import (
     EU_AI_ACT_STATUTORY_DISCLAIMER,
+    PROHIBITED_LEGAL_TERMS,
+    ConfidenceFactorBreakdown,
     FrameworkControlSchema,
     FrameworkManifestSchema,
     FrameworkReferenceSetSchema,
     GovernanceActorIdentity,
     GovernanceAuditEvent,
+    IncidentFactContext,
     ManifestEntrySchema,
+    MappingCandidate,
+    MappingRuleMetadata,
+    ReviewGateEvaluation,
+    validate_no_legal_language,
 )
 from ai_incident_monitor.governance.reference_loader import (
     canonical_json_dumps,
@@ -33,6 +44,13 @@ from ai_incident_monitor.governance.reference_loader import (
     load_reference_set,
     parse_block_yaml,
     verify_framework_manifest,
+)
+from ai_incident_monitor.governance.review_gates import ReviewGateId, evaluate_review_gates
+from ai_incident_monitor.governance.rules import (
+    ALL_NIST_RULES,
+    ALL_OECD_RULES,
+    BaseNISTRule,
+    BaseOECDRule,
 )
 
 __all__ = [
@@ -50,13 +68,21 @@ __all__ = [
     "MappingStatus",
     "NISTApplicability",
     "OECDApplicability",
+    "SensitiveDomain",
     "EU_AI_ACT_STATUTORY_DISCLAIMER",
+    "PROHIBITED_LEGAL_TERMS",
+    "ConfidenceFactorBreakdown",
     "FrameworkControlSchema",
     "FrameworkManifestSchema",
     "FrameworkReferenceSetSchema",
     "GovernanceActorIdentity",
     "GovernanceAuditEvent",
+    "IncidentFactContext",
     "ManifestEntrySchema",
+    "MappingCandidate",
+    "MappingRuleMetadata",
+    "ReviewGateEvaluation",
+    "validate_no_legal_language",
     "canonical_json_dumps",
     "compute_file_sha256",
     "compute_manifest_hash",
@@ -64,4 +90,13 @@ __all__ = [
     "load_reference_set",
     "parse_block_yaml",
     "verify_framework_manifest",
+    "calculate_mapping_confidence",
+    "ReviewGateId",
+    "evaluate_review_gates",
+    "GovernanceMappingEngine",
+    "GovernanceMappingService",
+    "ALL_OECD_RULES",
+    "ALL_NIST_RULES",
+    "BaseOECDRule",
+    "BaseNISTRule",
 ]

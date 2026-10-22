@@ -149,6 +149,8 @@ class IncidentFrameworkMappingModel(Base, TimestampMixin):
     recommended_control_or_follow_up: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Provenance and HITL review tracking
+    rule_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
+    rule_version: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
     generated_by: Mapped[str] = mapped_column(String(64), nullable=False)
     reviewed_by: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

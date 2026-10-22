@@ -280,3 +280,22 @@
 * **Consequences**:
   - Full auditability and historical reconstruction.
   - Zero regression risk across methodology updates.
+
+---
+
+### ADR-016: Deterministic OECD and NIST AI RMF Governance Mapping Engine
+* **Date**: 2026-10-21
+* **Status**: RATIFIED
+* **Deciders**: AI Guardians LLC Leadership, Antigravity AI
+* **Context**: Governance mappings must be deterministic, reproducible, evidence-grounded, and strictly orthogonal to AIG-ISI severity scoring. Heuristics or LLM inference risk hallucinated control associations, unverified compliance claims, and legal liability.
+* **Decision**:
+  1. **Strict Reference Grounding**: The engine maps only against validated, versioned reference sets registered in `frameworks/manifest.json` (OECD AI Principles 2024, NIST AI RMF 1.0). Target identifiers outside the active reference library raise `ConstitutionalViolationError` (`Safety Rule 2`).
+  2. **Evidence-First Mandate**: Every mapping candidate must link to one or more verified incident evidence IDs; zero evidence produces zero mappings (`Safety Rule 1`).
+  3. **Strict NIST Hierarchy & Specificity Gate**: NIST mappings follow Function -> Category -> Subcategory. Subcategories require `HIGHLY_SPECIFIC` primary evidence and validated parent category/function references (`Safety Rule 2`).
+  4. **Multi-Factor Confidence & Review State Machine**: Independent confidence scoring (directness, corroboration, specificity, minus penalties for unknowns and disputed facts) routes candidates to `PENDING_REVIEW` upon triggering gates for sensitive domains, disputed facts, low confidence, or subcategory granularity. Automated algorithms cannot approve mappings (`Rule 12/13`).
+  5. **Non-Legal Terminology**: Mapping rationales, facts, and follow-ups programmatically forbid legal conclusion language (`violation`, `breach`, `illegal`, `unlawful`, `compliant`, `noncompliant`, `statutory duty`) (`Safety Rule 7`, `LGL-001`).
+  6. **Relational Provenance (Migration 004)**: Add `rule_id` and `rule_version` columns to `incident_framework_mappings`. Approved records are strictly immutable; edits create append-only superseding records with cryptographic audit chaining.
+* **Consequences**:
+  - 100% deterministic, audit-traceable governance mappings.
+  - Total elimination of LLM hallucination and legal conclusion exposure.
+  - Complete decoupling from AIG-ISI technical incident severity (`GOV-005`).

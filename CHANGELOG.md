@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Phase 5 Increment 2B] - 2026-10-21
+
+### Added
+- **Deterministic Governance Mapping Engine (`ai_incident_monitor.governance`)**:
+  - Pure deterministic, evidence-grounded evaluator (`GovernanceMappingEngine`) mapping incident context against validated reference library files (`frameworks/manifest.json`).
+  - Strict reference integrity and anti-fabrication enforcement: rejects unknown, inactive, or ungrounded framework identifiers with `ConstitutionalViolationError` (`Safety Rule 2`).
+  - Evidence-first invariant: requires at least one verified evidence ID; zero evidence yields zero mappings (`Safety Rule 1`).
+  - Complete decoupling from AIG-ISI severity scoring (`Safety Rule 4`, `GOV-005`).
+- **OECD & NIST Deterministic Rule Libraries (`governance.rules`)**:
+  - `oecd_rules.py`: Rules covering all five OECD AI Principles (2024 update: Principles 1.1–1.5), producing `DIRECTLY_IMPLICATED` or `BROADER_GOVERNANCE_LESSON` classifications.
+  - `nist_rules.py`: Rules covering all four core Functions (`GOVERN`, `MAP`, `MEASURE`, `MANAGE`), 5 exact Categories (`GOVERN 1`, `GOVERN 2`, `MAP 1`, `MEASURE 2`, `MANAGE 1`), and 4 exact Subcategories (`GOVERN 1.1`, `MAP 1.1`, `MEASURE 2.1`, `MANAGE 1.1`).
+  - Strict NIST hierarchy enforcement (Function -> Category -> Subcategory) with parent reference storage.
+  - Specificity gate: NIST subcategory mappings strictly require verified `HIGHLY_SPECIFIC` primary evidence; general evidence remains at Function/Category level.
+- **Independent Multi-Factor Confidence Scoring (`confidence.py`)**:
+  - Combines evidence count, directness, corroboration, and specificity on a 0–100 scale into bounded levels (`HIGH`, `MEDIUM`, `LOW`, `INSUFFICIENT`).
+  - Applies penalties for material unknowns (-15), disputed evidence (-25), and subcategory granularity (-15 to -30).
+- **Review State Machine & Gatekeeper (`review_gates.py`)**:
+  - Evaluates review gates routing candidates to `PENDING_REVIEW` for sensitive domains (`HEALTH_SAFETY`, `BIOMETRICS`, `LAW_ENFORCEMENT`, `CRITICAL_INFRASTRUCTURE`, `EMPLOYMENT`, `CREDIT`, `EDUCATION`), disputed facts, low confidence, or subcategory granularity.
+  - Enforces mandatory human approval (`is_human=True`); machine self-approval raises `ConstitutionalViolationError` (`Rule 12/13`).
+  - Enforces append-only supersession; mutating approved mappings raises `ImmutabilityViolationError`.
+- **Relational Persistence & Migration 004**:
+  - Alembic migration `004_oecd_nist_mapping_provenance.py` adding `rule_id` and `rule_version` columns to `incident_framework_mappings`.
+  - Normalized junction storage in `mapping_evidence_links`.
+  - Append-only cryptographic audit logging with chained SHA-256 event hashes.
+- **Testing & Quality Assurance**:
+  - 33 new automated tests (26 unit tests in `test_oecd_nist_mapping_engine.py` + 7 service/review tests in `test_mapping_service_and_review.py`).
+  - Total test suite: **464 / 464 passed tests** in ~5.6s with zero failures and zero warnings.
+  - Cryptographic provenance chain verified via `make verify-provenance-chain` (`is_valid: true`, 0 anomalies).
+- **Methodology Documentation & Architecture Decision Records**:
+  - Ratified ADR-016 (`Deterministic OECD and NIST AI RMF Governance Mapping Engine`) in `docs/DECISIONS.md`.
+  - Authored `docs/GOVERNANCE_MAPPING_METHODOLOGY.md` (METH-002).
+  - Updated `docs/ER_DIAGRAM.md` and `docs/REQUIREMENTS_TRACEABILITY.md` (`GOV-001`, `GOV-002`, `GOV-005` verified).
+
+### Hard Boundaries Enforced in Phase 5 Increment 2B
+- Phase 5 Increment 2C (EU AI Act screening) explicitly deferred and not started.
+- Zero LLM, Gemini, or generative AI calls.
+- Zero live external network calls, scrapers, or RSS background fetching.
+- Zero UI, Substack, dashboard, or public publishing components.
+- Zero legal violation determinations (Safety Rule 7, Constitutional Rules 10 & 11).
+
 ## [Phase 5 Increment 2A] - 2026-10-21
 
 ### Added

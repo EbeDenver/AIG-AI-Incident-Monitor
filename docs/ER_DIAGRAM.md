@@ -153,6 +153,8 @@ erDiagram
         json disputed_facts
         json evidence_ids
         text recommended_control_or_follow_up
+        string rule_id
+        string rule_version
         string generated_by
         string reviewed_by
         datetime generated_at
