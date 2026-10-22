@@ -198,25 +198,46 @@ class EULegalRelevanceScreenModel(Base, TimestampMixin):
         nullable=False,
         index=True,
     )
+    screen_version: Mapped[str] = mapped_column(String(30), nullable=False, default="1.0.0")
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="DRAFT", index=True)
+    relevance_level: Mapped[str] = mapped_column(
+        String(40), nullable=False, default="INSUFFICIENT_INFORMATION", index=True
+    )
+    nexus_assessment: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="INSUFFICIENT_NEXUS_INFORMATION"
+    )
     territorial_nexus: Mapped[str] = mapped_column(
+        String(40), nullable=False, default="INSUFFICIENT_INFORMATION"
+    )
+    ai_system_context: Mapped[str] = mapped_column(
         String(40), nullable=False, default="INSUFFICIENT_INFORMATION"
     )
     ai_system_relevance: Mapped[str] = mapped_column(
         String(40), nullable=False, default="INSUFFICIENT_INFORMATION"
     )
     actor_roles: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    actor_role_confidence: Mapped[str] = mapped_column(String(40), nullable=False, default="UNKNOWN")
     risk_class: Mapped[str] = mapped_column(
         String(40), nullable=False, default="INSUFFICIENT_INFORMATION"
     )
     serious_incident_relevance: Mapped[str] = mapped_column(
         String(40), nullable=False, default="INSUFFICIENT_INFORMATION"
     )
+    conceptual_risk_areas: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     potentially_relevant_articles: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    potentially_relevant_reference_ids: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     operational_obligations: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
-    applicability_date_assessment: Mapped[str] = mapped_column(Text, nullable=False)
+    operational_relevance_areas: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    applicability_date_assessment: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    timing_assessment: Mapped[str] = mapped_column(String(50), nullable=False, default="NOT_ASSESSED")
+    known_facts: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    unknowns: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    disputed_facts: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     missing_facts: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    follow_up_questions: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    rationale: Mapped[str] = mapped_column(Text, nullable=False, default="")
     confidence: Mapped[str] = mapped_column(String(20), nullable=False, default="INSUFFICIENT")
-    status: Mapped[str] = mapped_column(String(30), nullable=False, default="DRAFT", index=True)
+    disclaimer_version: Mapped[str] = mapped_column(String(30), nullable=False, default="2024-1689-v2")
     disclaimer_text: Mapped[str] = mapped_column(Text, nullable=False)
 
     # Provenance and HITL review tracking
@@ -228,6 +249,7 @@ class EULegalRelevanceScreenModel(Base, TimestampMixin):
     # Immutability and supersession chain
     supersedes_screen_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
     superseded_by_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
+    metadata_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
 
     # Relationships
     incident: Mapped[IncidentModel] = relationship(
@@ -242,6 +264,55 @@ class EULegalRelevanceScreenModel(Base, TimestampMixin):
         "MappingEvidenceLinkModel",
         back_populates="eu_screen",
         cascade="all, delete-orphan",
+    )
+    rule_traces: Mapped[list[EUScreenRuleTraceModel]] = relationship(
+        "EUScreenRuleTraceModel",
+        back_populates="screen",
+        cascade="all, delete-orphan",
+    )
+
+    @property
+    def screen_status(self) -> str:
+        """Alias for status property to align with domain model conventions."""
+        return self.status
+
+    @screen_status.setter
+    def screen_status(self, value: str) -> None:
+        self.status = value
+
+
+class EUScreenRuleTraceModel(Base):
+    """Relational model recording fine-grained rule evaluation provenance for an EU informational screen."""
+
+    __tablename__ = "eu_screen_rule_traces"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    eu_legal_relevance_screen_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("eu_legal_relevance_screens.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    rule_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    rule_version: Mapped[str] = mapped_column(String(30), nullable=False)
+    reference_set_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("framework_reference_sets.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    matched_condition_ids: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
+    )
+
+    # Relationships
+    screen: Mapped[EULegalRelevanceScreenModel] = relationship(
+        "EULegalRelevanceScreenModel",
+        back_populates="rule_traces",
+    )
+    reference_set: Mapped[FrameworkReferenceSetModel] = relationship(
+        "FrameworkReferenceSetModel",
     )
 
 

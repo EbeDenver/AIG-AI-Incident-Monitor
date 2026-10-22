@@ -299,3 +299,21 @@
   - 100% deterministic, audit-traceable governance mappings.
   - Total elimination of LLM hallucination and legal conclusion exposure.
   - Complete decoupling from AIG-ISI technical incident severity (`GOV-005`).
+
+---
+
+### ADR-017: EU AI Act Informational Relevance Screen Foundation & Output Eligibility Guard
+* **Date**: 2026-10-22
+* **Status**: RATIFIED
+* **Deciders**: AI Guardians LLC Leadership, Antigravity AI
+* **Context**: Screening incident records against Regulation (EU) 2024/1689 (EU AI Act) concepts requires strict non-judicial boundaries, explicit distinction between statutory applicability and non-binding informational relevance (`LGL-001`, `LGL-002`, `LGL-003`), mandatory immutable disclaimer versioning, human-in-the-loop review gating, fine-grained rule provenance, and an output-eligibility guard that unconditionally blocks unapproved, unverified, or ungrounded screens from external release.
+* **Decision**:
+  1. **Relational Schema Foundation (Migration 005)**: Extend `eu_legal_relevance_screens` with 16 epistemic and audit columns (`screen_version`, `status`, `relevance_level`, `nexus_assessment`, `ai_system_context`, `actor_role_confidence`, `conceptual_risk_areas`, `potentially_relevant_reference_ids`, `operational_relevance_areas`, `timing_assessment`, `known_facts`, `unknowns`, `disputed_facts`, `follow_up_questions`, `rationale`, `disclaimer_version`, `metadata_json`) and create table `eu_screen_rule_traces` for rule evaluation provenance.
+  2. **Non-Judicial Controlled Vocabularies**: Implement strictly non-legal enumerations (`EURelevanceLevel`, `EUScreenStatus`, `EUNexusAssessment`, `EUActorRoleConfidence`, `EUTimingAssessment`, `EUSeriousIncidentRelevance`). Prohibit legal conclusion terminology (`violation`, `breach`, `illegal`, `statutory duty`) in schemas and models (`Safety Rule 7`, `LGL-001`).
+  3. **Mandatory Versioned Disclaimer**: Enforce disclaimer version `"2024-1689-v2"` with exact approved text. Any disclaimer tampering or mismatch raises `ValueError` on validation.
+  4. **State Machine & Human Review Primacy**: Enforce review states (`DRAFT`, `CANDIDATE`, `PENDING_REVIEW`, `APPROVED_INFORMATIONAL`, `REJECTED`, `SUPERSEDED`). Setting `APPROVED_INFORMATIONAL` strictly requires authenticated human reviewer identity (`is_human=True`); automated algorithms/LLMs cannot approve themselves (`Rule 12/13`). In-place mutation of approved screens raises `ImmutabilityViolationError`; edits must create append-only superseding records.
+  5. **Output-Eligibility Guard**: Implement `verify_output_eligibility` blocking external release or reporting unless a screen is in `APPROVED_INFORMATIONAL` status, contains the exact versioned disclaimer, has at least one primary evidence link, and has authenticated human review.
+* **Consequences**:
+  - Epistemically unassailable and legally hedged foundation for EU AI Act governance screening.
+  - Zero risk of unreviewed, automated, or ungrounded legal assertions escaping to external reports.
+  - Clean separation of foundation (2C-1) from deterministic rule evaluators (2C-2) and conceptual scoping/linter (2C-3).

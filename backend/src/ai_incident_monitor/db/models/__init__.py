@@ -14,6 +14,7 @@ from ai_incident_monitor.db.models.evidence import (
 )
 from ai_incident_monitor.db.models.governance import (
     EULegalRelevanceScreenModel,
+    EUScreenRuleTraceModel,
     FrameworkControlModel,
     FrameworkReferenceSetModel,
     GovernanceAuditLogModel,
@@ -42,6 +43,7 @@ __all__ = [
     "DedupCandidateModel",
     "DisputedFactModel",
     "EULegalRelevanceScreenModel",
+    "EUScreenRuleTraceModel",
     "EvidenceRecordModel",
     "FrameworkControlModel",
     "FrameworkReferenceSetModel",

@@ -8,8 +8,15 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from ai_incident_monitor.domain.common import ConstitutionalViolationError
 from ai_incident_monitor.governance.enums import (
     ControlLevel,
+    EUActorRoleConfidence,
+    EUNexusAssessment,
+    EURelevanceLevel,
+    EUScreenStatus,
+    EUSeriousIncidentRelevance,
+    EUTimingAssessment,
     FrameworkCode,
     FrameworkStatus,
     GovernanceAuditEventType,
@@ -20,13 +27,22 @@ from ai_incident_monitor.governance.enums import (
     SensitiveDomain,
 )
 
-# Immutable statutory disclaimer mandated by Constitutional Rules 10 & 11 and LGL-001
+# Immutable statutory disclaimers mandated by Constitutional Rules 10 & 11 and LGL-001/LGL-002
 EU_AI_ACT_STATUTORY_DISCLAIMER: str = (
     "INFORMATIONAL SCREENING ONLY — NOT LEGAL ADVICE. This assessment reflects an "
     "automated preliminary screening of reported incident facts against Regulation (EU) "
     "2024/1689 concepts. It does not constitute a judicial, regulatory, or professional "
     "legal determination of non-compliance, liability, or statutory applicability. "
     "Absence of judicial adjudication precludes any finding of breach."
+)
+
+EU_AI_ACT_DISCLAIMER_VERSION: str = "2024-1689-v2"
+EU_AI_ACT_DISCLAIMER_V2: str = (
+    "Informational governance screen only. This assessment is based on currently recorded "
+    "incident evidence and is not legal advice, a legal determination, or a finding of "
+    "compliance or noncompliance. Applicability of the EU AI Act depends on facts, "
+    "jurisdiction, role, intended purpose, timing, and other circumstances that may be "
+    "incomplete or disputed. Qualified legal counsel should assess any legal obligations."
 )
 
 SHA256_HEX_REGEX = re.compile(r"^[a-f0-9]{64}$")
@@ -467,3 +483,175 @@ class MappingCandidate(BaseModel):
                         f"NIST category mapping '{self.target_identifier}' must store parent_function_identifier."
                     )
         return self
+
+
+# ------------------------------------------------------------------------------
+# Increment 2C-1: EU Informational Screen Foundation Schemas & Guards
+# ------------------------------------------------------------------------------
+
+
+class OutputIneligibleError(ConstitutionalViolationError):
+    """Raised when an EU AI Act screen fails output-eligibility requirements."""
+
+    pass
+
+
+class EUScreenRuleTraceSchema(BaseModel):
+    """Typed trace of a deterministic screening rule evaluation."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    id: Optional[str] = None
+    screen_id: Optional[str] = None
+    rule_id: str = Field(min_length=1, max_length=64)
+    rule_version: str = Field(min_length=1, max_length=30)
+    reference_set_id: str = Field(min_length=1, max_length=64)
+    matched_condition_ids: list[str] = Field(default_factory=list)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class EULegalRelevanceScreenSchema(BaseModel):
+    """Domain schema for an informational EU AI Act relevance screen."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    id: Optional[str] = None
+    incident_id: str = Field(min_length=1, max_length=64)
+    reference_set_id: str = Field(min_length=1, max_length=64)
+    screen_version: str = Field(default="1.0.0", max_length=30)
+    status: EUScreenStatus = Field(default=EUScreenStatus.DRAFT)
+    relevance_level: EURelevanceLevel = Field(default=EURelevanceLevel.INSUFFICIENT_INFORMATION)
+    nexus_assessment: EUNexusAssessment = Field(default=EUNexusAssessment.INSUFFICIENT_NEXUS_INFORMATION)
+    ai_system_context: str = Field(default="INSUFFICIENT_INFORMATION", max_length=40)
+    actor_roles: list[str] = Field(default_factory=list)
+    actor_role_confidence: EUActorRoleConfidence = Field(default=EUActorRoleConfidence.UNKNOWN)
+    conceptual_risk_areas: list[str] = Field(default_factory=list)
+    potentially_relevant_reference_ids: list[str] = Field(default_factory=list)
+    operational_relevance_areas: list[str] = Field(default_factory=list)
+    serious_incident_relevance: EUSeriousIncidentRelevance = Field(
+        default=EUSeriousIncidentRelevance.INSUFFICIENT_INFORMATION
+    )
+    timing_assessment: EUTimingAssessment = Field(default=EUTimingAssessment.NOT_ASSESSED)
+    known_facts: list[str] = Field(default_factory=list)
+    unknowns: list[str] = Field(default_factory=list)
+    disputed_facts: list[str] = Field(default_factory=list)
+    missing_facts: list[str] = Field(default_factory=list)
+    follow_up_questions: list[str] = Field(default_factory=list)
+    rationale: str = Field(default="")
+    confidence: GovernanceConfidence = Field(default=GovernanceConfidence.INSUFFICIENT)
+    disclaimer_version: str = Field(default=EU_AI_ACT_DISCLAIMER_VERSION, max_length=30)
+    disclaimer_text: str = Field(default=EU_AI_ACT_DISCLAIMER_V2)
+    evidence_ids: list[str] = Field(default_factory=list)
+    rule_traces: list[EUScreenRuleTraceSchema] = Field(default_factory=list)
+    generated_by: str = Field(default="DeterministicGovernanceEngine/1.0", max_length=64)
+    reviewed_by: Optional[str] = Field(default=None, max_length=64)
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    reviewed_at: Optional[datetime] = None
+    supersedes_screen_id: Optional[str] = None
+    superseded_by_id: Optional[str] = None
+    metadata_json: dict[str, Any] = Field(default_factory=dict)
+
+    @property
+    def screen_status(self) -> EUScreenStatus:
+        return self.status
+
+    @field_validator("disclaimer_version")
+    @classmethod
+    def validate_disclaimer_version(cls, v: str) -> str:
+        if v != EU_AI_ACT_DISCLAIMER_VERSION:
+            raise ValueError(
+                f"Invalid disclaimer_version '{v}': must be '{EU_AI_ACT_DISCLAIMER_VERSION}'."
+            )
+        return v
+
+    @field_validator("disclaimer_text")
+    @classmethod
+    def validate_disclaimer_text(cls, v: str) -> str:
+        if v != EU_AI_ACT_DISCLAIMER_V2:
+            raise ValueError(
+                "Mandatory disclaimer text mismatch: disclaimer must match approved EU_AI_ACT_DISCLAIMER_V2 exactly."
+            )
+        return v
+
+    @field_validator("rationale")
+    @classmethod
+    def validate_screen_rationale_legal_language(cls, v: str) -> str:
+        validate_no_legal_language(v, field_name="rationale")
+        return v
+
+    @field_validator("known_facts", "unknowns", "disputed_facts", "missing_facts", "follow_up_questions")
+    @classmethod
+    def validate_screen_facts_legal_language(cls, v: list[str]) -> list[str]:
+        for item in v:
+            validate_no_legal_language(item, field_name="fact_or_question_item")
+        return v
+
+
+def verify_output_eligibility(
+    screen: Any,
+    evidence_links: Optional[list[Any]] = None,
+    raise_error: bool = False,
+) -> tuple[bool, list[str]]:
+    """Verify whether an EU informational screen satisfies output-eligibility criteria.
+
+    Constitutional output guard foundation (Phase 5 Increment 2C-1):
+    Blocks any screen that lacks:
+    1. Approved informational state: status must be APPROVED_INFORMATIONAL.
+    2. Valid disclaimer: disclaimer_version == '2024-1689-v2' and disclaimer_text == EU_AI_ACT_DISCLAIMER_V2.
+    3. Required evidence links: at least one primary evidence link must be linked (len >= 1).
+    4. Required authenticated human review: reviewed_by must be non-empty and reviewed_at must be set.
+    """
+    reasons: list[str] = []
+
+    # 1. State check
+    raw_status = getattr(screen, "status", None)
+    status_str = raw_status.value if hasattr(raw_status, "value") else str(raw_status)
+    if status_str != EUScreenStatus.APPROVED_INFORMATIONAL.value:
+        reasons.append(
+            f"Screen status is '{status_str}'; must be '{EUScreenStatus.APPROVED_INFORMATIONAL.value}' for output eligibility."
+        )
+
+    # 2. Disclaimer check
+    disclaimer_version = getattr(screen, "disclaimer_version", None)
+    if disclaimer_version != EU_AI_ACT_DISCLAIMER_VERSION:
+        reasons.append(
+            f"Invalid disclaimer version '{disclaimer_version}'; expected '{EU_AI_ACT_DISCLAIMER_VERSION}'."
+        )
+
+    disclaimer_text = getattr(screen, "disclaimer_text", None)
+    if disclaimer_text != EU_AI_ACT_DISCLAIMER_V2:
+        reasons.append(
+            "Disclaimer text has been modified or does not match mandatory EU_AI_ACT_DISCLAIMER_V2."
+        )
+
+    # 3. Evidence links check
+    if evidence_links is not None:
+        link_count = len(evidence_links)
+    elif hasattr(screen, "evidence_links"):
+        link_count = len(screen.evidence_links)
+    elif hasattr(screen, "evidence_ids"):
+        link_count = len(screen.evidence_ids)
+    else:
+        link_count = 0
+
+    if link_count < 1:
+        reasons.append("Screen lacks required primary evidence links (minimum 1 required).")
+
+    # 4. Human review check
+    reviewed_by = getattr(screen, "reviewed_by", None)
+    if not reviewed_by or not str(reviewed_by).strip():
+        reasons.append("Screen lacks authenticated reviewer identity (reviewed_by).")
+
+    reviewed_at = getattr(screen, "reviewed_at", None)
+    if not reviewed_at:
+        reasons.append("Screen lacks review timestamp (reviewed_at).")
+
+    is_eligible = len(reasons) == 0
+    if not is_eligible and raise_error:
+        screen_id = getattr(screen, "id", "unknown")
+        raise OutputIneligibleError(
+            f"EU Screen '{screen_id}' is ineligible for external/reporting output: "
+            + "; ".join(reasons)
+        )
+
+    return is_eligible, reasons

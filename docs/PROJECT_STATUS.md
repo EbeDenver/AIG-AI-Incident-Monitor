@@ -3,8 +3,8 @@
 **Organization:** AI Guardians LLC
 **Document Identifier:** STAT-001
 **Last Updated:** 2026-10-21
-**Current Milestone:** Phase 5 (AIG-ISI Severity Scoring Engine & Governance Mappings) — INCREMENT 2B COMPLETED (Branch: `phase5-inc2b-oecd-nist-mapping`)
-**Overall Status:** GREEN (Phase 5 Increment 2B Complete, 464/464 Tests Passing, 0 Failures, Provenance Chain Valid)
+**Current Milestone:** Phase 5 (AIG-ISI Severity Scoring Engine & Governance Mappings) — INCREMENT 2C-1 COMPLETED (Branch: `phase5-inc2c1-eu-screen-foundation`)
+**Overall Status:** GREEN (Phase 5 Increment 2C-1 Complete, 484/484 Tests Passing, 0 Failures, Provenance Chain Valid)
 
 ---
 
@@ -16,7 +16,7 @@
 | **Phase 2** | **Core Schemas & Epistemic Models** | Pydantic v2 models, epistemic typing, 29 golden fixtures, 89 tests | **COMPLETED** | **2026-10-19** |
 | **Phase 3** | **Data Foundation & Manual Import Engine** | SQLAlchemy 2.0 ORM, dual-engine Alembic, repositories, CSV/JSON/XLSX import, CWE-1236 sanitizer, 4-tier dedup, append-only audit, 144 tests | **COMPLETED** | **2026-10-19** |
 | **Phase 4** | **Secure Ingestion Connectors & Provenance** | SSRF defense, RSS/arXiv connectors, OECD adapter, raw staging store, 30-day purge, manifest hash chaining, XML containment, 197 tests | **COMPLETED** | **2026-10-20** |
-| **Phase 5** | **AIG-ISI Scoring & Governance Map** | AIG-ISI engine, factor rationales, OECD/NIST/EU Act mappers | **IN PROGRESS (Inc 1 Merged, Inc 2A Merged, Inc 2B Complete)** | Target: Phase 5 |
+| **Phase 5** | **AIG-ISI Scoring & Governance Map** | AIG-ISI engine, factor rationales, OECD/NIST/EU Act mappers | **IN PROGRESS (Inc 1 Merged, Inc 2A Merged, Inc 2B Merged, Inc 2C-1 Complete)** | Target: Phase 5 |
 | **Phase 6** | Editorial Pipeline & Human Review | Substack generator, neutral tone linter, HITL review CLI | Planned | Phase 6 Session |
 | **Phase 7** | End-to-End Harness & Observability | Orchestration, telemetry, multi-Mac test suite, monitoring, Cloudflare deployment prep | Planned | Phase 7 Session |
 
@@ -76,8 +76,17 @@ Based on [`docs/REQUIREMENTS_TRACEABILITY.md`](REQUIREMENTS_TRACEABILITY.md):
     - `GOV-001`: Deterministic OECD AI Principles mapping engine (`GovernanceMappingEngine`, `ALL_OECD_RULES`).
     - `GOV-002`: Deterministic NIST AI RMF 1.0 core functions, categories, and subcategories mapping engine (`GovernanceMappingEngine`, `ALL_NIST_RULES`).
     - `GOV-005`: Governance mapping orthogonality to AIG-ISI severity scoring (`test_aig_isi_severity_score_does_not_affect_mapping`).
-  - `PLANNED (Phases 5–7)`: 28 requirements
-* **Total Verified**: 41 / 69 (59.4%)
+  - `VERIFIED (Phase 5 Increment 2C-1 EU Screen Foundation)`: 5 requirements
+    - `GOV-004`: Clear separation of statutory jurisdictional applicability and conceptual relevance (`EURelevanceLevel`, `EUNexusAssessment`).
+    - `AUD-001`: Prohibition of automated model self-approval via `is_human=True` check in `transition_eu_screen_status`.
+    - `AUD-002`: Authenticated human reviewer enforcement in `verify_output_eligibility`.
+    - `LGL-002`: Mandatory versioned disclaimer enforcement (`EU_AI_ACT_DISCLAIMER_V2`, `'2024-1689-v2'`).
+    - `LGL-003`: Distinction between statutory applicability and non-binding informational relevance across all domain schemas.
+  - `IN PROGRESS (Phase 5 Increment 2C)`: 2 requirements
+    - `GOV-003`: EU AI Act categorization screening (foundation delivered in 2C-1; rule evaluators in 2C-2/2C-3).
+    - `LGL-001`: Never assert unadjudicated violations (schema and regex guards delivered in 2C-1; output linter in 2C-3).
+  - `PLANNED (Phases 5–7)`: 21 requirements
+* **Total Verified**: 46 / 69 (66.7%)
 
 ---
 

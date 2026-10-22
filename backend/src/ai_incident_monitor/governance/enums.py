@@ -54,6 +54,33 @@ class NISTApplicability(str, Enum):
     NOT_APPLICABLE = "NOT_APPLICABLE"
 
 
+class EURelevanceLevel(str, Enum):
+    """Informational relevance classification under Regulation (EU) 2024/1689.
+
+    Non-judicial categorization observing correspondence between incident evidence
+    and EU AI Act statutory concepts. Does NOT represent legal applicability or violation.
+    """
+
+    DIRECT_RELEVANCE = "DIRECT_RELEVANCE"
+    POSSIBLE_RELEVANCE = "POSSIBLE_RELEVANCE"
+    CONCEPTUAL_RELEVANCE = "CONCEPTUAL_RELEVANCE"
+    UNLIKELY_RELEVANCE = "UNLIKELY_RELEVANCE"
+    OUTSIDE_APPARENT_SCOPE = "OUTSIDE_APPARENT_SCOPE"
+    INSUFFICIENT_INFORMATION = "INSUFFICIENT_INFORMATION"
+
+
+class EUScreenStatus(str, Enum):
+    """Lifecycle workflow state for an EU AI Act informational relevance screen."""
+
+    DRAFT = "DRAFT"
+    CANDIDATE = "CANDIDATE"
+    PENDING_REVIEW = "PENDING_REVIEW"
+    APPROVED_INFORMATIONAL = "APPROVED_INFORMATIONAL"
+    REJECTED = "REJECTED"
+    SUPERSEDED = "SUPERSEDED"
+    INSUFFICIENT_EVIDENCE = "INSUFFICIENT_EVIDENCE"
+
+
 class EUNexus(str, Enum):
     """Territorial and market nexus under Article 2 of Regulation (EU) 2024/1689."""
 
@@ -62,6 +89,15 @@ class EUNexus(str, Enum):
     EU_AFFECTED_PERSONS = "EU_AFFECTED_PERSONS"
     NO_APPARENT_EU_NEXUS = "NO_APPARENT_EU_NEXUS"
     INSUFFICIENT_INFORMATION = "INSUFFICIENT_INFORMATION"
+
+
+class EUNexusAssessment(str, Enum):
+    """Controlled nexus assessment under Article 2 of Regulation (EU) 2024/1689."""
+
+    POSSIBLE_EU_NEXUS = "POSSIBLE_EU_NEXUS"
+    NO_EU_NEXUS_EVIDENCE = "NO_EU_NEXUS_EVIDENCE"
+    INSUFFICIENT_NEXUS_INFORMATION = "INSUFFICIENT_NEXUS_INFORMATION"
+    OUTSIDE_APPARENT_TERRITORIAL_SCOPE = "OUTSIDE_APPARENT_TERRITORIAL_SCOPE"
 
 
 class EUAISystemRelevance(str, Enum):
@@ -86,6 +122,15 @@ class EUActorRole(str, Enum):
     UNKNOWN = "UNKNOWN"
 
 
+class EUActorRoleConfidence(str, Enum):
+    """Epistemic certainty of actor role attribution in incident evidence."""
+
+    IDENTIFIED_FROM_EVIDENCE = "IDENTIFIED_FROM_EVIDENCE"
+    POSSIBLE_FROM_EVIDENCE = "POSSIBLE_FROM_EVIDENCE"
+    UNKNOWN = "UNKNOWN"
+    DISPUTED = "DISPUTED"
+
+
 class EURiskClass(str, Enum):
     """Informational risk classification screening under Regulation (EU) 2024/1689."""
 
@@ -98,6 +143,16 @@ class EURiskClass(str, Enum):
     INSUFFICIENT_INFORMATION = "INSUFFICIENT_INFORMATION"
 
 
+class EUTimingAssessment(str, Enum):
+    """Temporal correspondence against statutory effective dates in reference metadata."""
+
+    REFERENCE_METADATA_ALIGNS = "REFERENCE_METADATA_ALIGNS"
+    INCIDENT_DATE_UNKNOWN = "INCIDENT_DATE_UNKNOWN"
+    EFFECTIVE_DATE_UNCERTAIN = "EFFECTIVE_DATE_UNCERTAIN"
+    TEMPORAL_CONTEXT_REQUIRES_REVIEW = "TEMPORAL_CONTEXT_REQUIRES_REVIEW"
+    NOT_ASSESSED = "NOT_ASSESSED"
+
+
 class EUSeriousIncident(str, Enum):
     """Correspondence to Article 3(49) serious incident harm thresholds."""
 
@@ -105,6 +160,15 @@ class EUSeriousIncident(str, Enum):
     UNLIKELY_RELEVANT = "UNLIKELY_RELEVANT"
     OUTSIDE_SCOPE = "OUTSIDE_SCOPE"
     INSUFFICIENT_INFORMATION = "INSUFFICIENT_INFORMATION"
+
+
+class EUSeriousIncidentRelevance(str, Enum):
+    """Controlled vocabulary for serious incident conceptual relevance screening."""
+
+    POTENTIALLY_RELEVANT_FOR_REVIEW = "POTENTIALLY_RELEVANT_FOR_REVIEW"
+    CONCEPTUALLY_RELEVANT = "CONCEPTUALLY_RELEVANT"
+    INSUFFICIENT_INFORMATION = "INSUFFICIENT_INFORMATION"
+    NOT_APPARENTLY_RELEVANT = "NOT_APPARENTLY_RELEVANT"
 
 
 class EUOperationalObligation(str, Enum):
@@ -135,6 +199,7 @@ class MappingStatus(str, Enum):
     CANDIDATE = "CANDIDATE"
     PENDING_REVIEW = "PENDING_REVIEW"
     APPROVED = "APPROVED"
+    APPROVED_INFORMATIONAL = "APPROVED_INFORMATIONAL"
     REJECTED = "REJECTED"
     SUPERSEDED = "SUPERSEDED"
     INSUFFICIENT_EVIDENCE = "INSUFFICIENT_EVIDENCE"
