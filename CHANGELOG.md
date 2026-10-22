@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Phase 5 Increment 2C-1] - 2026-10-22
+
+### Added
+- **Relational Schema Foundation & Alembic Migration 005 (`005_eu_ai_act_informational_screen.py`)**:
+  - Added 16 epistemic, provenance, and audit columns to `eu_legal_relevance_screens`: `screen_version`, `status`, `relevance_level`, `nexus_assessment`, `ai_system_context`, `actor_role_confidence`, `conceptual_risk_areas`, `potentially_relevant_reference_ids`, `operational_relevance_areas`, `timing_assessment`, `known_facts`, `unknowns`, `disputed_facts`, `follow_up_questions`, `rationale`, `disclaimer_version`, `metadata_json`.
+  - Created junction table `eu_screen_rule_traces` with foreign keys to `eu_legal_relevance_screens` (`CASCADE`) and `framework_reference_sets` (`RESTRICT`) for fine-grained rule evaluation tracking.
+  - Full migration cycle verified (001 -> 002 -> 003 -> 004 -> 005 -> 004 -> 003 -> 002 -> base -> head) with SQLite batch alter support and zero foreign key violations.
+- **Non-Judicial Controlled Vocabularies (`ai_incident_monitor.governance.enums`)**:
+  - `EURelevanceLevel`: strictly non-legal categorization (`DIRECT_RELEVANCE`, `POSSIBLE_RELEVANCE`, `CONCEPTUAL_RELEVANCE`, `UNLIKELY_RELEVANCE`, `OUTSIDE_APPARENT_SCOPE`, `INSUFFICIENT_INFORMATION`).
+  - `EUScreenStatus`: review workflow state machine (`DRAFT`, `CANDIDATE`, `PENDING_REVIEW`, `APPROVED_INFORMATIONAL`, `REJECTED`, `SUPERSEDED`, `INSUFFICIENT_EVIDENCE`).
+  - `EUNexusAssessment`: non-liability territorial/market connection (`POSSIBLE_EU_NEXUS`, `NO_EU_NEXUS_EVIDENCE`, `INSUFFICIENT_NEXUS_INFORMATION`, `OUTSIDE_APPARENT_TERRITORIAL_SCOPE`).
+  - `EUActorRoleConfidence`: epistemic certainty of actor roles (`IDENTIFIED_FROM_EVIDENCE`, `POSSIBLE_FROM_EVIDENCE`, `UNKNOWN`, `DISPUTED`).
+  - `EUTimingAssessment`: temporal correspondence against reference metadata (`REFERENCE_METADATA_ALIGNS`, `INCIDENT_DATE_UNKNOWN`, `EFFECTIVE_DATE_UNCERTAIN`, `TEMPORAL_CONTEXT_REQUIRES_REVIEW`, `NOT_ASSESSED`).
+  - `EUSeriousIncidentRelevance`: harm threshold correspondence (`POTENTIALLY_RELEVANT_FOR_REVIEW`, `CONCEPTUALLY_RELEVANT`, `INSUFFICIENT_INFORMATION`, `NOT_APPARENTLY_RELEVANT`).
+  - Added `APPROVED_INFORMATIONAL` to `MappingStatus`.
+- **Mandatory Versioned Disclaimer & Domain Schemas (`governance.models`)**:
+  - Immutable versioned disclaimer `EU_AI_ACT_DISCLAIMER_VERSION = "2024-1689-v2"`.
+  - Approved statutory disclaimer text `EU_AI_ACT_DISCLAIMER_V2` mandated across all schemas and repository operations.
+  - Pydantic models `EULegalRelevanceScreenSchema` and `EUScreenRuleTraceSchema` enforcing non-legal language validation on all narrative and epistemic fields (`Safety Rule 7`, `LGL-001`).
+- **State Machine & Human Review Primacy (`governance_repo.py`)**:
+  - `transition_eu_screen_status`: Enforces mandatory human approval (`is_human=True`); machine self-approval raises `ConstitutionalViolationError` (`Rule 12/13`).
+  - Hard immutability: In-place mutation of approved informational screens raises `ImmutabilityViolationError`.
+  - Non-destructive append-only supersession via `supersede_eu_screen` with bidirectional lineage tracking (`supersedes_screen_id`, `superseded_by_id`).
+- **Constitutional Output-Eligibility Guard (`verify_output_eligibility`)**:
+  - Guard foundation that unconditionally blocks downstream reporting/publishing unless a screen has `APPROVED_INFORMATIONAL` state, valid versioned disclaimer (`2024-1689-v2`), at least one linked primary evidence record, and authenticated human review identity.
+- **Append-Only Cryptographic Audit Trail**:
+  - Records `CREATE_EU_SCREEN`, `TRANSITION_STATE`, `SUPERSEDE_EU_SCREEN`, and `ADD_EVIDENCE_LINK` with sequential SHA-256 hash chaining and tamper detection.
+- **Testing & Quality Assurance**:
+  - 20 new tests added (19 unit tests in `test_eu_screen_foundation.py` + 1 integration migration test update).
+  - Total test suite: **484 / 484 passed tests** in ~5.3s with zero failures and zero warnings.
+  - Provenance chain verified valid via `make verify-provenance-chain` (`is_valid: true`, 0 anomalies).
+- **Architecture & Traceability Documentation**:
+  - Ratified ADR-017 (`EU AI Act Informational Relevance Screen Foundation & Output Eligibility Guard`) in `docs/DECISIONS.md`.
+  - Updated `docs/ER_DIAGRAM.md` documenting table 22 (`eu_screen_rule_traces`) and all new screen columns.
+  - Updated `docs/REQUIREMENTS_TRACEABILITY.md` (`GOV-004`, `AUD-001`, `AUD-002`, `LGL-002`, `LGL-003` verified; `GOV-003`, `LGL-001` in progress).
+  - Updated `docs/PROJECT_STATUS.md` and `docs/NEXT_SESSION.md`.
+
+### Hard Boundaries Enforced in Phase 5 Increment 2C-1
+- Phase 5 Increments 2C-2 and 2C-3 explicitly deferred and not started.
+- Zero evaluation rules, screening logic, or conceptual scope rules implemented.
+- `eu_screen.py`, `eu_ai_act_rules.py`, `EURelevanceScreeningEngine`, and `eu_output_linter.py` deferred until authorized sub-increments.
+- Zero LLM, Gemini, embedding, or generative model calls.
+- Zero live network retrieval, scraping, or external APIs.
+- Zero UI/API endpoints, dashboard exposure, or publishing paths.
+- Zero legal determinations, statutory applicability conclusions, or violation assertions.
+
 ## [Phase 5 Increment 2B] - 2026-10-21
 
 ### Added

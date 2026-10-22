@@ -2,18 +2,18 @@
 **Project:** AI Incident Monitor
 **Organization:** AI Guardians LLC
 **Document Identifier:** DOC-ERD-001
-**Milestone:** Phase 5 Increment 2A (Governance Reference Library & Relational Data Foundation)
+**Milestone:** Phase 5 Increment 2C-1 (EU AI Act Informational Relevance Screen Foundation)
 **Status:** ACTIVE
 
 ---
 
 ## 1. Relational Database Schema Overview
 
-The AI Incident Monitor persistence foundation comprises 21 relational tables managed via SQLAlchemy 2.0 ORM and Alembic migrations:
+The AI Incident Monitor persistence foundation comprises 22 relational tables managed via SQLAlchemy 2.0 ORM and Alembic migrations:
 - **Core Entities**: `incidents`, `claims`, `evidence_records`, `source_references`, `quote_spans`, `claim_evidence_links`
 - **Epistemic & Causal Layer**: `causal_assessments`, `ai_involvement_assessments`, `uncertainty_records`, `disputed_facts`
 - **Assessment & Severity Layer**: `severity_assessments`
-- **Governance Framework Mapping Layer (Migration 003)**: `framework_reference_sets`, `framework_controls`, `incident_framework_mappings`, `eu_legal_relevance_screens`, `mapping_evidence_links`, `governance_audit_logs`
+- **Governance Framework Mapping Layer (Migrations 003, 004, 005)**: `framework_reference_sets`, `framework_controls`, `incident_framework_mappings`, `eu_legal_relevance_screens`, `eu_screen_rule_traces`, `mapping_evidence_links`, `governance_audit_logs`
 - **Ingestion & Deduplication Layer**: `raw_import_records`, `dedup_candidates`
 - **Governance & Audit Trail**: `human_review_records`, `audit_logs`, `governance_audit_logs`
 
@@ -46,6 +46,7 @@ erDiagram
     framework_reference_sets ||--o{ framework_controls : "contains"
     framework_reference_sets ||--o{ incident_framework_mappings : "defines"
     framework_reference_sets ||--o{ eu_legal_relevance_screens : "defines"
+    framework_reference_sets ||--o{ eu_screen_rule_traces : "defines"
     framework_reference_sets ||--o| framework_reference_sets : "supersedes"
 
     framework_controls ||--o{ incident_framework_mappings : "referenced_by"
@@ -54,6 +55,7 @@ erDiagram
     incident_framework_mappings ||--o| incident_framework_mappings : "supersedes"
 
     eu_legal_relevance_screens ||--o{ mapping_evidence_links : "grounded_by"
+    eu_legal_relevance_screens ||--o{ eu_screen_rule_traces : "evaluated_by"
     eu_legal_relevance_screens ||--o| eu_legal_relevance_screens : "supersedes"
 
     raw_import_records ||--o{ incidents : "ingested_into"
@@ -169,17 +171,32 @@ erDiagram
         string id PK
         string incident_id FK
         string reference_set_id FK
+        string screen_version
+        string status
+        string relevance_level
+        string nexus_assessment
         string territorial_nexus
+        string ai_system_context
         string ai_system_relevance
         json actor_roles
+        string actor_role_confidence
         string risk_class
         string serious_incident_relevance
+        json conceptual_risk_areas
         json potentially_relevant_articles
+        json potentially_relevant_reference_ids
         json operational_obligations
+        json operational_relevance_areas
         text applicability_date_assessment
+        string timing_assessment
+        json known_facts
+        json unknowns
+        json disputed_facts
         json missing_facts
+        json follow_up_questions
+        text rationale
         string confidence
-        string status
+        string disclaimer_version
         text disclaimer_text
         string generated_by
         string reviewed_by
@@ -187,8 +204,19 @@ erDiagram
         datetime reviewed_at
         string supersedes_screen_id
         string superseded_by_id
+        json metadata_json
         datetime created_at
         datetime updated_at
+    }
+
+    eu_screen_rule_traces {
+        string id PK
+        string eu_legal_relevance_screen_id FK
+        string rule_id
+        string rule_version
+        string reference_set_id FK
+        json matched_condition_ids
+        datetime created_at
     }
 
     mapping_evidence_links {

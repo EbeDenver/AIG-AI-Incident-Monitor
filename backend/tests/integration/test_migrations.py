@@ -67,7 +67,11 @@ def test_alembic_upgrade_downgrade_cycle(temp_alembic_config: tuple[Config, str,
         "governance_audit_logs",
     }
 
-    all_expected_tables = foundation_tables | governance_tables
+    inc2c_tables = {
+        "eu_screen_rule_traces",
+    }
+
+    all_expected_tables = foundation_tables | governance_tables | inc2c_tables
 
     # 1. Upgrade to 002 (Phase 5 Increment 1 state)
     command.upgrade(alembic_cfg, "002")
@@ -76,7 +80,16 @@ def test_alembic_upgrade_downgrade_cycle(temp_alembic_config: tuple[Config, str,
     assert foundation_tables.issubset(tables_002)
     assert len(governance_tables.intersection(tables_002)) == 0, "003 tables should not exist yet"
 
-    # 2. Upgrade to head (004)
+    # 2. Upgrade to 004 (Phase 5 Increment 2B state)
+    command.upgrade(alembic_cfg, "004")
+    inspector_004 = inspect(engine)
+    tables_004 = set(inspector_004.get_table_names())
+    assert (foundation_tables | governance_tables).issubset(tables_004)
+    assert len(inc2c_tables.intersection(tables_004)) == 0, "005 tables should not exist at 004"
+    screen_cols_004 = {col["name"] for col in inspector_004.get_columns("eu_legal_relevance_screens")}
+    assert "screen_version" not in screen_cols_004, "screen_version should not exist at 004"
+
+    # 3. Upgrade to head (005 - Phase 5 Increment 2C-1 state)
     command.upgrade(alembic_cfg, "head")
     inspector_head = inspect(engine)
     created_tables = set(inspector_head.get_table_names())
@@ -87,20 +100,52 @@ def test_alembic_upgrade_downgrade_cycle(temp_alembic_config: tuple[Config, str,
     assert "rule_id" in mapping_cols, "rule_id column must exist after 004 upgrade"
     assert "rule_version" in mapping_cols, "rule_version column must exist after 004 upgrade"
 
+    # Verify 005 columns exist on eu_legal_relevance_screens
+    screen_cols_head = {col["name"] for col in inspector_head.get_columns("eu_legal_relevance_screens")}
+    expected_005_cols = {
+        "screen_version",
+        "relevance_level",
+        "nexus_assessment",
+        "ai_system_context",
+        "actor_role_confidence",
+        "conceptual_risk_areas",
+        "potentially_relevant_reference_ids",
+        "operational_relevance_areas",
+        "timing_assessment",
+        "known_facts",
+        "unknowns",
+        "disputed_facts",
+        "follow_up_questions",
+        "rationale",
+        "disclaimer_version",
+        "metadata_json",
+    }
+    assert expected_005_cols.issubset(screen_cols_head), f"Missing 005 columns: {expected_005_cols - screen_cols_head}"
+
     # Verify foreign key check passes on head
     with engine.connect() as conn:
         fk_violations = conn.execute(text("PRAGMA foreign_key_check;")).fetchall()
         assert len(fk_violations) == 0, f"Foreign key check violations: {fk_violations}"
 
-    # 3. Test selective downgrade: 004 -> 003
+    # 4. Test selective downgrade: 005 -> 004
+    command.downgrade(alembic_cfg, "004")
+    inspector_down_to_004 = inspect(engine)
+    tables_down_004 = set(inspector_down_to_004.get_table_names())
+    assert (foundation_tables | governance_tables).issubset(tables_down_004)
+    assert "eu_screen_rule_traces" not in tables_down_004, "eu_screen_rule_traces must be dropped by 005 downgrade"
+    screen_cols_down_004 = {col["name"] for col in inspector_down_to_004.get_columns("eu_legal_relevance_screens")}
+    assert "screen_version" not in screen_cols_down_004, "screen_version must be dropped by 005 downgrade"
+    assert "relevance_level" not in screen_cols_down_004, "relevance_level must be dropped by 005 downgrade"
+
+    # 5. Test selective downgrade: 004 -> 003
     command.downgrade(alembic_cfg, "003")
     inspector_down_to_003 = inspect(engine)
     mapping_cols_003 = {col["name"] for col in inspector_down_to_003.get_columns("incident_framework_mappings")}
     assert "rule_id" not in mapping_cols_003, "rule_id column must be dropped by 004 downgrade"
     assert "rule_version" not in mapping_cols_003, "rule_version column must be dropped by 004 downgrade"
-    assert all_expected_tables.issubset(set(inspector_down_to_003.get_table_names())), "003 tables must remain intact"
+    assert (foundation_tables | governance_tables).issubset(set(inspector_down_to_003.get_table_names())), "003 tables must remain intact"
 
-    # 4. Test selective downgrade: 003 -> 002 (Binding Correction 10)
+    # 6. Test selective downgrade: 003 -> 002 (Binding Correction 10)
     # Must remove ONLY objects created by migration 003, leaving earlier records intact
     command.downgrade(alembic_cfg, "002")
     inspector_down_to_002 = inspect(engine)
@@ -109,14 +154,14 @@ def test_alembic_upgrade_downgrade_cycle(temp_alembic_config: tuple[Config, str,
     for gov_table in governance_tables:
         assert gov_table not in tables_after_002_down, f"Table {gov_table} must be dropped by 003 downgrade"
 
-    # 5. Downgrade from 002 to base
+    # 7. Downgrade from 002 to base
     command.downgrade(alembic_cfg, "base")
     inspector_after_down = inspect(engine)
     tables_after_down = set(inspector_after_down.get_table_names())
     data_tables_remaining = tables_after_down - {"alembic_version"}
     assert len(data_tables_remaining) == 0, f"Tables remained after downgrade to base: {data_tables_remaining}"
 
-    # 6. Re-upgrade to head (idempotency verification)
+    # 8. Re-upgrade to head (idempotency verification)
     command.upgrade(alembic_cfg, "head")
     inspector_reup = inspect(engine)
     recreated_tables = set(inspector_reup.get_table_names())
@@ -124,6 +169,8 @@ def test_alembic_upgrade_downgrade_cycle(temp_alembic_config: tuple[Config, str,
     recreated_mapping_cols = {col["name"] for col in inspector_reup.get_columns("incident_framework_mappings")}
     assert "rule_id" in recreated_mapping_cols
     assert "rule_version" in recreated_mapping_cols
+    recreated_screen_cols = {col["name"] for col in inspector_reup.get_columns("eu_legal_relevance_screens")}
+    assert expected_005_cols.issubset(recreated_screen_cols)
 
     with engine.connect() as conn:
         fk_violations = conn.execute(text("PRAGMA foreign_key_check;")).fetchall()

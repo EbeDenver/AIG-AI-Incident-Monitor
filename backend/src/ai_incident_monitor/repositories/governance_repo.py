@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from ai_incident_monitor.db.models.governance import (
     EULegalRelevanceScreenModel,
+    EUScreenRuleTraceModel,
     FrameworkControlModel,
     FrameworkReferenceSetModel,
     GovernanceAuditLogModel,
@@ -24,13 +25,17 @@ from ai_incident_monitor.domain.common import (
     ImmutabilityViolationError,
 )
 from ai_incident_monitor.governance.enums import (
+    EUScreenStatus,
     GovernanceAuditEventType,
     MappingStatus,
 )
 from ai_incident_monitor.governance.models import (
+    EU_AI_ACT_DISCLAIMER_V2,
+    EU_AI_ACT_DISCLAIMER_VERSION,
     EU_AI_ACT_STATUTORY_DISCLAIMER,
     FrameworkReferenceSetSchema,
     GovernanceActorIdentity,
+    verify_output_eligibility,
 )
 
 
@@ -391,30 +396,107 @@ class GovernanceRepository:
         screen_id = f"euscreen_{uuid.uuid4().hex[:16]}"
         now = datetime.now(timezone.utc)
 
+        status = screen_data.get("status", screen_data.get("screen_status", EUScreenStatus.DRAFT.value))
+        if hasattr(status, "value"):
+            status = status.value
+
+        relevance_level = screen_data.get("relevance_level", "INSUFFICIENT_INFORMATION")
+        if hasattr(relevance_level, "value"):
+            relevance_level = relevance_level.value
+
+        nexus_assessment = screen_data.get("nexus_assessment", "INSUFFICIENT_NEXUS_INFORMATION")
+        if hasattr(nexus_assessment, "value"):
+            nexus_assessment = nexus_assessment.value
+
+        actor_role_confidence = screen_data.get("actor_role_confidence", "UNKNOWN")
+        if hasattr(actor_role_confidence, "value"):
+            actor_role_confidence = actor_role_confidence.value
+
+        timing_assessment = screen_data.get("timing_assessment", "NOT_ASSESSED")
+        if hasattr(timing_assessment, "value"):
+            timing_assessment = timing_assessment.value
+
+        serious_incident_relevance = screen_data.get(
+            "serious_incident_relevance", "INSUFFICIENT_INFORMATION"
+        )
+        if hasattr(serious_incident_relevance, "value"):
+            serious_incident_relevance = serious_incident_relevance.value
+
+        confidence = screen_data.get("confidence", "INSUFFICIENT")
+        if hasattr(confidence, "value"):
+            confidence = confidence.value
+
+        # Mandatory versioned disclaimer enforcement
+        disclaimer_ver = screen_data.get("disclaimer_version")
+        if disclaimer_ver == EU_AI_ACT_DISCLAIMER_VERSION or disclaimer_ver == "2024-1689-v2":
+            disclaimer_version = EU_AI_ACT_DISCLAIMER_VERSION
+            disclaimer_text = EU_AI_ACT_DISCLAIMER_V2
+        elif disclaimer_ver is None or disclaimer_ver == "2024-1689-v1":
+            disclaimer_version = "2024-1689-v1"
+            disclaimer_text = EU_AI_ACT_STATUTORY_DISCLAIMER
+        else:
+            raise ValueError(f"Unsupported disclaimer_version: '{disclaimer_ver}'")
+
         screen = EULegalRelevanceScreenModel(
             id=screen_id,
             incident_id=screen_data["incident_id"],
             reference_set_id=screen_data["reference_set_id"],
+            screen_version=screen_data.get("screen_version", "1.0.0"),
+            status=status,
+            relevance_level=relevance_level,
+            nexus_assessment=nexus_assessment,
             territorial_nexus=screen_data.get("territorial_nexus", "INSUFFICIENT_INFORMATION"),
+            ai_system_context=screen_data.get("ai_system_context", "INSUFFICIENT_INFORMATION"),
             ai_system_relevance=screen_data.get("ai_system_relevance", "INSUFFICIENT_INFORMATION"),
-            actor_roles=screen_data.get("actor_roles", []),
+            actor_roles=list(screen_data.get("actor_roles", [])),
+            actor_role_confidence=actor_role_confidence,
             risk_class=screen_data.get("risk_class", "INSUFFICIENT_INFORMATION"),
-            serious_incident_relevance=screen_data.get("serious_incident_relevance", "INSUFFICIENT_INFORMATION"),
-            potentially_relevant_articles=screen_data.get("potentially_relevant_articles", []),
-            operational_obligations=screen_data.get("operational_obligations", []),
+            serious_incident_relevance=serious_incident_relevance,
+            conceptual_risk_areas=list(screen_data.get("conceptual_risk_areas", [])),
+            potentially_relevant_articles=list(screen_data.get("potentially_relevant_articles", [])),
+            potentially_relevant_reference_ids=list(screen_data.get("potentially_relevant_reference_ids", [])),
+            operational_obligations=list(screen_data.get("operational_obligations", [])),
+            operational_relevance_areas=list(screen_data.get("operational_relevance_areas", [])),
             applicability_date_assessment=screen_data.get("applicability_date_assessment", "Pending factual evaluation"),
-            missing_facts=screen_data.get("missing_facts", []),
-            confidence=screen_data.get("confidence", "INSUFFICIENT"),
-            status=screen_data.get("status", MappingStatus.DRAFT.value),
-            disclaimer_text=EU_AI_ACT_STATUTORY_DISCLAIMER,
+            timing_assessment=timing_assessment,
+            known_facts=list(screen_data.get("known_facts", [])),
+            unknowns=list(screen_data.get("unknowns", [])),
+            disputed_facts=list(screen_data.get("disputed_facts", [])),
+            missing_facts=list(screen_data.get("missing_facts", [])),
+            follow_up_questions=list(screen_data.get("follow_up_questions", [])),
+            rationale=screen_data.get("rationale", ""),
+            confidence=confidence,
+            disclaimer_version=disclaimer_version,
+            disclaimer_text=disclaimer_text,
             generated_by=screen_data.get("generated_by", actor.actor_id),
             reviewed_by=screen_data.get("reviewed_by"),
             generated_at=screen_data.get("generated_at", now),
             reviewed_at=screen_data.get("reviewed_at"),
             supersedes_screen_id=screen_data.get("supersedes_screen_id"),
             superseded_by_id=None,
+            metadata_json=screen_data.get("metadata_json", {}),
         )
         self.session.add(screen)
+
+        # Handle rule traces if provided in screen_data
+        rule_traces = screen_data.get("rule_traces", [])
+        for rt in rule_traces:
+            rt_id = f"eutrace_{uuid.uuid4().hex[:16]}"
+            rt_rule_id = rt.rule_id if hasattr(rt, "rule_id") else rt["rule_id"]
+            rt_version = rt.rule_version if hasattr(rt, "rule_version") else rt.get("rule_version", "1.0.0")
+            rt_refset = rt.reference_set_id if hasattr(rt, "reference_set_id") else rt.get("reference_set_id", screen_data["reference_set_id"])
+            rt_matched = rt.matched_condition_ids if hasattr(rt, "matched_condition_ids") else rt.get("matched_condition_ids", [])
+            trace_model = EUScreenRuleTraceModel(
+                id=rt_id,
+                eu_legal_relevance_screen_id=screen_id,
+                rule_id=rt_rule_id,
+                rule_version=rt_version,
+                reference_set_id=rt_refset,
+                matched_condition_ids=list(rt_matched),
+                created_at=now,
+            )
+            self.session.add(trace_model)
+
         self.session.flush()
 
         after_state = self._serialize_screen_state(screen)
@@ -447,6 +529,75 @@ class GovernanceRepository:
             stmt = stmt.where(EULegalRelevanceScreenModel.superseded_by_id.is_(None))
         return list(self.session.execute(stmt).scalars().all())
 
+    def transition_eu_screen_status(
+        self,
+        screen_id: str,
+        new_status: EUScreenStatus | MappingStatus | str,
+        actor: GovernanceActorIdentity,
+        rationale: str = "",
+    ) -> EULegalRelevanceScreenModel:
+        """Transition the review state of an EU informational screen.
+
+        Constitutional Rules 12 & 13: An automated model/LLM can NEVER approve an assessment.
+        Setting status to APPROVED_INFORMATIONAL strictly requires actor.is_human == True.
+        Approved screens are immutable and cannot be mutated in place; edits must supersede.
+        """
+        screen = self.session.get(EULegalRelevanceScreenModel, screen_id)
+        if screen is None:
+            raise ValueError(f"EU legal relevance screen not found: {screen_id}")
+
+        new_status_str = new_status.value if hasattr(new_status, "value") else str(new_status)
+
+        if screen.status == EUScreenStatus.APPROVED_INFORMATIONAL.value:
+            raise ImmutabilityViolationError(
+                f"Cannot mutate approved EU screen '{screen_id}' in place. Reviewer edits must "
+                "create a superseding screen record."
+            )
+
+        now = datetime.now(timezone.utc)
+
+        if new_status_str == EUScreenStatus.APPROVED_INFORMATIONAL.value:
+            if not actor.is_human:
+                raise ConstitutionalViolationError(
+                    "Automated self-approval forbidden (Rule 12). Only authenticated human reviewer "
+                    "with is_human=True can approve EU informational screens."
+                )
+
+            # Temporarily apply reviewer identity for output eligibility verification
+            screen.reviewed_by = actor.actor_id
+            screen.reviewed_at = now
+            screen.status = new_status_str
+
+            evidence_links = self.get_eu_screen_evidence_links(screen.id)
+            is_eligible, reasons = verify_output_eligibility(
+                screen, evidence_links=evidence_links, raise_error=False
+            )
+            if not is_eligible:
+                self.session.expire(screen)
+                raise ConstitutionalViolationError(
+                    f"Cannot approve EU screen '{screen_id}' due to eligibility failure: {'; '.join(reasons)}"
+                )
+
+        before_state = self._serialize_screen_state(screen)
+
+        screen.status = new_status_str
+        screen.reviewed_by = actor.actor_id
+        screen.reviewed_at = now
+        self.session.flush()
+
+        after_state = self._serialize_screen_state(screen)
+        self.record_governance_audit_event(
+            entity_type="eu_legal_relevance_screens",
+            entity_id=screen.id,
+            transition_type=GovernanceAuditEventType.TRANSITION_STATE,
+            actor=actor,
+            before_state=before_state,
+            after_state=after_state,
+            details={"new_status": new_status_str, "rationale": rationale},
+        )
+
+        return screen
+
     def supersede_eu_screen(
         self,
         original_screen_id: str,
@@ -465,57 +616,100 @@ class GovernanceRepository:
         new_screen_id = f"euscreen_{uuid.uuid4().hex[:16]}"
         now = datetime.now(timezone.utc)
 
+        target_disclaimer_ver = updated_attributes.get("disclaimer_version", original.disclaimer_version)
+        if target_disclaimer_ver == EU_AI_ACT_DISCLAIMER_VERSION or target_disclaimer_ver == "2024-1689-v2":
+            disclaimer_ver = EU_AI_ACT_DISCLAIMER_VERSION
+            disclaimer_txt = EU_AI_ACT_DISCLAIMER_V2
+        else:
+            disclaimer_ver = "2024-1689-v1"
+            disclaimer_txt = EU_AI_ACT_STATUTORY_DISCLAIMER
+
         merged_data: dict[str, Any] = {
             "incident_id": original.incident_id,
             "reference_set_id": original.reference_set_id,
+            "screen_version": original.screen_version,
             "territorial_nexus": original.territorial_nexus,
+            "nexus_assessment": original.nexus_assessment,
+            "ai_system_context": original.ai_system_context,
             "ai_system_relevance": original.ai_system_relevance,
             "actor_roles": list(original.actor_roles),
+            "actor_role_confidence": original.actor_role_confidence,
             "risk_class": original.risk_class,
             "serious_incident_relevance": original.serious_incident_relevance,
+            "conceptual_risk_areas": list(original.conceptual_risk_areas),
             "potentially_relevant_articles": list(original.potentially_relevant_articles),
+            "potentially_relevant_reference_ids": list(original.potentially_relevant_reference_ids),
             "operational_obligations": list(original.operational_obligations),
+            "operational_relevance_areas": list(original.operational_relevance_areas),
             "applicability_date_assessment": original.applicability_date_assessment,
+            "timing_assessment": original.timing_assessment,
+            "known_facts": list(original.known_facts),
+            "unknowns": list(original.unknowns),
+            "disputed_facts": list(original.disputed_facts),
             "missing_facts": list(original.missing_facts),
+            "follow_up_questions": list(original.follow_up_questions),
+            "rationale": original.rationale,
             "confidence": original.confidence,
-            "status": MappingStatus.CANDIDATE.value if actor.is_human else MappingStatus.DRAFT.value,
-            "disclaimer_text": EU_AI_ACT_STATUTORY_DISCLAIMER,
+            "relevance_level": original.relevance_level,
+            "status": EUScreenStatus.CANDIDATE.value if actor.is_human else EUScreenStatus.DRAFT.value,
+            "disclaimer_version": disclaimer_ver,
+            "disclaimer_text": disclaimer_txt,
             "generated_by": actor.actor_id,
             "reviewed_by": actor.actor_id if actor.is_human else None,
             "generated_at": now,
             "reviewed_at": now if actor.is_human else None,
             "supersedes_screen_id": original.id,
+            "metadata_json": dict(original.metadata_json),
         }
         merged_data.update(updated_attributes)
+        # Always enforce mandatory disclaimer text matching disclaimer_version
+        merged_data["disclaimer_version"] = disclaimer_ver
+        merged_data["disclaimer_text"] = disclaimer_txt
 
         new_screen = EULegalRelevanceScreenModel(
             id=new_screen_id,
             incident_id=merged_data["incident_id"],
             reference_set_id=merged_data["reference_set_id"],
+            screen_version=merged_data["screen_version"],
+            status=merged_data["status"],
+            relevance_level=merged_data["relevance_level"],
+            nexus_assessment=merged_data["nexus_assessment"],
             territorial_nexus=merged_data["territorial_nexus"],
+            ai_system_context=merged_data["ai_system_context"],
             ai_system_relevance=merged_data["ai_system_relevance"],
             actor_roles=merged_data["actor_roles"],
+            actor_role_confidence=merged_data["actor_role_confidence"],
             risk_class=merged_data["risk_class"],
             serious_incident_relevance=merged_data["serious_incident_relevance"],
+            conceptual_risk_areas=merged_data["conceptual_risk_areas"],
             potentially_relevant_articles=merged_data["potentially_relevant_articles"],
+            potentially_relevant_reference_ids=merged_data["potentially_relevant_reference_ids"],
             operational_obligations=merged_data["operational_obligations"],
+            operational_relevance_areas=merged_data["operational_relevance_areas"],
             applicability_date_assessment=merged_data["applicability_date_assessment"],
+            timing_assessment=merged_data["timing_assessment"],
+            known_facts=merged_data["known_facts"],
+            unknowns=merged_data["unknowns"],
+            disputed_facts=merged_data["disputed_facts"],
             missing_facts=merged_data["missing_facts"],
+            follow_up_questions=merged_data["follow_up_questions"],
+            rationale=merged_data["rationale"],
             confidence=merged_data["confidence"],
-            status=merged_data["status"],
-            disclaimer_text=EU_AI_ACT_STATUTORY_DISCLAIMER,
+            disclaimer_version=merged_data["disclaimer_version"],
+            disclaimer_text=merged_data["disclaimer_text"],
             generated_by=merged_data["generated_by"],
             reviewed_by=merged_data.get("reviewed_by"),
             generated_at=merged_data["generated_at"],
             reviewed_at=merged_data.get("reviewed_at"),
             supersedes_screen_id=original.id,
             superseded_by_id=None,
+            metadata_json=merged_data["metadata_json"],
         )
         self.session.add(new_screen)
 
         original_before = self._serialize_screen_state(original)
         original.superseded_by_id = new_screen_id
-        original.status = MappingStatus.SUPERSEDED.value
+        original.status = EUScreenStatus.SUPERSEDED.value
         self.session.flush()
 
         original_after = self._serialize_screen_state(original)
@@ -541,6 +735,65 @@ class GovernanceRepository:
         )
 
         return new_screen
+
+    def add_eu_screen_rule_trace(
+        self,
+        screen_id: str,
+        rule_id: str,
+        rule_version: str,
+        reference_set_id: str,
+        matched_condition_ids: Optional[list[str]] = None,
+    ) -> EUScreenRuleTraceModel:
+        """Record a fine-grained deterministic rule evaluation trace for an EU screen."""
+        trace_id = f"eutrace_{uuid.uuid4().hex[:16]}"
+        now = datetime.now(timezone.utc)
+        trace = EUScreenRuleTraceModel(
+            id=trace_id,
+            eu_legal_relevance_screen_id=screen_id,
+            rule_id=rule_id,
+            rule_version=rule_version,
+            reference_set_id=reference_set_id,
+            matched_condition_ids=list(matched_condition_ids or []),
+            created_at=now,
+        )
+        self.session.add(trace)
+        self.session.flush()
+        return trace
+
+    def get_eu_screen_rule_traces(self, screen_id: str) -> list[EUScreenRuleTraceModel]:
+        """Fetch all rule evaluation traces for an EU screen."""
+        stmt = (
+            select(EUScreenRuleTraceModel)
+            .where(EUScreenRuleTraceModel.eu_legal_relevance_screen_id == screen_id)
+            .order_by(EUScreenRuleTraceModel.created_at.asc())
+        )
+        return list(self.session.execute(stmt).scalars().all())
+
+    def get_eu_screen_evidence_links(self, screen_id: str) -> list[MappingEvidenceLinkModel]:
+        """Fetch all evidence links connected to an EU screen."""
+        stmt = (
+            select(MappingEvidenceLinkModel)
+            .where(MappingEvidenceLinkModel.eu_legal_relevance_screen_id == screen_id)
+            .order_by(MappingEvidenceLinkModel.created_at.asc())
+        )
+        return list(self.session.execute(stmt).scalars().all())
+
+    def add_eu_screen_evidence_link(
+        self,
+        screen_id: str,
+        evidence_id: str,
+        claim_type: str = "EVIDENCE_LINK",
+        relevance_note: Optional[str] = None,
+        actor: Optional[GovernanceActorIdentity] = None,
+    ) -> MappingEvidenceLinkModel:
+        """Convenience method connecting an evidence record to an EU legal screen."""
+        return self.add_evidence_link(
+            screen_id=screen_id,
+            evidence_id=evidence_id,
+            claim_type=claim_type,
+            relevance_note=relevance_note,
+            actor=actor,
+        )
 
     # --------------------------------------------------------------------------
     # Evidence Links
@@ -740,14 +993,36 @@ class GovernanceRepository:
             "id": s.id,
             "incident_id": s.incident_id,
             "reference_set_id": s.reference_set_id,
+            "screen_version": s.screen_version,
+            "status": s.status,
+            "relevance_level": s.relevance_level,
+            "nexus_assessment": s.nexus_assessment,
             "territorial_nexus": s.territorial_nexus,
+            "ai_system_context": s.ai_system_context,
             "ai_system_relevance": s.ai_system_relevance,
             "actor_roles": list(s.actor_roles),
+            "actor_role_confidence": s.actor_role_confidence,
             "risk_class": s.risk_class,
             "serious_incident_relevance": s.serious_incident_relevance,
+            "conceptual_risk_areas": list(s.conceptual_risk_areas),
             "potentially_relevant_articles": list(s.potentially_relevant_articles),
+            "potentially_relevant_reference_ids": list(s.potentially_relevant_reference_ids),
             "operational_obligations": list(s.operational_obligations),
-            "status": s.status,
+            "operational_relevance_areas": list(s.operational_relevance_areas),
+            "applicability_date_assessment": s.applicability_date_assessment,
+            "timing_assessment": s.timing_assessment,
+            "known_facts": list(s.known_facts),
+            "unknowns": list(s.unknowns),
+            "disputed_facts": list(s.disputed_facts),
+            "missing_facts": list(s.missing_facts),
+            "follow_up_questions": list(s.follow_up_questions),
+            "rationale": s.rationale,
+            "confidence": s.confidence,
+            "disclaimer_version": s.disclaimer_version,
+            "disclaimer_text": s.disclaimer_text,
+            "generated_by": s.generated_by,
+            "reviewed_by": s.reviewed_by,
             "supersedes_screen_id": s.supersedes_screen_id,
             "superseded_by_id": s.superseded_by_id,
+            "metadata_json": s.metadata_json,
         }
