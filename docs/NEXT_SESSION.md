@@ -1,59 +1,60 @@
-# NEXT SESSION HANDOFF: Phase 5 Increment 2A Complete / Increment 2B Pending
-**Project:** AI Incident Monitor
-**Organization:** AI Guardians LLC
-**Document Identifier:** NEXT-001
-**Target Milestone:** Phase 5, Increment 2A (Reference Library & Relational Data Foundation) Completed; Increment 2B (OECD & NIST Mapping Engines) Pending Authorization
-**Parent Handoff:** Phase 5, Increment 1 (AIG-ISI Multi-Dimensional Scoring Core) Merged into `main` via PR #4 (`19db6c35fc1ad854d40b0386f4508f04af571c63`)
-**Effective Date:** 2026-10-21
-**Current Branch:** `phase5-inc2a-reference-foundation`
-**Feature Branch Status:** PR created from `phase5-inc2a-reference-foundation` to `main`
+# NEXT SESSION HANDOFF: Phase 5 Increment 2B Complete / Increment 2C Pending
+**Project:** AI Incident Monitor  
+**Organization:** AI Guardians LLC  
+**Document Identifier:** NEXT-001  
+**Target Milestone:** Phase 5, Increment 2B (OECD & NIST AI RMF Deterministic Mapping Engine) Completed; Increment 2C (EU AI Act Informational Screening Engine) Pending Authorization  
+**Parent Handoff:** Phase 5, Increment 2A (Reference Library & Relational Data Foundation) Merged into `main` via PR #5 (`ba9c3de4f626af813cfd6bf41b110367a57c36e8`)  
+**Effective Date:** 2026-10-21  
+**Current Branch:** `phase5-inc2b-oecd-nist-mapping`  
+**Feature Branch Status:** Implementation complete and verified; ready for review / PR  
 
 ---
 
-## 1. Current State: Phase 5 Increment 2A Implemented & Verified
+## 1. Current State: Phase 5 Increment 2B Implemented & Verified
 
-Phase 5 Increment 2A ("Reference Library & Relational Data Foundation") has been fully implemented, tested, and verified on branch `phase5-inc2a-reference-foundation`:
-- **Branch**: `phase5-inc2a-reference-foundation` (based on `main` at `55bc448`)
-- **Test Suite Status**: **432 passed tests** (382 baseline + 50 new governance and migration tests) in under 65s with zero failures and zero warnings. (Satisfies requirement of at least 430 total tests).
-- **Alembic Migration 003**: Migration `003_governance_framework_mappings.py` verified through complete upgrade/downgrade cycle (001 -> 002 -> 003 -> 002 -> 003) on SQLite and PostgreSQL.
-- **Provenance Integrity**: Verified via `make verify-provenance-chain` (`is_valid: true`).
+Phase 5 Increment 2B ("OECD & NIST AI RMF Deterministic Mapping Engine") has been fully implemented, tested, and verified on branch `phase5-inc2b-oecd-nist-mapping`:
 
-### Deliverables Landed in Increment 2A:
-1. **Reference Library (`frameworks/`)**:
-   - `frameworks/manifest.json`: Cryptographic manifest registering all official reference files with SHA-256 hashes computed over raw UTF-8 file bytes.
-   - `frameworks/oecd/oecd-principles-2024.yaml`: OECD AI Principles (2024 update, Principles 1.1–1.5) with official OECD legal locators.
-   - `frameworks/nist/nist-ai-rmf-1.0.yaml`: NIST AI RMF 1.0 (Functions GOVERN, MAP, MEASURE, MANAGE, 19 categories, 4 subcategories) with NIST SP 1270 citations.
-   - `frameworks/eu-ai-act/eu-ai-act-2024-1689.yaml`: Regulation (EU) 2024/1689 reference nodes (Prohibited Practices, High-Risk categories, GPAI obligations, serious incidents, definitions) with neutral official journal citations and zero unadjudicated legal conclusions.
-2. **Domain Schemas & Standalone Loader (`backend/src/ai_incident_monitor/governance/`)**:
-   - `enums.py`: Controlled vocabularies for frameworks, control levels, OECD/NIST/EU applicability categories, territorial nexus, and audit event types.
-   - `models.py`: Strict Pydantic v2 schemas (`extra="forbid"`, `frozen=True`), anti-fabrication field validators, immutable statutory disclaimers, and audit event structures.
-   - `reference_loader.py`: Zero-dependency, pure-Python deterministic block YAML parser, raw byte SHA-256 calculator, canonical JSON manifest hasher, and manifest validator.
-3. **Relational Persistence & Migration 003 (`backend/src/ai_incident_monitor/db/models/governance.py`)**:
-   - `FrameworkReferenceSetModel` & `FrameworkControlModel`: Versioned framework trees.
-   - `IncidentFrameworkMappingModel`: Evidence-grounded mappings decoupled from severity scores.
-   - `EULegalRelevanceScreenModel`: Informational EU AI Act screening records with statutory disclaimers.
-   - `MappingEvidenceLinkModel`: XOR-constrained junction linking evidence to either mappings or EU screens.
-   - `GovernanceAuditLogModel`: Append-only governance audit log with cryptographic SHA-256 hash chaining.
-   - Migration `003_governance_framework_mappings.py`: Dual-engine PostgreSQL/SQLite migration with clean downgrade.
-4. **Typed Governance Repository (`backend/src/ai_incident_monitor/repositories/governance_repo.py`)**:
-   - CRUD for reference sets, controls, mappings, EU legal screens, and evidence links.
-   - Hard in-place mutation prevention on approved mappings/screens (`ImmutabilityViolationError`).
-   - Non-destructive supersession workflow.
-   - Cryptographic audit trail with chained `event_hash = SHA256(canonical(event) + previous_hash)`.
+- **Branch**: `phase5-inc2b-oecd-nist-mapping` (branched from `main` at `ba9c3de4f626af813cfd6bf41b110367a57c36e8`)
+- **Test Suite Status**: **464 passed tests** (431 baseline + 33 new Increment 2B unit tests: 26 mapping engine + 7 service/review tests) in ~5.6s with zero failures and zero warnings.
+- **Alembic Migration 004**: Migration `004_oecd_nist_mapping_provenance.py` adds `rule_id` and `rule_version` columns to `incident_framework_mappings`. Fully verified through complete upgrade/downgrade cycles (001 -> 002 -> 003 -> 004 -> 003 -> 002 -> base -> head).
+- **Provenance Integrity**: Verified via `make verify-provenance-chain` (`is_valid: true`, 0 anomalies).
+
+### Deliverables Landed in Increment 2B:
+1. **Deterministic Mapping Rules (`backend/src/ai_incident_monitor/governance/rules/`)**:
+   - `oecd_rules.py`: Rules covering all five OECD AI Principles (2024 update: Principles 1.1–1.5), supporting applicability classifications `DIRECTLY_IMPLICATED`, `BROADER_GOVERNANCE_LESSON`, `INSUFFICIENT_EVIDENCE`, `NOT_APPLICABLE`.
+   - `nist_rules.py`: Rules covering all four core Functions (`GOVERN`, `MAP`, `MEASURE`, `MANAGE`), 5 exact Categories (`GOVERN 1`, `GOVERN 2`, `MAP 1`, `MEASURE 2`, `MANAGE 1`), and 4 exact Subcategories (`GOVERN 1.1`, `MAP 1.1`, `MEASURE 2.1`, `MANAGE 1.1`).
+   - Strict NIST hierarchy enforcement (Function -> Category -> Subcategory) with parent reference storage and specificity gates requiring `HIGHLY_SPECIFIC` primary evidence for subcategory candidates.
+2. **Independent Confidence Calculation (`backend/src/ai_incident_monitor/governance/confidence.py`)**:
+   - Multi-factor evidentiary confidence scoring combining quantity, directness, corroboration, and specificity.
+   - Rigorous penalties for material unknowns (-15), disputed evidence (-25), and subcategory granularity (-15 to -30).
+   - Strict confidence bounds (`HIGH`, `MEDIUM`, `LOW`, `INSUFFICIENT`).
+3. **Review State Machine & Gatekeeper (`backend/src/ai_incident_monitor/governance/review_gates.py`)**:
+   - Automated routing to `PENDING_REVIEW` upon triggering gates for sensitive domains (`HEALTH_SAFETY`, `BIOMETRICS`, `LAW_ENFORCEMENT`, `CRITICAL_INFRASTRUCTURE`, `EMPLOYMENT`, `CREDIT`, `EDUCATION`), disputed evidence, low confidence, or subcategory granularity.
+4. **Governance Mapping Engine & Service Layer (`backend/src/ai_incident_monitor/governance/`)**:
+   - `engine.py` (`GovernanceMappingEngine`): Pure deterministic evaluator validating reference integrity against `frameworks/manifest.json`, rejecting unknown or inactive identifiers, and enforcing non-legal terminology.
+   - `mapping_service.py` (`GovernanceMappingService`): Orchestrates reference set DB initialization, candidate persistence, normalized evidence links (`mapping_evidence_links`), and human approval workflows.
+   - Hard human approval enforcement: Rejects machine self-approval with `ConstitutionalViolationError` (Rule 12).
+   - Non-destructive revision supersession: Revisions create append-only records; in-place mutation of approved records raises `ImmutabilityViolationError`.
+5. **Relational Persistence & Migration 004**:
+   - Migration `004_oecd_nist_mapping_provenance.py` adding `rule_id` and `rule_version` columns.
+   - Updated `IncidentFrameworkMappingModel` and `GovernanceRepository`.
+6. **Documentation Updates**:
+   - Created `docs/GOVERNANCE_MAPPING_METHODOLOGY.md` (METH-002).
+   - Updated `docs/DECISIONS.md` (ratified ADR-016).
+   - Updated `docs/ER_DIAGRAM.md` (documented `rule_id` and `rule_version`).
+   - Updated `docs/REQUIREMENTS_TRACEABILITY.md` (`GOV-001`, `GOV-002`, `GOV-005` verified).
+   - Updated `docs/PROJECT_STATUS.md` and `CHANGELOG.md`.
 
 ---
 
 ## 2. Hard Boundaries & Scope Safeguards
 
 The following boundaries must continue to be strictly enforced:
-- **Phase 5 Increment 2B is PENDING AUTHORIZATION.** Do not begin Increment 2B until explicitly instructed by the user.
-- Zero OECD or NIST mapping engines implemented in 2A (reserved for 2B).
-- Zero EU AI Act rule evaluators or classification engines implemented in 2A (reserved for 2C).
+- **Phase 5 Increment 2C is PENDING AUTHORIZATION.** Do not begin EU AI Act screening or classification logic until explicitly authorized.
 - Zero LLM, Gemini, or generative AI calls.
 - Zero live external network calls, scrapers, or RSS background fetching.
 - Zero UI, Substack, dashboard, or public publishing components.
-- Zero unadjudicated legal violation determinations (Constitutional Rule 10/11).
-- All requirements traceability statuses remain `PLANNED` until formal acceptance review.
+- Zero unadjudicated legal violation determinations (Safety Rule 7, Constitutional Rules 10 & 11).
 
 ---
 
@@ -64,8 +65,8 @@ To synchronize, inspect, and verify this branch:
 ```bash
 cd /path/to/AIG-AI-Incident-Monitor
 git fetch origin --prune
-git switch phase5-inc2a-reference-foundation
-git pull --ff-only origin phase5-inc2a-reference-foundation
+git switch phase5-inc2b-oecd-nist-mapping
+git pull --ff-only origin phase5-inc2b-oecd-nist-mapping
 git status --short
 .venv/bin/pytest backend/tests
 make verify-provenance-chain

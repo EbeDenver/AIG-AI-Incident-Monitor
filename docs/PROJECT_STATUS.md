@@ -3,8 +3,8 @@
 **Organization:** AI Guardians LLC
 **Document Identifier:** STAT-001
 **Last Updated:** 2026-10-21
-**Current Milestone:** Phase 5 (AIG-ISI Severity Scoring Engine & Governance Mappings) — INCREMENT 2A COMPLETED (Branch: `phase5-inc2a-reference-foundation`)
-**Overall Status:** GREEN (Phase 5 Increment 2A Complete, 432/432 Tests Passing, 0 Failures, Provenance Chain Valid)
+**Current Milestone:** Phase 5 (AIG-ISI Severity Scoring Engine & Governance Mappings) — INCREMENT 2B COMPLETED (Branch: `phase5-inc2b-oecd-nist-mapping`)
+**Overall Status:** GREEN (Phase 5 Increment 2B Complete, 464/464 Tests Passing, 0 Failures, Provenance Chain Valid)
 
 ---
 
@@ -16,7 +16,7 @@
 | **Phase 2** | **Core Schemas & Epistemic Models** | Pydantic v2 models, epistemic typing, 29 golden fixtures, 89 tests | **COMPLETED** | **2026-10-19** |
 | **Phase 3** | **Data Foundation & Manual Import Engine** | SQLAlchemy 2.0 ORM, dual-engine Alembic, repositories, CSV/JSON/XLSX import, CWE-1236 sanitizer, 4-tier dedup, append-only audit, 144 tests | **COMPLETED** | **2026-10-19** |
 | **Phase 4** | **Secure Ingestion Connectors & Provenance** | SSRF defense, RSS/arXiv connectors, OECD adapter, raw staging store, 30-day purge, manifest hash chaining, XML containment, 197 tests | **COMPLETED** | **2026-10-20** |
-| **Phase 5** | **AIG-ISI Scoring & Governance Map** | AIG-ISI engine, factor rationales, OECD/NIST/EU Act mappers | **IN PROGRESS (Inc 1 Merged, Inc 2A Complete)** | Target: Phase 5 |
+| **Phase 5** | **AIG-ISI Scoring & Governance Map** | AIG-ISI engine, factor rationales, OECD/NIST/EU Act mappers | **IN PROGRESS (Inc 1 Merged, Inc 2A Merged, Inc 2B Complete)** | Target: Phase 5 |
 | **Phase 6** | Editorial Pipeline & Human Review | Substack generator, neutral tone linter, HITL review CLI | Planned | Phase 6 Session |
 | **Phase 7** | End-to-End Harness & Observability | Orchestration, telemetry, multi-Mac test suite, monitoring, Cloudflare deployment prep | Planned | Phase 7 Session |
 
@@ -72,8 +72,12 @@ Based on [`docs/REQUIREMENTS_TRACEABILITY.md`](REQUIREMENTS_TRACEABILITY.md):
     - `SEV-003`: Structural isolation of AIG-ISI from external regulatory classifications (`ADR-012`).
     - `SEV-006`: Automated review holds for high-severity assessments (`ReviewGate.TIER_4_OR_5`, `ReviewStatus.PENDING_REVIEW`).
     - `TST-002`: Deterministic golden-fixture test suite validating AIG-ISI severity scoring repeatability across model versions (`calibration_fixtures.json`, `test_calibration_benchmarks.py`).
-  - `PLANNED (Phases 5–7)`: 31 requirements
-* **Total Verified**: 38 / 69 (55.1%)
+  - `VERIFIED (Phase 5 Increment 2B Governance Mapping Engine)`: 3 requirements
+    - `GOV-001`: Deterministic OECD AI Principles mapping engine (`GovernanceMappingEngine`, `ALL_OECD_RULES`).
+    - `GOV-002`: Deterministic NIST AI RMF 1.0 core functions, categories, and subcategories mapping engine (`GovernanceMappingEngine`, `ALL_NIST_RULES`).
+    - `GOV-005`: Governance mapping orthogonality to AIG-ISI severity scoring (`test_aig_isi_severity_score_does_not_affect_mapping`).
+  - `PLANNED (Phases 5–7)`: 28 requirements
+* **Total Verified**: 41 / 69 (59.4%)
 
 ---
 
