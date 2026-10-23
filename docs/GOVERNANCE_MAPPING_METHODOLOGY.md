@@ -214,3 +214,89 @@ Phase 5 Increment 2C-2 introduces deterministic, offline fact evaluators for pre
 * **`RULE-EU-QUESTIONS-01`:** Analyzes evaluated epistemic voids across nexus, technical autonomy, actor roles, and occurrence timing. Generates neutral, non-leading inquiries and missing fact statements for human investigators.
 * **Strict Non-Judicial Phrasing:** All questions, missing facts, and rationales are validated against `validate_no_legal_language`, ensuring strict exclusion of legal violation terminology.
 
+---
+
+## 7. Regulation (EU) 2024/1689 Deterministic Conceptual Relevance Engine (Increment 2C-3A)
+
+Phase 5 Increment 2C-3A implements a pure, deterministic, evidence-grounded conceptual relevance engine (`EURelevanceScreeningEngine`) evaluating verified incident facts against canonical controls in `frameworks/eu-ai-act/eu-ai-act-2024-1689.yaml`.
+
+### 7.1 Non-Negotiable Safety & Epistemic Boundaries
+
+1. **Informational Screening ONLY:** Evaluations identify conceptual correspondence to statutory themes. They do **NOT** determine legal applicability, territorial jurisdiction, operator classification, compliance, noncompliance, liability, breach, or violation.
+2. **Evidence First (Safety Rule 1):** Zero verified incident evidence records unconditionally yield zero affirmative conceptual findings.
+3. **Validated References Only (Safety Rule 2):** Every conceptual rule and finding maps strictly to an active identifier in the cryptographic reference library (`frameworks/manifest.json`). Invented or unvalidated identifiers trigger a `ConstitutionalViolationError`.
+4. **Epistemic Modesty (Safety Rule 5):** Absent evidence is never interpreted as a negative finding; it is preserved as an explicit unknown.
+5. **Preservation of Disputed Facts:** Contested evidence remains visible, caps confidence at `LOW`, and forces human review.
+6. **Mandatory PENDING_REVIEW (Safety Rule 7):** Every screen and conceptual finding unconditionally enters `PENDING_REVIEW`. No automated process may approve, publish, distribute, or declare a screen eligible for external use.
+7. **Strict Lexical Invariants:** All generated rationales, known facts, and metadata items are validated against `validate_no_legal_language`. Prohibited terms include: `violation`, `breach`, `illegal`, `unlawful`, `legally required`, `statutory duty`, `obligation applies`, `must report`, `liable`, `liability`, `high-risk`, `prohibited`, `subject to an obligation`, `reportable`, `compliant`, `noncompliant`.
+8. **Decoupled Confidence:** Governance screening confidence is calculated independently from AIG-ISI severity and OECD/NIST confidence.
+
+### 7.2 Controlled Conceptual Relevance Ratings
+
+Each evaluated concept is categorized with a controlled informational rating:
+* `POTENTIALLY_RELEVANT_FOR_QUALIFIED_REVIEW`: Verified facts correspond directly to statutory control themes, requiring expert scrutiny.
+* `CONCEPTUALLY_RELEVANT`: Incident facts engage with regulated domain, transparency, or operational control concepts.
+* `INSUFFICIENT_INFORMATION`: Available evidence is inadequate to evaluate correspondence.
+* `NOT_APPARENTLY_RELEVANT`: Documented facts do not demonstrate engagement with the conceptual scope.
+* `NOT_APPLICABLE_TO_RECORDED_CONTEXT`: Concept is demonstrably outside the technical or operational boundaries of the incident.
+
+### 7.3 Conceptual Rule Families (28 Specific Canonical Rules)
+
+#### Rule Family D1: Article 5 Prohibited Practice Concepts
+* **`RULE-EU-CONC-PROHIB-01` (EU-ART-5.1.a):** Subliminal, manipulative, or deceptive behavioral distortion techniques.
+* **`RULE-EU-CONC-PROHIB-02` (EU-ART-5.1.b):** Exploitation of age, disability, or socio-economic vulnerabilities.
+* **`RULE-EU-CONC-PROHIB-03` (EU-ART-5.1.c):** Evaluation or classification based on social behavior (social scoring).
+* **`RULE-EU-CONC-PROHIB-04` (EU-ART-5.1.d):** Predictive policing or individual criminal risk assessments based solely on profiling.
+* **`RULE-EU-CONC-PROHIB-05` (EU-ART-5.1.e):** Untargeted facial image scraping from the internet or CCTV streams.
+* **`RULE-EU-CONC-PROHIB-06` (EU-ART-5.1.f):** Workplace or educational institution emotion recognition.
+* **`RULE-EU-CONC-PROHIB-07` (EU-ART-5.1.g):** Biometric categorization deducing race, political beliefs, or sensitive traits.
+* **`RULE-EU-CONC-PROHIB-08` (EU-ART-5.1.h):** Real-time remote biometric identification in publicly accessible spaces.
+
+#### Rule Family D2: Annex III Regulated Operational Domain Concepts
+* **`RULE-EU-CONC-ANNEX3-01` (EU-ANNEX-III.1):** Remote biometric identification and categorization in permitted contexts.
+* **`RULE-EU-CONC-ANNEX3-02` (EU-ANNEX-III.2):** Safety components in critical physical or digital infrastructure.
+* **`RULE-EU-CONC-ANNEX3-03` (EU-ANNEX-III.3):** Educational admissions, grading, vocational placement, or automated proctoring.
+* **`RULE-EU-CONC-ANNEX3-04` (EU-ANNEX-III.4):** Recruitment screening, job targeting, task allocation, or worker monitoring.
+* **`RULE-EU-CONC-ANNEX3-05` (EU-ANNEX-III.5):** Credit scoring, health/life insurance risk pricing, or essential public assistance eligibility.
+* **`RULE-EU-CONC-ANNEX3-06` (EU-ANNEX-III.6):** Law enforcement individual risk assessments, polygraphs, or evidence evaluation.
+* **`RULE-EU-CONC-ANNEX3-07` (EU-ANNEX-III.7):** Border control, asylum examination, visa adjudication, or traveller verification.
+* **`RULE-EU-CONC-ANNEX3-08` (EU-ANNEX-III.8):** Judicial research, alternative dispute resolution, or democratic/electoral processes.
+
+#### Rule Family D3: Article 50 Transparency Concepts
+* **`RULE-EU-CONC-TRANSP-01` (EU-ART-50.1):** Direct AI-to-human interaction disclosure (conversational chatbots/assistants).
+* **`RULE-EU-CONC-TRANSP-02` (EU-ART-50.2):** Synthetic media, deepfake generation, likeness manipulation, or voice cloning.
+* **`RULE-EU-CONC-TRANSP-04` (EU-ART-50.4):** AI-generated or manipulated public informational text on matters of public interest.
+
+#### Rule Family D4: General-Purpose AI Concepts (Articles 51 & 53)
+* **`RULE-EU-CONC-GPAI-01` (EU-ART-51):** High-compute foundation models ($>10^{25}\text{ FLOPs}$) or systemic risk surface.
+* **`RULE-EU-CONC-GPAI-02` (EU-ART-53):** Technical documentation, copyright compliance policies, and training data summaries.
+
+#### Rule Family D5: Operational Control Concepts (Articles 10, 12, 14, 15, 72, 73)
+* **`RULE-EU-CONC-OPS-DATA` (EU-ART-10):** Training/testing data governance, dataset bias, and demographic curation.
+* **`RULE-EU-CONC-OPS-LOGS` (EU-ART-12):** Automatic event recording, telemetry duration, and technical audit logging.
+* **`RULE-EU-CONC-OPS-OVERSIGHT` (EU-ART-14):** Human oversight mechanisms, stop buttons, and automation bias mitigations.
+* **`RULE-EU-CONC-OPS-ROBUST` (EU-ART-15):** Cybersecurity, prompt injection resilience, and adversarial robustness.
+* **`RULE-EU-CONC-OPS-PMM` (EU-ART-72):** Post-market monitoring systems and field performance drift surveillance.
+* **`RULE-EU-CONC-OPS-REPORTING` (EU-ART-73):** Incident escalation protocols and supervisory authority notifications.
+
+#### Rule Family D6: Serious Incident Conceptual Relevance (Article 3(49))
+* **`RULE-EU-CONC-SERIOUS-01` (EU-ART-3.49):** Serious harm criteria (death, severe health injury, critical infrastructure disruption, or fundamental rights impairment).
+
+### 7.4 Engine Orchestration & Composite Screen Assembly
+
+`EURelevanceScreeningEngine` orchestrates:
+1. Pure fact context evaluation via `evaluate_eu_fact_context` (nexus, AI-system definition, operator roles, timing, epistemic gaps).
+2. Pure conceptual relevance evaluation via `evaluate_eu_conceptual_context` (28 rules across 6 families).
+3. Automatic parent control linkage (`EU-ART-5`, `EU-ART-6`, `EU-ART-50`).
+4. Schema generation into `EULegalRelevanceScreenSchema` with `status=EUScreenStatus.PENDING_REVIEW`, mandatory disclaimer (`EU_AI_ACT_DISCLAIMER_V2`), fine-grained rule traces, and structured findings stored in `metadata_json["conceptual_findings"]`.
+5. Cryptographic audit logging and relational persistence in `eu_legal_relevance_screens` and `eu_screen_rule_traces`.
+
+### 7.5 Explicit Scope Boundary: Phase 5 Increment 2C-3B Deferred
+
+Phase 5 Increment 2C-3A delivers the conceptual relevance engine only. Increment 2C-3B remains deferred and explicitly out of scope:
+* No output linter (`eu_output_linter.py`) has been added.
+* Final external-use output eligibility enforcement is deferred to 2C-3B.
+* Reviewer attestation validation beyond existing 2C-1 mechanics is deferred to 2C-3B.
+* No publishing, Substack, API route, or UI integration exists.
+
+

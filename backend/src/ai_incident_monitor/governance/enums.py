@@ -233,3 +233,39 @@ class GovernanceAuditEventType(str, Enum):
     MANUAL_OVERRIDE = "MANUAL_OVERRIDE"
     CREATE_EU_SCREEN = "CREATE_EU_SCREEN"
     SUPERSEDE_EU_SCREEN = "SUPERSEDE_EU_SCREEN"
+
+
+class EUConceptualRelevanceLevel(str, Enum):
+    """Controlled informational relevance rating for an EU AI Act concept.
+
+    Non-judicial categorization indicating the degree of correspondence between verified
+    incident facts and statutory reference concepts. Does NOT represent legal applicability.
+    """
+
+    POTENTIALLY_RELEVANT_FOR_QUALIFIED_REVIEW = "POTENTIALLY_RELEVANT_FOR_QUALIFIED_REVIEW"
+    CONCEPTUALLY_RELEVANT = "CONCEPTUALLY_RELEVANT"
+    INSUFFICIENT_INFORMATION = "INSUFFICIENT_INFORMATION"
+    NOT_APPARENTLY_RELEVANT = "NOT_APPARENTLY_RELEVANT"
+    NOT_APPLICABLE_TO_RECORDED_CONTEXT = "NOT_APPLICABLE_TO_RECORDED_CONTEXT"
+
+
+class EUConceptType(str, Enum):
+    """Categorical classification of EU AI Act statutory concepts."""
+
+    ARTICLE_5_CONCEPT = "ARTICLE_5_CONCEPT"
+    ANNEX_III_CONCEPT = "ANNEX_III_CONCEPT"
+    ARTICLE_50_CONCEPT = "ARTICLE_50_CONCEPT"
+    GPAI_CONCEPT = "GPAI_CONCEPT"
+    OPERATIONAL_CONTROL_CONCEPT = "OPERATIONAL_CONTROL_CONCEPT"
+    SERIOUS_INCIDENT_CONCEPT = "SERIOUS_INCIDENT_CONCEPT"
+
+
+class EUEvidenceStrength(str, Enum):
+    """Degree of factual evidence substantiating a conceptual observation."""
+
+    DIRECT = "DIRECT"
+    CORROBORATED = "CORROBORATED"
+    INDICATIVE = "INDICATIVE"
+    DISPUTED = "DISPUTED"
+    INSUFFICIENT = "INSUFFICIENT"
+

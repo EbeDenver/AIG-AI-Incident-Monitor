@@ -7,6 +7,9 @@ from ai_incident_monitor.governance.enums import (
     EUActorRole,
     EUActorRoleConfidence,
     EUAISystemRelevance,
+    EUConceptType,
+    EUConceptualRelevanceLevel,
+    EUEvidenceStrength,
     EUNexus,
     EUNexusAssessment,
     EUOperationalObligation,
@@ -25,6 +28,7 @@ from ai_incident_monitor.governance.enums import (
     OECDApplicability,
     SensitiveDomain,
 )
+from ai_incident_monitor.governance.eu_screen import EURelevanceScreeningEngine
 from ai_incident_monitor.governance.mapping_service import GovernanceMappingService
 from ai_incident_monitor.governance.models import (
     EU_AI_ACT_DISCLAIMER_V2,
@@ -32,6 +36,8 @@ from ai_incident_monitor.governance.models import (
     EU_AI_ACT_STATUTORY_DISCLAIMER,
     PROHIBITED_LEGAL_TERMS,
     ConfidenceFactorBreakdown,
+    EUConceptualEvaluationResult,
+    EUConceptualFinding,
     EULegalRelevanceScreenSchema,
     EUScreenRuleTraceSchema,
     FrameworkControlSchema,
@@ -60,14 +66,17 @@ from ai_incident_monitor.governance.reference_loader import (
 from ai_incident_monitor.governance.review_gates import ReviewGateId, evaluate_review_gates
 from ai_incident_monitor.governance.rules import (
     ALL_EU_AISYS_RULES,
+    ALL_EU_CONCEPTUAL_RULES,
     ALL_EU_NEXUS_RULES,
     ALL_EU_ROLE_RULES,
     ALL_NIST_RULES,
     ALL_OECD_RULES,
+    BaseEUConceptualRule,
     BaseEUFactRule,
     BaseNISTRule,
     BaseOECDRule,
     EUFactEvaluationResult,
+    evaluate_eu_conceptual_context,
     evaluate_eu_fact_context,
 )
 
@@ -76,6 +85,9 @@ __all__ = [
     "EUActorRole",
     "EUActorRoleConfidence",
     "EUAISystemRelevance",
+    "EUConceptType",
+    "EUConceptualRelevanceLevel",
+    "EUEvidenceStrength",
     "EUNexus",
     "EUNexusAssessment",
     "EUOperationalObligation",
@@ -99,6 +111,9 @@ __all__ = [
     "OutputIneligibleError",
     "EUScreenRuleTraceSchema",
     "EULegalRelevanceScreenSchema",
+    "EUConceptualFinding",
+    "EUConceptualEvaluationResult",
+    "EURelevanceScreeningEngine",
     "verify_output_eligibility",
     "PROHIBITED_LEGAL_TERMS",
     "ConfidenceFactorBreakdown",
@@ -130,9 +145,12 @@ __all__ = [
     "ALL_EU_NEXUS_RULES",
     "ALL_EU_AISYS_RULES",
     "ALL_EU_ROLE_RULES",
+    "ALL_EU_CONCEPTUAL_RULES",
     "BaseOECDRule",
     "BaseNISTRule",
     "BaseEUFactRule",
+    "BaseEUConceptualRule",
     "EUFactEvaluationResult",
     "evaluate_eu_fact_context",
+    "evaluate_eu_conceptual_context",
 ]
