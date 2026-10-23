@@ -535,6 +535,7 @@ class GovernanceRepository:
         new_status: EUScreenStatus | MappingStatus | str,
         actor: GovernanceActorIdentity,
         rationale: str = "",
+        reviewer_attestation: Optional[Any] = None,
     ) -> EULegalRelevanceScreenModel:
         """Transition the review state of an EU informational screen.
 
@@ -563,14 +564,50 @@ class GovernanceRepository:
                     "with is_human=True can approve EU informational screens."
                 )
 
-            # Temporarily apply reviewer identity for output eligibility verification
+            # Check reviewer rationale against prohibited terms before approving
+            if rationale:
+                from ai_incident_monitor.governance.eu_output_linter import EUOutputLinter
+
+                linter = EUOutputLinter()
+                rationale_findings = linter.lint_text(rationale, "transition_rationale")
+                if rationale_findings:
+                    raise ConstitutionalViolationError(
+                        f"Reviewer rationale contains prohibited legal-conclusion language: {rationale_findings[0].message}"
+                    )
+
+            # Process reviewer attestation
+            from ai_incident_monitor.governance.models import EUReviewerAttestationSchema
+
+            if reviewer_attestation is None:
+                attestation_model = EUReviewerAttestationSchema(
+                    attestor_id=actor.actor_id,
+                    attestor_role=actor.role or "HUMAN_REVIEWER",
+                    is_human=actor.is_human,
+                    attested_at=now,
+                    statement_confirmed=True,
+                )
+            elif isinstance(reviewer_attestation, EUReviewerAttestationSchema):
+                attestation_model = reviewer_attestation
+            else:
+                attestation_model = EUReviewerAttestationSchema.model_validate(reviewer_attestation)
+
+            # Temporarily apply reviewer identity and attestation for output eligibility verification
             screen.reviewed_by = actor.actor_id
             screen.reviewed_at = now
             screen.status = new_status_str
 
+            meta = dict(screen.metadata_json or {})
+            meta["reviewer_attestation"] = attestation_model.model_dump(mode="json")
+            if rationale:
+                meta["reviewer_rationale"] = rationale
+            screen.metadata_json = meta
+
             evidence_links = self.get_eu_screen_evidence_links(screen.id)
             is_eligible, reasons = verify_output_eligibility(
-                screen, evidence_links=evidence_links, raise_error=False
+                screen,
+                evidence_links=evidence_links,
+                reviewer_attestation=attestation_model,
+                raise_error=False,
             )
             if not is_eligible:
                 self.session.expire(screen)
@@ -593,7 +630,11 @@ class GovernanceRepository:
             actor=actor,
             before_state=before_state,
             after_state=after_state,
-            details={"new_status": new_status_str, "rationale": rationale},
+            details={
+                "new_status": new_status_str,
+                "rationale": rationale,
+                "has_attestation": "reviewer_attestation" in (screen.metadata_json or {}),
+            },
         )
 
         return screen
@@ -612,6 +653,17 @@ class GovernanceRepository:
 
         if original.superseded_by_id is not None:
             raise ValueError(f"Screen '{original_screen_id}' has already been superseded by '{original.superseded_by_id}'.")
+
+        # Check supersession rationale against prohibited legal terms
+        if rationale:
+            from ai_incident_monitor.governance.eu_output_linter import EUOutputLinter
+
+            linter = EUOutputLinter()
+            rationale_findings = linter.lint_text(rationale, "supersede_rationale")
+            if rationale_findings:
+                raise ConstitutionalViolationError(
+                    f"Supersede rationale contains prohibited legal-conclusion language: {rationale_findings[0].message}"
+                )
 
         new_screen_id = f"euscreen_{uuid.uuid4().hex[:16]}"
         now = datetime.now(timezone.utc)
@@ -961,6 +1013,59 @@ class GovernanceRepository:
             expected_prev_hash = evt.event_hash
 
         return len(errors) == 0, errors
+
+    def record_linter_audit_event(
+        self,
+        screen_id: str,
+        linter_report: Any,
+        actor: GovernanceActorIdentity,
+    ) -> GovernanceAuditLogModel:
+        """Record an append-only audit event for output linter execution."""
+        screen = self.session.get(EULegalRelevanceScreenModel, screen_id)
+        screen_state = self._serialize_screen_state(screen) if screen else {}
+        return self.record_governance_audit_event(
+            entity_type="eu_legal_relevance_screens",
+            entity_id=screen_id,
+            transition_type=GovernanceAuditEventType.LINTER_EXECUTION,
+            actor=actor,
+            before_state=screen_state,
+            after_state=screen_state,
+            details={
+                "overall_result": getattr(linter_report, "overall_result", str(linter_report)),
+                "is_clean": getattr(linter_report, "is_clean", False),
+                "findings_count": len(getattr(linter_report, "findings", [])),
+                "block_reasons": (
+                    linter_report.block_reasons()
+                    if hasattr(linter_report, "block_reasons")
+                    else []
+                ),
+                "inspected_fields_count": getattr(linter_report, "inspected_fields_count", 0),
+            },
+        )
+
+    def record_output_eligibility_audit_event(
+        self,
+        screen_id: str,
+        is_eligible: bool,
+        reasons: list[str],
+        actor: GovernanceActorIdentity,
+    ) -> GovernanceAuditLogModel:
+        """Record an append-only audit event for output eligibility evaluation."""
+        screen = self.session.get(EULegalRelevanceScreenModel, screen_id)
+        screen_state = self._serialize_screen_state(screen) if screen else {}
+        return self.record_governance_audit_event(
+            entity_type="eu_legal_relevance_screens",
+            entity_id=screen_id,
+            transition_type=GovernanceAuditEventType.OUTPUT_ELIGIBILITY_CHECK,
+            actor=actor,
+            before_state=screen_state,
+            after_state=screen_state,
+            details={
+                "is_eligible": is_eligible,
+                "reasons": reasons,
+                "evaluated_at": datetime.now(timezone.utc).isoformat(),
+            },
+        )
 
     # --------------------------------------------------------------------------
     # State Serializers

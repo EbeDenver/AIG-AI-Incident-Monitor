@@ -660,25 +660,73 @@ class EUConceptualEvaluationResult(BaseModel):
         return v
 
 
+class EUReviewerAttestationSchema(BaseModel):
+    """Immutable human reviewer attestation required for informational screen approval.
+
+    Constitutional Rules 12, 13, 14 & 15:
+    Automated self-approval is forbidden. Approval of informational screens strictly requires
+    an authenticated human reviewer attesting to evidence verification, neutral methodology,
+    and non-legal determination status.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    attestor_id: str = Field(min_length=1, max_length=64, description="Identifier of the authenticated human reviewer")
+    attestor_role: str = Field(min_length=1, max_length=64, description="Role of the authenticated reviewer")
+    is_human: bool = Field(description="Must be strictly True; automated self-attestation is forbidden.")
+    attested_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    statement_confirmed: bool = Field(description="Confirms review of evidence and non-legal-determination status.")
+    attestation_statement: str = Field(
+        default=(
+            "I confirm that this informational governance screen has been evaluated strictly "
+            "against recorded evidence, reflects preliminary informational relevance rather "
+            "than a legal determination or advice, and adheres to AI Guardians governance standards."
+        )
+    )
+    evidence_verified: bool = Field(default=True, description="Confirms primary evidence was examined")
+    linter_checked: bool = Field(default=True, description="Confirms non-legal language validation")
+
+    @field_validator("is_human")
+    @classmethod
+    def validate_is_human(cls, v: bool) -> bool:
+        if v is not True:
+            raise ValueError("Reviewer attestation requires is_human=True; automated attestation is strictly forbidden.")
+        return v
+
+    @field_validator("statement_confirmed")
+    @classmethod
+    def validate_statement_confirmed(cls, v: bool) -> bool:
+        if v is not True:
+            raise ValueError("Reviewer attestation statement must be confirmed.")
+        return v
+
 
 def verify_output_eligibility(
     screen: Any,
     evidence_links: Optional[list[Any]] = None,
+    reviewer_attestation: Optional[EUReviewerAttestationSchema | dict[str, Any]] = None,
+    reference_set: Optional[Any] = None,
     raise_error: bool = False,
 ) -> tuple[bool, list[str]]:
     """Verify whether an EU informational screen satisfies output-eligibility criteria.
 
-    Constitutional output guard foundation (Phase 5 Increment 2C-1):
-    Blocks any screen that lacks:
+    Constitutional Rules 10, 11, 12, 13, 14 & 15 (Phase 5 Increment 2C-3B):
+    Fails closed and blocks external/reporting output unless all 7 gates are satisfied:
     1. Approved informational state: status must be APPROVED_INFORMATIONAL.
-    2. Valid disclaimer: disclaimer_version == '2024-1689-v2' and disclaimer_text == EU_AI_ACT_DISCLAIMER_V2.
-    3. Required evidence links: at least one primary evidence link must be linked (len >= 1).
+    2. Valid immutable disclaimer: disclaimer_version == '2024-1689-v2' and disclaimer_text == EU_AI_ACT_DISCLAIMER_V2.
+    3. Required evidence links: at least one primary evidence link must be linked (minimum 1 required).
     4. Required authenticated human review: reviewed_by must be non-empty and reviewed_at must be set.
+    5. Required human reviewer attestation: valid EUReviewerAttestationSchema with is_human=True,
+       matching attestor_id, and confirmed statement.
+    6. Verified and active reference set: if reference_set is provided, it must not be stale, deprecated, or superseded.
+    7. Output linter clearance: EUOutputLinter passes with zero blocking findings across all fields.
     """
     reasons: list[str] = []
 
     # 1. State check
     raw_status = getattr(screen, "status", None)
+    if raw_status is None and isinstance(screen, dict):
+        raw_status = screen.get("status")
     status_str = raw_status.value if hasattr(raw_status, "value") else str(raw_status)
     if status_str != EUScreenStatus.APPROVED_INFORMATIONAL.value:
         reasons.append(
@@ -687,12 +735,16 @@ def verify_output_eligibility(
 
     # 2. Disclaimer check
     disclaimer_version = getattr(screen, "disclaimer_version", None)
+    if disclaimer_version is None and isinstance(screen, dict):
+        disclaimer_version = screen.get("disclaimer_version")
     if disclaimer_version != EU_AI_ACT_DISCLAIMER_VERSION:
         reasons.append(
             f"Invalid disclaimer version '{disclaimer_version}'; expected '{EU_AI_ACT_DISCLAIMER_VERSION}'."
         )
 
     disclaimer_text = getattr(screen, "disclaimer_text", None)
+    if disclaimer_text is None and isinstance(screen, dict):
+        disclaimer_text = screen.get("disclaimer_text")
     if disclaimer_text != EU_AI_ACT_DISCLAIMER_V2:
         reasons.append(
             "Disclaimer text has been modified or does not match mandatory EU_AI_ACT_DISCLAIMER_V2."
@@ -701,10 +753,12 @@ def verify_output_eligibility(
     # 3. Evidence links check
     if evidence_links is not None:
         link_count = len(evidence_links)
-    elif hasattr(screen, "evidence_links"):
+    elif hasattr(screen, "evidence_links") and screen.evidence_links:
         link_count = len(screen.evidence_links)
-    elif hasattr(screen, "evidence_ids"):
+    elif hasattr(screen, "evidence_ids") and screen.evidence_ids:
         link_count = len(screen.evidence_ids)
+    elif isinstance(screen, dict):
+        link_count = len(screen.get("evidence_links") or screen.get("evidence_ids") or [])
     else:
         link_count = 0
 
@@ -713,16 +767,94 @@ def verify_output_eligibility(
 
     # 4. Human review check
     reviewed_by = getattr(screen, "reviewed_by", None)
+    if reviewed_by is None and isinstance(screen, dict):
+        reviewed_by = screen.get("reviewed_by")
     if not reviewed_by or not str(reviewed_by).strip():
         reasons.append("Screen lacks authenticated reviewer identity (reviewed_by).")
 
     reviewed_at = getattr(screen, "reviewed_at", None)
+    if reviewed_at is None and isinstance(screen, dict):
+        reviewed_at = screen.get("reviewed_at")
     if not reviewed_at:
         reasons.append("Screen lacks review timestamp (reviewed_at).")
 
+    # 5. Reviewer attestation check
+    metadata_json = getattr(screen, "metadata_json", {}) or {}
+    if not metadata_json and isinstance(screen, dict):
+        metadata_json = screen.get("metadata_json", {}) or {}
+
+    attestation_data = reviewer_attestation or metadata_json.get("reviewer_attestation")
+    if not attestation_data:
+        reasons.append("Screen lacks required human reviewer attestation (reviewer_attestation).")
+    else:
+        try:
+            if isinstance(attestation_data, EUReviewerAttestationSchema):
+                attestation_obj = attestation_data
+            else:
+                attestation_obj = EUReviewerAttestationSchema.model_validate(attestation_data)
+
+            if not attestation_obj.is_human:
+                reasons.append(
+                    "Reviewer attestation must have is_human=True; automated attestation is strictly forbidden."
+                )
+            if not attestation_obj.statement_confirmed:
+                reasons.append("Reviewer attestation statement was not confirmed.")
+            if reviewed_by and attestation_obj.attestor_id != str(reviewed_by).strip():
+                reasons.append(
+                    f"Attestation attestor_id '{attestation_obj.attestor_id}' does not match screen reviewed_by '{reviewed_by}'."
+                )
+        except Exception as exc:
+            reasons.append(f"Reviewer attestation validation failed: {exc}")
+
+    # 6. Reference set check (if reference_set is provided)
+    if reference_set is not None:
+        ref_status = getattr(reference_set, "status", None)
+        if ref_status is None and isinstance(reference_set, dict):
+            ref_status = reference_set.get("status")
+        ref_status_str = ref_status.value if hasattr(ref_status, "value") else str(ref_status)
+
+        if ref_status_str in [FrameworkStatus.SUPERSEDED.value, FrameworkStatus.DEPRECATED.value]:
+            reasons.append(
+                f"Screen is based on a stale or superseded reference set '{getattr(reference_set, 'id', 'unknown')}'."
+            )
+
+        ref_code = getattr(reference_set, "framework_code", None)
+        if ref_code is None and isinstance(reference_set, dict):
+            ref_code = reference_set.get("framework_code")
+        ref_code_str = ref_code.value if hasattr(ref_code, "value") else str(ref_code)
+        ref_id = str(getattr(reference_set, "id", "") or "")
+
+        if ref_code_str != FrameworkCode.EU_AI_ACT.value and "eu-ai-act" not in ref_id:
+            reasons.append(
+                f"Screen references non-EU AI Act framework reference set '{ref_id}'."
+            )
+
+    # 7. Output linter check
+    try:
+        from ai_incident_monitor.governance.eu_output_linter import (
+            EULinterResult,
+            EUOutputLinter,
+        )
+
+        linter = EUOutputLinter()
+        linter_report = linter.lint_screen(
+            screen,
+            reference_set=reference_set,
+            evidence_links=evidence_links,
+            check_eligibility_prerequisites=False,  # Already handled in gates 1-4 above
+        )
+        if not linter_report.is_clean:
+            for finding in linter_report.findings:
+                if finding.blocked_boolean:
+                    reasons.append(
+                        f"Output linter blocked ({finding.finding_code}) in {finding.field_name}: {finding.message}"
+                    )
+    except Exception as exc:
+        reasons.append(f"Output linter execution failure (fail-closed): {exc}")
+
     is_eligible = len(reasons) == 0
     if not is_eligible and raise_error:
-        screen_id = getattr(screen, "id", "unknown")
+        screen_id = getattr(screen, "id", "unknown") if not isinstance(screen, dict) else screen.get("id", "unknown")
         raise OutputIneligibleError(
             f"EU Screen '{screen_id}' is ineligible for external/reporting output: "
             + "; ".join(reasons)
