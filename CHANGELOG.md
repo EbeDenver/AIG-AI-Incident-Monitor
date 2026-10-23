@@ -5,6 +5,71 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Phase 5 Increment 2C-3A] - 2026-10-23
+
+### Added
+- **EU AI Act Conceptual Relevance Engine (`ai_incident_monitor.governance.eu_screen.EURelevanceScreeningEngine`)**:
+  - Implemented deterministic, offline, inspectable screening engine orchestrating fact evaluators (`evaluate_eu_fact_context`) and conceptual relevance evaluators (`evaluate_eu_conceptual_context`).
+  - Evaluates incident facts against 28 specific conceptual rules mapped to canonical controls in `frameworks/eu-ai-act/eu-ai-act-2024-1689.yaml`.
+  - Automatic parent control linkage for `EU-ART-5` (prohibited practices parent), `EU-ART-6` (Annex III parent), and `EU-ART-50` (transparency parent).
+  - Safety Rule 2 enforcement: raises `ConstitutionalViolationError` if any rule references an unvalidated or inactive external identifier.
+  - Epistemic modesty & Safety Rule 1: zero evidence records unconditionally produce zero affirmative conceptual findings.
+  - Orthogonal confidence calculation decoupled from AIG-ISI severity and OECD/NIST confidence.
+  - Mandatory `PENDING_REVIEW` routing: all affirmative screens unconditionally enter `PENDING_REVIEW`.
+- **Deterministic Conceptual Relevance Rules (`ai_incident_monitor.governance.rules.eu_conceptual_relevance_rules`)**:
+  - **Rule Family D1 (Article 5 Prohibited Concepts)**:
+    - `RULE-EU-CONC-PROHIB-01` (`EU-ART-5.1.a`): Subliminal and manipulative techniques.
+    - `RULE-EU-CONC-PROHIB-02` (`EU-ART-5.1.b`): Vulnerability exploitation.
+    - `RULE-EU-CONC-PROHIB-03` (`EU-ART-5.1.c`): Social scoring.
+    - `RULE-EU-CONC-PROHIB-04` (`EU-ART-5.1.d`): Predictive policing profiling.
+    - `RULE-EU-CONC-PROHIB-05` (`EU-ART-5.1.e`): Untargeted facial image scraping.
+    - `RULE-EU-CONC-PROHIB-06` (`EU-ART-5.1.f`): Emotion recognition in workplace and education.
+    - `RULE-EU-CONC-PROHIB-07` (`EU-ART-5.1.g`): Sensitive biometric categorization.
+    - `RULE-EU-CONC-PROHIB-08` (`EU-ART-5.1.h`): Real-time remote biometric identification in public spaces.
+  - **Rule Family D2 (Annex III Regulated Operational Domain Concepts)**:
+    - `RULE-EU-CONC-ANNEX3-01` (`EU-ANNEX-III.1`): Biometrics in permitted contexts.
+    - `RULE-EU-CONC-ANNEX3-02` (`EU-ANNEX-III.2`): Critical infrastructure safety components.
+    - `RULE-EU-CONC-ANNEX3-03` (`EU-ANNEX-III.3`): Education and vocational training.
+    - `RULE-EU-CONC-ANNEX3-04` (`EU-ANNEX-III.4`): Employment and worker management.
+    - `RULE-EU-CONC-ANNEX3-05` (`EU-ANNEX-III.5`): Essential public and private services.
+    - `RULE-EU-CONC-ANNEX3-06` (`EU-ANNEX-III.6`): Law enforcement.
+    - `RULE-EU-CONC-ANNEX3-07` (`EU-ANNEX-III.7`): Migration, asylum, and border control.
+    - `RULE-EU-CONC-ANNEX3-08` (`EU-ANNEX-III.8`): Administration of justice and democratic processes.
+  - **Rule Family D3 (Article 50 Transparency Concepts)**:
+    - `RULE-EU-CONC-TRANSP-01` (`EU-ART-50.1`): AI interaction notification.
+    - `RULE-EU-CONC-TRANSP-02` (`EU-ART-50.2`): Synthetic media and deepfakes.
+    - `RULE-EU-CONC-TRANSP-04` (`EU-ART-50.4`): AI-generated public informational text.
+  - **Rule Family D4 (General-Purpose AI Concepts)**:
+    - `RULE-EU-CONC-GPAI-01` (`EU-ART-51`): High-compute models with systemic risk.
+    - `RULE-EU-CONC-GPAI-02` (`EU-ART-53`): GPAI provider documentation obligations.
+  - **Rule Family D5 (Operational Control Concepts)**:
+    - `RULE-EU-CONC-OPS-DATA` (`EU-ART-10`): Data and data governance.
+    - `RULE-EU-CONC-OPS-LOGS` (`EU-ART-12`): Record-keeping and technical logging.
+    - `RULE-EU-CONC-OPS-OVERSIGHT` (`EU-ART-14`): Human oversight.
+    - `RULE-EU-CONC-OPS-ROBUST` (`EU-ART-15`): Accuracy, robustness, and cybersecurity.
+    - `RULE-EU-CONC-OPS-PMM` (`EU-ART-72`): Post-market monitoring by providers.
+    - `RULE-EU-CONC-OPS-REPORTING` (`EU-ART-73`): Reporting of serious incidents.
+  - **Rule Family D6 (Serious Incident Thresholds)**:
+    - `RULE-EU-CONC-SERIOUS-01` (`EU-ART-3.49`): Serious incident harm thresholds.
+- **Controlled Vocabularies & Domain Schemas**:
+  - `EUConceptualRelevanceLevel`, `EUConceptType`, `EUEvidenceStrength` in `ai_incident_monitor.governance.enums`.
+  - `EUConceptualFinding` and `EUConceptualEvaluationResult` in `ai_incident_monitor.governance.models` with strict non-legal language validation.
+- **Testing & Verification**:
+  - 40 new unit tests in `backend/tests/unit/governance/test_eu_conceptual_rules.py`.
+  - Total test suite: **556 / 556 passed tests** in ~6.1s (0 failures, 0 regressions).
+  - Provenance chain verified via `make verify-provenance-chain` (`is_valid: true`, 0 anomalies).
+- **Documentation**:
+  - Section 7 added to `docs/GOVERNANCE_MAPPING_METHODOLOGY.md`.
+  - `docs/REQUIREMENTS_TRACEABILITY.md`, `docs/PROJECT_STATUS.md`, and `docs/NEXT_SESSION.md` updated.
+
+### Hard Boundaries Enforced in Phase 5 Increment 2C-3A
+- Phase 5 Increment 2C-3B remains explicitly deferred:
+  - Zero output linter (`eu_output_linter.py`) code.
+  - Final external-use output eligibility enforcement deferred.
+  - Reviewer attestation validation beyond existing 2C-1 mechanics deferred.
+- Zero LLMs, generative models, web scrapers, or network dependencies.
+- Zero statutory or judicial determinations (`Safety Rule 7`, `LGL-001`).
+
 ## [Phase 5 Increment 2C-2] - 2026-10-22
 
 ### Added

@@ -159,5 +159,21 @@ Phase 5 Increment 1 delivered, verified, and merged to `main` via PR #4 (`19db6c
   - Relational Schema: Alembic migration `003_governance_framework_mappings.py` adding 6 relational tables (`framework_reference_sets`, `framework_controls`, `incident_framework_mappings`, `eu_legal_relevance_screens`, `mapping_evidence_links`, `governance_audit_logs`) with verified clean downgrade.
   - Typed Governance Repository: `GovernanceRepository` enforcing in-place mutation prevention on approved records (`ImmutabilityViolationError`), supersession versioning, and cryptographic audit hash chaining.
   - Automated Verification: 50 new tests (49 unit + 1 migration upgrade/downgrade), bringing repository test suite to 432 passed tests (exceeding requirement of at least 430 total tests) with 0 failures and 0 warnings.
-- [ ] **Increment 2B (Planned - Awaiting User Approval)**: Deterministic mapping engines for OECD AI Principles and NIST AI RMF.
-- [ ] **Increment 2C (Planned - Awaiting User Approval)**: EU AI Act informational regulatory screening engine.
+- [x] **Increment 2B (Verified & Merged to main)**: Deterministic mapping engines for OECD AI Principles and NIST AI RMF:
+  - Pure deterministic rule evaluators for OECD AI Principles and NIST AI RMF 1.0 functions, categories, and subcategories.
+  - Relational persistence migration `004_oecd_nist_mapping_provenance.py` and `GovernanceMappingService`.
+  - Specificity and hierarchy enforcement, independent orthogonal confidence scoring model, review gates, and 52 new tests (484 total tests).
+- [x] **Increment 2C-1 (Verified & Merged to main)**: EU AI Act Informational Relevance Screen Foundation:
+  - Relational schema migration `005_eu_screen_foundation.py` adding `eu_screen_rule_traces` and `review_status` state machine.
+  - Controlled vocabularies, mandatory versioned disclaimer (`EU_AI_ACT_DISCLAIMER_V2`), output-eligibility guard (`verify_output_eligibility`), and cryptographic audit trail. (484 total tests).
+- [x] **Increment 2C-2 (Verified & Merged to main)**: EU AI Act Core Deterministic Fact Evaluators:
+  - Deterministic evaluators for territorial/market nexus (Article 2), AI-system definitional context (Article 3(1)), actor role attribution (Article 3(2)–(8)), temporal alignment, and epistemic gaps with neutral follow-up questions.
+  - Non-legal language validation (`validate_no_legal_language`), fine-grained rule traces, and 32 new tests (516 total tests).
+- [x] **Increment 2C-3A (Verified on `phase5-inc2c3a-eu-conceptual-relevance`)**: EU AI Act Conceptual Relevance Engine:
+  - Deterministic, evidence-grounded screening engine (`EURelevanceScreeningEngine`) evaluating 28 specific conceptual rules across 6 rule families: Article 5 (points a–h), Annex III (points 1–8), Article 50 (points 1, 2, 4), GPAI (Articles 51 and 53), Operational Controls (Articles 10, 12, 14, 15, 72, 73), and Serious Incident harm thresholds (Article 3(49)).
+  - Automatic parent control linkage (`EU-ART-5`, `EU-ART-6`, `EU-ART-50`).
+  - Mandatory `PENDING_REVIEW` routing, orthogonal confidence scoring, zero-evidence modesty, and strict prohibition of legal determination language.
+  - 40 new unit tests (556 total tests passing), 0 failures, verified provenance chain.
+- [ ] **Increment 2C-3B (Planned - Deferred)**: EU Output Linter and Final Review Gate Integration:
+  - Output linter (`eu_output_linter.py`), final external-use eligibility verification integration, reviewer-attestation validation.
+- [ ] **Increment 2D (Planned)**: Governance reporting and publishing workflows.

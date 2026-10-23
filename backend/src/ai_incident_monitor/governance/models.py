@@ -12,6 +12,9 @@ from ai_incident_monitor.domain.common import ConstitutionalViolationError
 from ai_incident_monitor.governance.enums import (
     ControlLevel,
     EUActorRoleConfidence,
+    EUConceptType,
+    EUConceptualRelevanceLevel,
+    EUEvidenceStrength,
     EUNexusAssessment,
     EURelevanceLevel,
     EUScreenStatus,
@@ -589,6 +592,73 @@ class EULegalRelevanceScreenSchema(BaseModel):
         for item in v:
             validate_no_legal_language(item, field_name="fact_or_question_item")
         return v
+
+
+class EUConceptualFinding(BaseModel):
+    """Structured, evidence-grounded finding evaluating conceptual relevance to a single EU AI Act control."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    rule_id: str = Field(min_length=1, max_length=64)
+    rule_version: str = Field(min_length=1, max_length=30)
+    reference_id: str = Field(min_length=1, max_length=64)
+    control_title: str = Field(min_length=1, max_length=255)
+    source_locator: str = Field(min_length=1, max_length=255)
+    concept_type: EUConceptType
+    relevance_level: EUConceptualRelevanceLevel
+    evidence_strength: EUEvidenceStrength
+    evidence_ids: list[str] = Field(default_factory=list)
+    known_facts: list[str] = Field(default_factory=list)
+    unknowns: list[str] = Field(default_factory=list)
+    disputed_facts: list[str] = Field(default_factory=list)
+    rationale: str = Field(min_length=1)
+    matched_condition_ids: list[str] = Field(default_factory=list)
+    confidence: GovernanceConfidence = Field(default=GovernanceConfidence.MEDIUM)
+    review_routing: EUScreenStatus = Field(default=EUScreenStatus.PENDING_REVIEW)
+
+    @field_validator("rationale")
+    @classmethod
+    def validate_finding_rationale_legal_language(cls, v: str) -> str:
+        validate_no_legal_language(v, field_name="finding_rationale")
+        return v
+
+    @field_validator("known_facts", "unknowns", "disputed_facts")
+    @classmethod
+    def validate_finding_facts_legal_language(cls, v: list[str]) -> list[str]:
+        for item in v:
+            validate_no_legal_language(item, field_name="finding_fact_item")
+        return v
+
+
+class EUConceptualEvaluationResult(BaseModel):
+    """Consolidated outcome of all EU AI Act conceptual relevance evaluations."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    incident_id: str = Field(min_length=1, max_length=64)
+    reference_set_id: str = Field(default="eu-ai-act-2024-1689", max_length=64)
+    reference_set_version: str = Field(default="2024/1689", max_length=30)
+    reference_content_hash: str = Field(
+        default="c5b25d21a4b4c7ec022f8b8c0b39dae48f1b9a96041f89ad082d5bfaff2b2d11",
+        max_length=64,
+    )
+    findings: list[EUConceptualFinding] = Field(default_factory=list)
+    rule_traces: list[EUScreenRuleTraceSchema] = Field(default_factory=list)
+    conceptual_risk_areas: list[str] = Field(default_factory=list)
+    potentially_relevant_reference_ids: list[str] = Field(default_factory=list)
+    operational_relevance_areas: list[str] = Field(default_factory=list)
+    serious_incident_relevance: EUSeriousIncidentRelevance = Field(
+        default=EUSeriousIncidentRelevance.INSUFFICIENT_INFORMATION
+    )
+    status: EUScreenStatus = Field(default=EUScreenStatus.PENDING_REVIEW)
+    rationale: str = Field(default="")
+
+    @field_validator("rationale")
+    @classmethod
+    def validate_composite_rationale_legal_language(cls, v: str) -> str:
+        validate_no_legal_language(v, field_name="composite_rationale")
+        return v
+
 
 
 def verify_output_eligibility(
