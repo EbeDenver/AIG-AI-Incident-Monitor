@@ -59,10 +59,16 @@ from ai_incident_monitor.governance.reference_loader import (
 )
 from ai_incident_monitor.governance.review_gates import ReviewGateId, evaluate_review_gates
 from ai_incident_monitor.governance.rules import (
+    ALL_EU_AISYS_RULES,
+    ALL_EU_NEXUS_RULES,
+    ALL_EU_ROLE_RULES,
     ALL_NIST_RULES,
     ALL_OECD_RULES,
+    BaseEUFactRule,
     BaseNISTRule,
     BaseOECDRule,
+    EUFactEvaluationResult,
+    evaluate_eu_fact_context,
 )
 
 __all__ = [
@@ -121,6 +127,12 @@ __all__ = [
     "GovernanceMappingService",
     "ALL_OECD_RULES",
     "ALL_NIST_RULES",
+    "ALL_EU_NEXUS_RULES",
+    "ALL_EU_AISYS_RULES",
+    "ALL_EU_ROLE_RULES",
     "BaseOECDRule",
     "BaseNISTRule",
+    "BaseEUFactRule",
+    "EUFactEvaluationResult",
+    "evaluate_eu_fact_context",
 ]

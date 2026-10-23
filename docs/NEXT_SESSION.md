@@ -1,64 +1,66 @@
-# NEXT SESSION HANDOFF: Phase 5 Increment 2C-1 Complete / Increment 2C-2 Pending
+# NEXT SESSION HANDOFF: Phase 5 Increment 2C-2 Complete / Increment 2C-3 Pending
 **Project:** AI Incident Monitor  
 **Organization:** AI Guardians LLC  
 **Document Identifier:** NEXT-001  
-**Target Milestone:** Phase 5, Increment 2C-1 (EU Informational Screen Foundation) Completed; Increment 2C-2 (Core Deterministic Evaluators) Pending Authorization  
-**Parent Handoff:** Phase 5, Increment 2B (OECD & NIST Mapping Engine) Merged into `main` (`836d9d225b290aba6cd6b48e9fe7784cd139acda`)  
+**Target Milestone:** Phase 5, Increment 2C-2 (Core Deterministic Fact Evaluators) Completed; Increment 2C-3 (Conceptual Scope & Output Linter) Pending Authorization  
+**Parent Handoff:** Phase 5, Increment 2C-1 (EU Informational Screen Foundation) Merged into `main` (`c701f7d1f937683e64f3ddaa9ca074599151f935`)  
 **Effective Date:** 2026-10-22  
-**Current Branch:** `phase5-inc2c1-eu-screen-foundation`  
+**Current Branch:** `phase5-inc2c2-eu-core-evaluators`  
 **Feature Branch Status:** Implementation complete and verified; ready for review / PR  
 
 ---
 
-## 1. Current State: Phase 5 Increment 2C-1 Implemented & Verified
+## 1. Current State: Phase 5 Increment 2C-2 Implemented & Verified
 
-Phase 5 Increment 2C-1 ("EU Informational Screen Foundation") has been fully implemented, tested, and verified on branch `phase5-inc2c1-eu-screen-foundation`:
+Phase 5 Increment 2C-2 ("EU Informational Screen: Core Deterministic Fact Evaluators") has been fully implemented, tested, and verified on branch `phase5-inc2c2-eu-core-evaluators`:
 
-- **Branch**: `phase5-inc2c1-eu-screen-foundation` (branched from `main` at `836d9d225b290aba6cd6b48e9fe7784cd139acda`)
-- **Test Suite Status**: **484 passed tests** (464 baseline + 20 new tests: 19 unit tests in `test_eu_screen_foundation.py` + 1 integration migration test update) in ~5.3s with zero failures and zero warnings.
-- **Alembic Migration 005**: Migration `005_eu_ai_act_informational_screen.py` adds 16 epistemic and audit columns to `eu_legal_relevance_screens` and creates `eu_screen_rule_traces`. Fully verified through complete upgrade/downgrade cycles (`001 -> 002 -> 004 -> 005 -> 004 -> 003 -> 002 -> base -> head`).
+- **Branch**: `phase5-inc2c2-eu-core-evaluators` (branched from `main` at `c701f7d1f937683e64f3ddaa9ca074599151f935`)
+- **Test Suite Status**: **516 passed tests** (484 baseline + 32 new unit tests in `test_eu_fact_evaluators.py`) in ~5.8s with zero failures, zero warnings, and zero regressions.
 - **Provenance Integrity**: Verified via `make verify-provenance-chain` (`is_valid: true`, 0 anomalies).
 
-### Deliverables Landed in Increment 2C-1:
-1. **Relational Schema Foundation & Migration 005 (`backend/alembic/versions/005_eu_ai_act_informational_screen.py`)**:
-   - Added `screen_version`, `status`, `relevance_level`, `nexus_assessment`, `ai_system_context`, `actor_role_confidence`, `conceptual_risk_areas`, `potentially_relevant_reference_ids`, `operational_relevance_areas`, `timing_assessment`, `known_facts`, `unknowns`, `disputed_facts`, `follow_up_questions`, `rationale`, `disclaimer_version`, `metadata_json` to `eu_legal_relevance_screens`.
-   - Created junction table `eu_screen_rule_traces` with foreign keys to `eu_legal_relevance_screens` (CASCADE) and `framework_reference_sets` (RESTRICT).
-2. **Controlled Vocabularies (`backend/src/ai_incident_monitor/governance/enums.py`)**:
-   - `EURelevanceLevel` (`DIRECT_RELEVANCE`, `POSSIBLE_RELEVANCE`, `CONCEPTUAL_RELEVANCE`, `UNLIKELY_RELEVANCE`, `OUTSIDE_APPARENT_SCOPE`, `INSUFFICIENT_INFORMATION`).
-   - `EUScreenStatus` (`DRAFT`, `CANDIDATE`, `PENDING_REVIEW`, `APPROVED_INFORMATIONAL`, `REJECTED`, `SUPERSEDED`, `INSUFFICIENT_EVIDENCE`).
-   - `EUNexusAssessment` (`POSSIBLE_EU_NEXUS`, `NO_EU_NEXUS_EVIDENCE`, `INSUFFICIENT_NEXUS_INFORMATION`, `OUTSIDE_APPARENT_TERRITORIAL_SCOPE`).
-   - `EUActorRoleConfidence` (`IDENTIFIED_FROM_EVIDENCE`, `POSSIBLE_FROM_EVIDENCE`, `UNKNOWN`, `DISPUTED`).
-   - `EUTimingAssessment` (`REFERENCE_METADATA_ALIGNS`, `INCIDENT_DATE_UNKNOWN`, `EFFECTIVE_DATE_UNCERTAIN`, `TEMPORAL_CONTEXT_REQUIRES_REVIEW`, `NOT_ASSESSED`).
-   - `EUSeriousIncidentRelevance` (`POTENTIALLY_RELEVANT_FOR_REVIEW`, `CONCEPTUALLY_RELEVANT`, `INSUFFICIENT_INFORMATION`, `NOT_APPARENTLY_RELEVANT`).
-3. **Immutable Versioned Disclaimer & Domain Schemas (`backend/src/ai_incident_monitor/governance/models.py`)**:
-   - Versioned disclaimer `EU_AI_ACT_DISCLAIMER_VERSION = "2024-1689-v2"`.
-   - Exact approved text `EU_AI_ACT_DISCLAIMER_V2` mandated across all schemas.
-   - Pydantic models `EULegalRelevanceScreenSchema` and `EUScreenRuleTraceSchema` enforcing non-legal language validators on narrative fields.
-4. **State Machine & Review Gatekeeper (`backend/src/ai_incident_monitor/repositories/governance_repo.py`)**:
-   - `transition_eu_screen_status`: Human reviewer check (`is_human=True`) required for `APPROVED_INFORMATIONAL`; machine self-approval strictly rejected (`ConstitutionalViolationError`).
-   - In-place mutation of approved screens strictly blocked (`ImmutabilityViolationError`).
-   - Non-destructive supersession via `supersede_eu_screen` with append-only lineage tracking.
-5. **Output-Eligibility Guard (`verify_output_eligibility`)**:
-   - Unconditionally blocks external-use or downstream reporting unless screen is `APPROVED_INFORMATIONAL`, retains exact v2 disclaimer, has at least one primary evidence link, and records authenticated human review.
-6. **Append-Only Cryptographic Audit Logging**:
-   - Records `CREATE_EU_SCREEN`, `TRANSITION_STATE`, `SUPERSEDE_EU_SCREEN`, and `ADD_EVIDENCE_LINK` with sequential SHA-256 hash chaining.
-7. **Documentation Updates**:
-   - Updated `docs/ER_DIAGRAM.md` with Migration 005 schema additions.
-   - Ratified `ADR-017` in `docs/DECISIONS.md`.
-   - Updated `docs/REQUIREMENTS_TRACEABILITY.md` (`GOV-004`, `AUD-001`, `AUD-002`, `LGL-002`, `LGL-003` verified; `GOV-003`, `LGL-001` in progress).
-   - Updated `docs/PROJECT_STATUS.md` and `CHANGELOG.md`.
+### Deliverables Landed in Increment 2C-2:
+1. **Rule Family A: Territorial and Market Nexus (`ai_incident_monitor.governance.rules.eu_fact_rules`)**:
+   - `RULE-EU-NEXUS-01` (`EUEstablishmentNexusRule`): Provider or deployer establishment in an EU Member State (`COND-NEXUS-ESTABLISHMENT` -> `POSSIBLE_EU_NEXUS`).
+   - `RULE-EU-NEXUS-02` (`EUMarketPlacementNexusRule`): Commercial availability, placing on the market, or putting into service in EU territory (`COND-NEXUS-MARKET-PLACEMENT` -> `POSSIBLE_EU_NEXUS`).
+   - `RULE-EU-NEXUS-03` (`EUOutputUsedNexusRule`): Third-country AI system outputs utilized in Union or affecting natural persons located in the EU (`COND-NEXUS-OUTPUT-USED-IN-EU` -> `POSSIBLE_EU_NEXUS`).
+   - `RULE-EU-NEXUS-04` (`EUNexusAbsenceInsufficiencyRule`): Absence of nexus, foreign deployment, or insufficient information (`OUTSIDE_APPARENT_TERRITORIAL_SCOPE`, `NO_EU_NEXUS_EVIDENCE`, `INSUFFICIENT_NEXUS_INFORMATION`).
+2. **Rule Family B: AI-System Technical Context (Article 3(1))**:
+   - `RULE-EU-AISYS-01` (`EUAISystemMeetsDefinitionRule`): Machine-based inferencing, adaptiveness, and autonomy generating outputs influencing physical/virtual environments (`COND-AISYS-AUTONOMOUS-INFERENCE` -> `MEETS_DEFINITION`).
+   - `RULE-EU-AISYS-02` (`EUAISystemBorderlineRule`): Complex statistical scoring, heuristic expert systems, or ambiguous autonomy (`COND-AISYS-BORDERLINE-AUTONOMY` -> `BORDERLINE_OR_UNCLEAR`).
+   - `RULE-EU-AISYS-03` (`EUAISystemOutsideDefinitionRule`): Classical deterministic scripts, static databases, traditional software lacking machine inference (`COND-AISYS-CLASSICAL-SOFTWARE` -> `OUTSIDE_DEFINITION`).
+3. **Rule Family C: Actor Role Context (Article 3(2)–(8))**:
+   - `RULE-EU-ROLE-01` (`EUActorRoleProviderRule`): Entity developed, trained, branded, or placed AI system on market under own name/trademark (`PROVIDER`).
+   - `RULE-EU-ROLE-02` (`EUActorRoleDeployerRule`): Entity utilizing AI system under own authority in operational/professional context (`DEPLOYER`).
+   - `RULE-EU-ROLE-03` (`EUActorRoleImporterDistributorRule`): Supply chain intermediaries (`IMPORTER`, `DISTRIBUTOR`).
+   - `RULE-EU-ROLE-04` (`EUActorRoleGPAIProviderRule`): Upstream general-purpose AI model development/provision (`GPAI_MODEL_PROVIDER`).
+   - Deterministic role confidence resolution: `IDENTIFIED_FROM_EVIDENCE`, `POSSIBLE_FROM_EVIDENCE`, `DISPUTED`, or `UNKNOWN`.
+4. **Temporal Alignment Evaluator**:
+   - `RULE-EU-TEMPORAL-01` (`EUTemporalAlignmentRule`): Compares incident occurrence date against statutory reference metadata effective dates (`REFERENCE_METADATA_ALIGNS`, `TEMPORAL_CONTEXT_REQUIRES_REVIEW`, `EFFECTIVE_DATE_UNCERTAIN`, `INCIDENT_DATE_UNKNOWN`, `NOT_ASSESSED`).
+5. **Rule Family E: Missing Facts & Non-Leading Follow-Up Questions**:
+   - `RULE-EU-QUESTIONS-01` (`EUMissingFactsQuestionsRule`): Systematically identifies factual voids across nexus, technical autonomy, actor roles, and timeline, generating neutral inquiries for human governance investigators.
+6. **Screening Context Evaluator (`evaluate_eu_fact_context`)**:
+   - Central deterministic coordinator executing all 5 rule families and producing `EUFactEvaluationResult`.
+   - Emits fine-grained rule evaluation traces (`EUScreenRuleTraceSchema`) for relational persistence in `eu_screen_rule_traces`.
+   - Provides `.to_screen_dict()` and `.to_screen_schema()` helpers for seamless integration with repository and schema models.
+7. **Extended IncidentFactContext**:
+   - Added optional typed `incident_date: Optional[date] = None` supporting temporal evaluations.
+8. **Architecture & Traceability Documentation**:
+   - Ratified ADR-018 (`EU AI Act Core Deterministic Fact Evaluators & Epistemic Void Inquiries`) in `docs/DECISIONS.md`.
+   - Updated `docs/GOVERNANCE_MAPPING_METHODOLOGY.md` documenting Section 6 (EU AI Act Fact Evaluators).
+   - Updated `docs/REQUIREMENTS_TRACEABILITY.md`, `docs/PROJECT_STATUS.md`, and `CHANGELOG.md`.
 
 ---
 
 ## 2. Hard Boundaries & Scope Safeguards
 
 The following boundaries continue to be strictly enforced:
-- **Phase 5 Increment 2C-2 is PENDING AUTHORIZATION.** Do not begin deterministic nexus, AI system, actor-role, temporal, or missing-fact evaluation rules until authorized.
-- Do NOT create `eu_screen.py`, `eu_ai_act_rules.py`, `EURelevanceScreeningEngine`, or `eu_output_linter.py` in this foundation increment.
+- **Phase 5 Increment 2C-3 remains explicitly out of scope:**
+  - Do NOT implement Article 5 (prohibited practices), Annex III (high-risk classifications), Article 50 (transparency), Articles 51–53 (GPAI systemic risk), or operational Articles 10, 12, 14, 15, 72, 73 conceptual relevance rules.
+  - Do NOT create `eu_output_linter.py`, public serializers, UI, API routes, dashboards, Substack/publishing workflows, or deployment configurations.
 - Zero LLM, Gemini, or generative model calls.
 - Zero live external network calls, scrapers, or APIs.
 - Zero UI/API endpoints, dashboard exposure, or public publishing components.
-- Zero unadjudicated legal violation determinations (Safety Rule 7, Constitutional Rules 10 & 11).
+- Zero unadjudicated legal violation determinations (`Safety Rule 7`, `Constitutional Rules 10 & 11`, `LGL-001`).
 
 ---
 
@@ -69,8 +71,8 @@ To synchronize, inspect, and verify this branch:
 ```bash
 cd /path/to/AIG-AI-Incident-Monitor
 git fetch origin --prune
-git switch phase5-inc2c1-eu-screen-foundation
-git pull --ff-only origin phase5-inc2c1-eu-screen-foundation
+git switch phase5-inc2c2-eu-core-evaluators
+git pull --ff-only origin phase5-inc2c2-eu-core-evaluators
 git status --short
 .venv/bin/pytest backend/tests
 make verify-provenance-chain

@@ -2,9 +2,9 @@
 **Project:** AI Incident Monitor
 **Organization:** AI Guardians LLC
 **Document Identifier:** STAT-001
-**Last Updated:** 2026-10-21
-**Current Milestone:** Phase 5 (AIG-ISI Severity Scoring Engine & Governance Mappings) — INCREMENT 2C-1 COMPLETED (Branch: `phase5-inc2c1-eu-screen-foundation`)
-**Overall Status:** GREEN (Phase 5 Increment 2C-1 Complete, 484/484 Tests Passing, 0 Failures, Provenance Chain Valid)
+**Last Updated:** 2026-10-22
+**Current Milestone:** Phase 5 (AIG-ISI Severity Scoring Engine & Governance Mappings) — INCREMENT 2C-2 COMPLETED (Branch: `phase5-inc2c2-eu-core-evaluators`)
+**Overall Status:** GREEN (Phase 5 Increment 2C-2 Complete, 516/516 Tests Passing, 0 Failures, Provenance Chain Valid)
 
 ---
 
@@ -16,7 +16,7 @@
 | **Phase 2** | **Core Schemas & Epistemic Models** | Pydantic v2 models, epistemic typing, 29 golden fixtures, 89 tests | **COMPLETED** | **2026-10-19** |
 | **Phase 3** | **Data Foundation & Manual Import Engine** | SQLAlchemy 2.0 ORM, dual-engine Alembic, repositories, CSV/JSON/XLSX import, CWE-1236 sanitizer, 4-tier dedup, append-only audit, 144 tests | **COMPLETED** | **2026-10-19** |
 | **Phase 4** | **Secure Ingestion Connectors & Provenance** | SSRF defense, RSS/arXiv connectors, OECD adapter, raw staging store, 30-day purge, manifest hash chaining, XML containment, 197 tests | **COMPLETED** | **2026-10-20** |
-| **Phase 5** | **AIG-ISI Scoring & Governance Map** | AIG-ISI engine, factor rationales, OECD/NIST/EU Act mappers | **IN PROGRESS (Inc 1 Merged, Inc 2A Merged, Inc 2B Merged, Inc 2C-1 Complete)** | Target: Phase 5 |
+| **Phase 5** | **AIG-ISI Scoring & Governance Map** | AIG-ISI engine, factor rationales, OECD/NIST/EU Act mappers | **IN PROGRESS (Inc 1 Merged, Inc 2A Merged, Inc 2B Merged, Inc 2C-1 Merged, Inc 2C-2 Complete)** | Target: Phase 5 |
 | **Phase 6** | Editorial Pipeline & Human Review | Substack generator, neutral tone linter, HITL review CLI | Planned | Phase 6 Session |
 | **Phase 7** | End-to-End Harness & Observability | Orchestration, telemetry, multi-Mac test suite, monitoring, Cloudflare deployment prep | Planned | Phase 7 Session |
 
@@ -83,8 +83,8 @@ Based on [`docs/REQUIREMENTS_TRACEABILITY.md`](REQUIREMENTS_TRACEABILITY.md):
     - `LGL-002`: Mandatory versioned disclaimer enforcement (`EU_AI_ACT_DISCLAIMER_V2`, `'2024-1689-v2'`).
     - `LGL-003`: Distinction between statutory applicability and non-binding informational relevance across all domain schemas.
   - `IN PROGRESS (Phase 5 Increment 2C)`: 2 requirements
-    - `GOV-003`: EU AI Act categorization screening (foundation delivered in 2C-1; rule evaluators in 2C-2/2C-3).
-    - `LGL-001`: Never assert unadjudicated violations (schema and regex guards delivered in 2C-1; output linter in 2C-3).
+    - `GOV-003`: EU AI Act categorization screening (foundation delivered in 2C-1; core deterministic fact evaluators delivered in 2C-2; conceptual scoping in 2C-3).
+    - `LGL-001`: Never assert unadjudicated violations (schema and regex guards delivered in 2C-1/2C-2; output linter in 2C-3).
   - `PLANNED (Phases 5–7)`: 21 requirements
 * **Total Verified**: 46 / 69 (66.7%)
 
