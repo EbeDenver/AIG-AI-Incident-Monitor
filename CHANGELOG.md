@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Phase 5 Increment 2C-3B] - 2026-10-23
+
+### Added
+- **EU AI Act Output Safety Linter (`ai_incident_monitor.governance.eu_output_linter.EUOutputLinter`)**:
+  - Implemented offline, deterministic regex- and token-based output linter inspecting all structured string and narrative fields across screen models and dictionaries.
+  - Prohibited term detection across 11 pattern families: *violation*, *breach*, *illegal*, *unlawful*, *compliant*, *noncompliant*, *compliance failure*, *statutory/legal duty*, *must report*, *reportable*, *legally high-risk*, *prohibited practice*, *EU AI Act applies*, *obligation applies*, and *legal liability*.
+  - Bypass resistance: normalizes case folding, underscores, hyphens, and whitespace padding (`non - compliant`, `high - risk  ai  system`).
+  - Narrow qualified allowlist: preserves authorized informational clauses without false positives (`"finding of compliance or noncompliance"`, `"alleged violation"`, `"reported breach"`, `"potential high-risk area"`, `"conceptual relevance to Article 5"`, `"serious incident reporting relevance"`).
+  - Emits structured finding reports (`EULinterReport`) with controlled result vocabulary (`EULinterResult`: `PASS`, `BLOCKED_PROHIBITED_TERM`, `BLOCKED_MISSING_DISCLAIMER`, `BLOCKED_UNAPPROVED_STATUS`, `BLOCKED_MISSING_EVIDENCE`, `BLOCKED_INVALID_REFERENCE`, `BLOCKED_STALE_REFERENCE_SET`, `BLOCKED_OUTPUT_SCHEMA_ERROR`).
+- **Human Reviewer Attestation Schema (`ai_incident_monitor.governance.models.EUReviewerAttestationSchema`)**:
+  - Structured, immutable attestation schema enforcing `is_human=True`, confirmed statement, evidence verification, and linter clearance.
+  - Enforces Constitutional Rules 12 & 13: automated algorithms and models cannot self-approve or self-attest.
+- **Seven-Gate Fail-Closed Output Eligibility (`verify_output_eligibility`)**:
+  - Enforces fail-closed evaluation across 7 preconditions: Approved informational status, exact immutable disclaimer v2 (`2024-1689-v2`), minimum 1 primary evidence link, authenticated human reviewer identity and timestamp, valid reviewer attestation with `is_human=True`, active non-stale reference set, and clean output linter report.
+- **Append-Only Cryptographic Audit Extensions**:
+  - Added `LINTER_EXECUTION` and `OUTPUT_ELIGIBILITY_CHECK` to `GovernanceAuditEventType`.
+  - Added `record_linter_audit_event` and `record_output_eligibility_audit_event` in `GovernanceRepository` with SHA-256 state digests and previous-event-hash linkage.
+- **Unit Test Suites**:
+  - `backend/tests/unit/governance/test_eu_output_linter.py`: 71 comprehensive unit tests verifying clean text, prohibited term detection, casing, punctuation/whitespace bypass resistance, allowlist preservation, and screen traversal.
+  - `backend/tests/unit/governance/test_eu_output_eligibility.py`: 25 unit tests isolating all 7 fail-closed gates, reviewer attestation checks, repository transition safeguards, and audit hash chaining.
+
 ## [Phase 5 Increment 2C-3A] - 2026-10-23
 
 ### Added

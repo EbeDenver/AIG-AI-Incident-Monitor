@@ -345,3 +345,35 @@
   - Transparent epistemic void tracking and neutral investigator inquiry generation.
   - Complete compliance with Safety Rule 7 and Constitutional Rules 10 & 11.
   - Strict preservation of the boundary separating 2C-2 (core fact evaluators) from 2C-3 (conceptual scoping, Article 5, Annex III, GPAI obligations, and output linter).
+
+---
+
+### ADR-019: EU AI Act Output Safety Linter, Reviewer Attestation, and Final Output Eligibility Enforcement
+* **Date**: 2026-10-23
+* **Status**: RATIFIED
+* **Deciders**: AI Guardians LLC Leadership, Antigravity AI
+* **Context**: Screening incidents against Regulation (EU) 2024/1689 carries severe epistemic and legal risks if outputs inadvertently assert legal determinations, regulatory breaches, or unadjudicated liability (`Constitutional Rules 10 & 11`, `LGL-001`). To guarantee that no external-facing report, publication, or export ever contains unauthorized legal claims or lacks required procedural preconditions, the platform requires an uncompromising, fail-closed output safety layer. This layer must enforce immutable disclaimer integrity, verify authenticated human reviewer sign-off, evaluate reviewer attestations, lint all structured narrative text against prohibited legal conclusions, and record append-only cryptographic audit events.
+* **Decision**:
+  1. **Deterministic Output Linter (`EUOutputLinter`)**:
+     Implement a pure, offline regex- and token-based linter in `backend/src/ai_incident_monitor/governance/eu_output_linter.py` inspecting all structured string and narrative fields (`rationale`, `known_facts`, `unknowns`, `disputed_facts`, `missing_facts`, `follow_up_questions`, `metadata_json["conceptual_findings"]`, `metadata_json["reviewer_notes"]`, reviewer transition/supersession rationales).
+  2. **Prohibited Patterns & Bypass Resistance**:
+     Block legal-conclusion terminology including variants of *violation*, *breach*, *illegal*, *unlawful*, *compliant*, *noncompliant*, *compliance failure*, *statutory/legal duty*, *must report*, *reportable*, *legally high-risk*, *prohibited practice*, *EU AI Act applies*, *obligation applies*, and *legal liability*. Normalize case folding, hyphenation, underscores, whitespace padding, and punctuation delimiters to defeat formatting-based bypass attempts.
+  3. **Narrow Qualified-Language Allowlist**:
+     Preserve approved informational clauses without triggering false positives (e.g. `"finding of compliance or noncompliance"`, `"alleged violation"`, `"reported breach"`, `"potential high-risk area"`, `"conceptual relevance to Article 5"`, `"serious incident reporting relevance"`). Mask allowlisted spans prior to running prohibited pattern checks.
+  4. **Human Reviewer Attestation Schema (`EUReviewerAttestationSchema`)**:
+     Enforce a structured, immutable schema in `models.py` capturing `attestor_id`, `attestor_role`, `is_human=True`, `attested_at`, `statement_confirmed=True`, `evidence_verified=True`, and `linter_checked=True`. Automated processes cannot self-attest (`Rule 12`).
+  5. **Fail-Closed 7-Gate Output Eligibility (`verify_output_eligibility`)**:
+     Block external release or reporting output unless all 7 gates pass:
+     - Gate 1: Status must be `APPROVED_INFORMATIONAL`.
+     - Gate 2: Disclaimer version must be `2024-1689-v2` with literal verbatim text match of `EU_AI_ACT_DISCLAIMER_V2`.
+     - Gate 3: Minimum 1 primary evidence link.
+     - Gate 4: Authenticated human reviewer identity (`reviewed_by`) and timestamp (`reviewed_at`).
+     - Gate 5: Valid human reviewer attestation (`is_human=True`, matching `attestor_id`, confirmed statement).
+     - Gate 6: Verified and active framework reference set (non-stale, non-superseded).
+     - Gate 7: Output linter clearance with zero blocking findings across all fields.
+  6. **Cryptographic Audit Trail Extensions**:
+     Add `LINTER_EXECUTION` and `OUTPUT_ELIGIBILITY_CHECK` to `GovernanceAuditEventType`. Chained into `governance_audit_logs` using SHA-256 state digests and previous-event-hash linkage.
+* **Consequences**:
+  - Epistemically airtight and legally hedged output safety layer.
+  - Complete elimination of automated self-approval or unauthorized legal determination escapes.
+  - Fully completes Phase 5 Increment 2C-3B and marks all Phase 5 governance mapping milestones complete.

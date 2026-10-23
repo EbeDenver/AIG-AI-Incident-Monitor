@@ -291,12 +291,56 @@ Each evaluated concept is categorized with a controlled informational rating:
 4. Schema generation into `EULegalRelevanceScreenSchema` with `status=EUScreenStatus.PENDING_REVIEW`, mandatory disclaimer (`EU_AI_ACT_DISCLAIMER_V2`), fine-grained rule traces, and structured findings stored in `metadata_json["conceptual_findings"]`.
 5. Cryptographic audit logging and relational persistence in `eu_legal_relevance_screens` and `eu_screen_rule_traces`.
 
-### 7.5 Explicit Scope Boundary: Phase 5 Increment 2C-3B Deferred
+---
 
-Phase 5 Increment 2C-3A delivers the conceptual relevance engine only. Increment 2C-3B remains deferred and explicitly out of scope:
-* No output linter (`eu_output_linter.py`) has been added.
-* Final external-use output eligibility enforcement is deferred to 2C-3B.
-* Reviewer attestation validation beyond existing 2C-1 mechanics is deferred to 2C-3B.
-* No publishing, Substack, API route, or UI integration exists.
+## 8. EU Informational Output Safety Layer & Reviewer Attestation (Increment 2C-3B)
+
+The final safety layer for EU AI Act informational screens strictly enforces Constitutional Rules 10, 11, 12, 13, 14 & 15 and LGL-001/LGL-002, guaranteeing that no external report, export, or publication occurs without meeting 7 fail-closed gates.
+
+### 8.1 Deterministic Output Linter (`EUOutputLinter`)
+
+The `EUOutputLinter` (`ai_incident_monitor.governance.eu_output_linter`) performs offline, deterministic inspection across all structured string and narrative fields:
+* **Fields Inspected:** `rationale`, `known_facts`, `unknowns`, `disputed_facts`, `missing_facts`, `follow_up_questions`, `applicability_date_assessment`, `metadata_json["conceptual_findings"]`, `metadata_json["reviewer_notes"]`, reviewer transition rationales, and supersession rationales.
+* **Prohibited Legal Conclusions:** Blocks variants and close paraphrases of:
+  - `violation`, `violates`, `violated`, `violating`, `infringement`, `infringes`, `infringed`
+  - `breach`, `breaches`, `breached`, `breaching`
+  - `illegal`, `illegality`, `illegally`, `unlawful`, `unlawfully`
+  - `noncompliant`, `non-compliant`, `non compliance`, `compliance failure`
+  - Positive compliance assertions (`is compliant`, `in compliance with`, `complies with`)
+  - Statutory and legal duties (`statutory duty applies`, `legal duty applies`, `duty applies`)
+  - Mandatory reporting claims (`must report`, `required to report`, `incident is reportable`)
+  - Definitive regulatory classifications (`legally high-risk`, `high-risk under the EU AI Act`, `high-risk ai system`)
+  - Prohibited practice claims (`prohibited practice`, `prohibited ai system`)
+  - Statutory applicability conclusions (`EU AI Act applies`, `statutory obligation applies`, `legal liability`, `liable for`)
+* **Bypass Resistance:** Normalizes case folding, underscores, hyphens, punctuation delimiters, and multi-space padding to defeat obfuscation.
+* **Narrow Qualified Allowlist:** Preserves authorized informational phrasing without false positives:
+  - `"finding of compliance or noncompliance"` (from the mandatory disclaimer)
+  - `"alleged violation"` / `"reported breach"`
+  - `"potential high-risk area"` / `"potential conceptual relevance to high-risk areas"`
+  - `"conceptual relevance to article 5"`
+  - `"serious incident reporting relevance"`
+* **Detection Without Silent Rewriting:** The linter strictly detects and blocks; it never auto-corrects or silently modifies text.
+
+### 8.2 Reviewer Attestation Schema (`EUReviewerAttestationSchema`)
+
+Constitutional Rules 12 & 13 forbid automated algorithms from self-approving. Transition to `APPROVED_INFORMATIONAL` strictly requires:
+* An authenticated human reviewer identity (`is_human=True`).
+* An immutable attestation record capturing `attestor_id`, `attestor_role`, `attested_at`, `statement_confirmed=True`, `evidence_verified=True`, and `linter_checked=True`.
+* The mandatory attestation statement confirms that the screen was evaluated against recorded evidence, represents non-legal informational relevance only, and complies with AI Guardians governance standards.
+
+### 8.3 Seven-Gate Fail-Closed Output Eligibility (`verify_output_eligibility`)
+
+Output eligibility fails closed unless all 7 preconditions are satisfied:
+1. **Gate 1 (Review Status):** `status == APPROVED_INFORMATIONAL`.
+2. **Gate 2 (Disclaimer Invariance):** `disclaimer_version == '2024-1689-v2'` and `disclaimer_text == EU_AI_ACT_DISCLAIMER_V2` (literal exact match).
+3. **Gate 3 (Primary Evidence):** Minimum 1 verified evidence link (`len >= 1`).
+4. **Gate 4 (Human Reviewer Identity):** Non-empty `reviewed_by` and valid `reviewed_at`.
+5. **Gate 5 (Reviewer Attestation):** Valid `EUReviewerAttestationSchema` with `is_human=True`, matching `attestor_id`, and confirmed statement.
+6. **Gate 6 (Reference Set Currency):** Valid active reference set (not deprecated or superseded).
+7. **Gate 7 (Linter Clearance):** Clean linter report with zero blocking findings.
+
+### 8.4 Cryptographic Audit Trail Chaining
+
+All state changes, supersessions, linter executions, and output eligibility evaluations are appended to `governance_audit_logs` with SHA-256 state digests and previous-event-hash chaining, ensuring complete forensic accountability.
 
 

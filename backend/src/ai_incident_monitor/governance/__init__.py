@@ -28,6 +28,14 @@ from ai_incident_monitor.governance.enums import (
     OECDApplicability,
     SensitiveDomain,
 )
+from ai_incident_monitor.governance.eu_output_linter import (
+    PROHIBITED_PATTERNS,
+    QUALIFIED_ALLOWLIST,
+    EULinterFinding,
+    EULinterReport,
+    EULinterResult,
+    EUOutputLinter,
+)
 from ai_incident_monitor.governance.eu_screen import EURelevanceScreeningEngine
 from ai_incident_monitor.governance.mapping_service import GovernanceMappingService
 from ai_incident_monitor.governance.models import (
@@ -39,6 +47,7 @@ from ai_incident_monitor.governance.models import (
     EUConceptualEvaluationResult,
     EUConceptualFinding,
     EULegalRelevanceScreenSchema,
+    EUReviewerAttestationSchema,
     EUScreenRuleTraceSchema,
     FrameworkControlSchema,
     FrameworkManifestSchema,
@@ -111,9 +120,16 @@ __all__ = [
     "OutputIneligibleError",
     "EUScreenRuleTraceSchema",
     "EULegalRelevanceScreenSchema",
+    "EUReviewerAttestationSchema",
     "EUConceptualFinding",
     "EUConceptualEvaluationResult",
     "EURelevanceScreeningEngine",
+    "EUOutputLinter",
+    "EULinterResult",
+    "EULinterFinding",
+    "EULinterReport",
+    "PROHIBITED_PATTERNS",
+    "QUALIFIED_ALLOWLIST",
     "verify_output_eligibility",
     "PROHIBITED_LEGAL_TERMS",
     "ConfidenceFactorBreakdown",
