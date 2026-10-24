@@ -419,3 +419,39 @@
   - Establishes the authoritative Phase 6A editorial foundation.
   - Phase 6B formatted renderers, Substack markdown export, and newsletters remain NOT STARTED.
   - Manual publication by operator; zero external network egress or distribution.
+
+---
+
+### ADR-021: Deterministic Editorial Renderers & Safe Local Dossier Export Engine
+* **Date**: 2026-10-24
+* **Status**: RATIFIED
+* **Deciders**: AI Guardians LLC Leadership, Antigravity AI
+* **Context**: While Phase 6A established relational dossier models and review state management, transforming structured dossiers into publication-ready artifacts required deterministic rendering across presentation profiles, safe atomic local file persistence, non-self-referential cryptographic provenance tracking, and local review CLI integration. Publication on Substack remains manual by the human operator, requiring strict local filesystem confinement and zero external API or network dispatch.
+* **Decision**:
+  1. **Deterministic Renderers (`EditorialMarkdownRenderer`, `EditorialJSONRenderer`)**:
+     - Implement deterministic Markdown and JSON renderers in `backend/src/ai_incident_monitor/editorial/renderers/`.
+     - Support 3 presentation profiles: `DEEP_DIVE_DOSSIER` (comprehensive), `EXECUTIVE_BRIEF` (strategic summary), and `RAPID_ALERT` (urgent bulletin).
+     - Support 2 artifact purposes:
+       - `INTERNAL_REVIEW_COPY`: Working draft rendered prior to approval with prominent watermark banner and validation findings table.
+       - `APPROVED_EDITORIAL_COPY`: Publication copy strictly requiring `APPROVED_INFORMATIONAL` status, matching content hash, zero source drift, zero blocking findings, and authenticated human actor (Rule 14).
+     - Epistemic tri-state formatting: rigorous visual separation of established facts, attributed allegations, unknowns, and disputes.
+     - Security sanitization: active HTML tags stripped, table pipe characters escaped, dangerous URL schemes (`javascript:`, `data:`, `file:`) neutralized.
+  2. **Non-Self-Referential Cryptographic Manifest (`EditorialExportManifest`)**:
+     - Computes `canonical_payload_hash` over deterministic payload excluding file digests to avoid circular hashing.
+     - Generated sidecar `.manifest.json` records physical `artifact_file_hash`, `canonical_dossier_content_hash`, and validation status.
+  3. **Safe Local Exporter (`EditorialDossierExporter`)**:
+     - Path traversal defense: validates output directory confinement and rejects null bytes.
+     - Symlink defense: strictly refuses to write into symlinked destinations.
+     - Accidental overwrite protection: fails closed (exit code 3) unless `--overwrite` is explicitly provided.
+     - Atomic write pattern: writes to staging temp files (`.tmp_<uuid>_<filename>`), computes digests, and invokes atomic `os.replace`.
+     - Source drift detection: blocks approved copy export if underlying incident records changed after dossier assembly.
+     - Append-only audit logging: records `EXPORT_DOSSIER` events in `governance_audit_logs`.
+     - Zero external egress: strictly local filesystem staging in `.data/editorial_exports/` (git-ignored); zero Substack API, email, webhook, or social dispatch.
+  4. **CLI Extension (`export-dossier`)**:
+     - Added `export-dossier` subcommand to `ai_incident_monitor.editorial.cli`.
+     - Flags: `--format` (`MARKDOWN`, `JSON`, `ALL`), `--profile`, `--purpose`, `--output-dir`, `--overwrite`, `--dry-run`, `--is-human`, `--non-human`, `--json`.
+     - Distinct exit codes: 0 (success), 1 (validation/input error), 2 (unexpected error), 3 (collision without overwrite), 4 (constitutional violation).
+* **Consequences**:
+  - Completes Phase 6B deliverables.
+  - Operators can inspect and edit rendered Markdown locally and manually publish to Substack.
+  - Zero dependencies on external publishing platforms or background schedulers.

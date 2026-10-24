@@ -3,8 +3,8 @@
 **Document Identifier:** METH-004  
 **Project:** AI Incident Monitor  
 **Organization:** AI Guardians LLC  
-**Milestone:** Phase 6A (Editorial Dossier Foundation & Review CLI)  
-**Effective Date:** 2026-10-23  
+**Milestone:** Phase 6 (Phase 6A & Phase 6B Implemented)  
+**Effective Date:** 2026-10-24  
 **Status:** APPROVED & IMPLEMENTED  
 
 ---
@@ -22,7 +22,11 @@ Automatic Internal Processing (Deduplication, Scoring, Linkage)
       ↓
 Automatic Dossier Preparation & Assembly
       ↓
+Deterministic Rendering & Local Working Draft Export (Internal Review Copy)
+      ↓
 Human Editorial Review & Attestation (Single Human-in-the-Loop Checkpoint)
+      ↓
+Deterministic Rendering & Local Final Draft Export (Approved Editorial Copy)
       ↓
 Manual Publication by Operator (External to System / Substack)
 ```
@@ -32,7 +36,7 @@ Manual Publication by Operator (External to System / Substack)
 2. **Dossier as Primary Review Checkpoint:** Human editorial review is **not** performed on every ingested incident record. The assembled editorial dossier is the primary human-review checkpoint. One dossier-level approval covers all entries within the exact reviewed version.
 3. **Optional EU & Governance Commentary Barrier:** Ordinary incident reporting is decoupled from regulatory determinations. If optional EU AI Act commentary is requested, it must strictly satisfy Phase 5 controls (`APPROVED_INFORMATIONAL` status, validated disclaimer, zero linter findings). If unapproved or missing, EU commentary is **cleanly omitted** with an internal rationale without blocking the incident's ordinary factual reporting.
 4. **Manual Publication Only:** No automated publication, external distribution, Substack API connection, email dispatch, or social posting is implemented or permitted. The operator manually publishes the final dossier.
-5. **Phase Boundaries:** Phase 6A establishes the domain models, relational persistence (Migration 006), assembly engine, validator, review state machine, and local CLI. **Phase 6B (formatted rendering, Substack markdown export, and newsletters) remains NOT STARTED.** Phase 6 is **not** complete merely because Phase 6A is ready.
+5. **Phase Boundaries:** Phase 6A established the domain models, relational persistence (Migration 006), assembly engine, validator, review state machine, and local CLI. Phase 6B implements deterministic rendering (Markdown and JSON package), cryptographic export manifests, safe local file export, and the `export-dossier` CLI command. External distribution remains strictly out of scope.
 
 ---
 
@@ -124,6 +128,7 @@ All lifecycle events write directly to the `governance_audit_logs` relational ta
 - `APPROVE_DOSSIER`
 - `REJECT_DOSSIER`
 - `SUPERSEDE_DOSSIER`
+- `EXPORT_DOSSIER`
 
 Each event records `before_state_digest`, `after_state_digest`, `previous_event_hash`, and a computed `event_hash`. Tampering or reordering of audit events is immediately detected by `EditorialRepository.verify_audit_chain()`.
 
@@ -144,3 +149,43 @@ The non-interactive CLI (`python -m ai_incident_monitor.editorial.cli`) provides
 | `reject-dossier` | Decline draft with mandatory documented rationale | Formatted text / `--json` / `--dry-run` |
 | `supersede-dossier` | Retire approved dossier in favor of updated revision | Formatted text / `--json` / `--dry-run` |
 | `verify-audit` | Verify cryptographic audit hash chain integrity | Formatted text / `--json` |
+| `export-dossier` | Export dossier to local Markdown, JSON, or manifest | Formatted text / `--json` / `--dry-run` |
+
+---
+
+## 7. Formatted Rendering Profiles & Local Dossier Export (Phase 6B)
+
+Phase 6B implements deterministic rendering engines and safe local file export capabilities, bridging structured database dossiers and manual Substack publication.
+
+### Presentation Profiles:
+1. **`DEEP_DIVE_DOSSIER`:** Exhaustive long-form analysis with complete incident entries, full epistemic segregation tables (established facts, allegations, unknowns, disputed topics), severity breakdown, and optional EU regulatory commentary.
+2. **`EXECUTIVE_BRIEF`:** High-level summary with key metrics, severity distribution table, bulleted incident briefs, and mandatory disclaimer.
+3. **`RAPID_ALERT`:** Concise urgent bulletin focusing on incident identification, severity tier, core facts, and immediate operational unknowns.
+
+### Artifact Purposes & Review Preconditions:
+- **`INTERNAL_REVIEW_COPY`:** Unapproved working draft generated prior to human approval. Rendered with an explicit top warning banner (`[UNAPPROVED — INTERNAL EDITORIAL REVIEW COPY — NOT FOR PUBLICATION]`), including validation findings and status notes for editorial verification.
+- **`APPROVED_EDITORIAL_COPY`:** Publication draft strictly requiring:
+  1. `status == APPROVED_INFORMATIONAL`
+  2. `content_hash` matching recomputed canonical content hash
+  3. `source_version_hash` matching current database incident sources (zero drift)
+  4. `blocking_finding_count == 0`
+  5. Human actor invocation (`is_human == True`, Rule 14)
+
+### Cryptographic Export Manifest (`.manifest.json`):
+Every export operation produces a companion provenance manifest containing:
+- `export_id` and ISO UTC timestamp
+- `dossier_id` and `dossier_version`
+- `artifact_purpose` and `presentation_profile`
+- `canonical_dossier_content_hash`: Canonical hash of underlying editorial dossier
+- `canonical_payload_hash`: Canonical hash of exported payload (excluding non-deterministic fields)
+- `artifact_file_hash`: SHA-256 digest of primary exported file on disk
+- `validation_status` and finding counts
+- `source_version_hashes` for underlying incidents
+
+### Safe Local File Exporter (`EditorialDossierExporter`):
+- **Path Traversal Defense:** Confines output writes to approved directories; rejects null bytes and path manipulation.
+- **Symlink Rejection:** Strictly refuses to export into symlinked directories.
+- **Collision Protection:** Fails closed if target files exist unless `--overwrite` is explicitly specified.
+- **Atomic Operations:** Writes to temporary staging files (`.tmp_<uuid>_<filename>`), computes digests, and invokes atomic `os.replace`.
+- **Append-Only Audit:** Records every export operation (`EXPORT_DOSSIER`) in `governance_audit_logs`.
+- **Zero External Distribution:** Pure local filesystem export to `.data/editorial_exports/`; zero external network requests, zero publishing API integrations.

@@ -41,6 +41,7 @@ id_ed25519
 .data/
 .data/raw_feeds/
 !.data/raw_feeds/.gitkeep
+.data/editorial_exports/
 data/raw/
 data/cache/
 data/crawled/

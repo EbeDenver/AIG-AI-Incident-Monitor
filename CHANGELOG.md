@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Phase 6B] - 2026-10-24
+
+### Added
+- **Deterministic Editorial Markdown Renderer (`EditorialMarkdownRenderer`)**:
+  - Pure deterministic Markdown generation for editorial dossiers across three presentation profiles:
+    - `DEEP_DIVE_DOSSIER`: Comprehensive technical analysis with full incident dossiers, epistemic segregation tables, and optional EU regulatory commentary.
+    - `EXECUTIVE_BRIEF`: High-level strategic synthesis featuring KPI tables, severity distributions, and concise incident briefs.
+    - `RAPID_ALERT`: Urgent operational alert detailing incident identification, severity tier, verified facts, and documented unknowns.
+  - Distinct artifact purpose modes:
+    - `INTERNAL_REVIEW_COPY`: Working draft rendered prior to human approval, complete with prominent unapproved watermark banner and validation findings breakdown.
+    - `APPROVED_EDITORIAL_COPY`: Publication copy strictly requiring `APPROVED_INFORMATIONAL` status, zero source drift, matching content hash, zero blocking validation findings, and human reviewer attestation (Rule 14).
+  - Robust formatting safeguards: active HTML tags stripped, markdown table pipe characters escaped, dangerous URL schemes (`javascript:`, `data:`, `file:`) neutralized.
+- **Deterministic Editorial JSON Package Renderer (`EditorialJSONRenderer`)**:
+  - Non-self-referential cryptographic hashing: computes `canonical_payload_hash` over deterministic export payload excluding file digests to avoid circular references.
+  - Complete structured package including canonical dossier content, review metadata, validation findings, and sanitized allowlisted audit lineage (stripping tokens, passwords, and internal notes).
+- **Artifact Provenance Manifest (`EditorialExportManifest`)**:
+  - Machine-readable manifest linking `canonical_dossier_content_hash`, `canonical_payload_hash`, physical `artifact_file_hash`, generator versions, disclaimer version, and validation reports.
+- **Safe Local Dossier Exporter (`EditorialDossierExporter`)**:
+  - Path traversal and confinement guards: rejects null bytes and confines export targets to safe directories.
+  - Symlink defense: strictly refuses to write into symlinked destination directories.
+  - Overwrite protection: fails closed (exit code 3) on filename collisions unless `--overwrite` is explicitly specified.
+  - Atomic two-stage write: writes to staging temp files (`.tmp_<uuid>_<filename>`), computes cryptographic digests, and invokes atomic `os.replace`.
+  - Source drift detection: blocks approved export if underlying incident records were updated after dossier assembly.
+  - Append-only audit logging: records `EXPORT_DOSSIER` events in `governance_audit_logs`.
+  - Pure local staging in `.data/editorial_exports/` (git-ignored); zero external network calls, zero Substack API integration, zero automated distribution.
+- **Local Review CLI Subcommand (`export-dossier`)**:
+  - Added `export-dossier` command to `ai_incident_monitor.editorial.cli` with options `--format`, `--profile`, `--purpose`, `--output-dir`, `--overwrite`, `--dry-run`, `--is-human`, `--non-human`, and `--json`.
+  - Standardized exit codes: 0 (success), 1 (validation/input error), 2 (unexpected error), 3 (collision without overwrite), 4 (constitutional violation).
+- **Unit & Integration Test Suites**:
+  - `backend/tests/unit/editorial/renderers/test_markdown_renderer.py` (15 unit tests).
+  - `backend/tests/unit/editorial/renderers/test_json_renderer.py` (8 unit tests).
+  - `backend/tests/unit/editorial/renderers/test_exporter_and_manifest.py` (13 unit tests).
+  - `backend/tests/integration/test_editorial_export_cli.py` (7 CLI integration tests).
+
 ## [Phase 6A] - 2026-10-23
 
 ### Added
