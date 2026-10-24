@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Phase 6A] - 2026-10-23
+
+### Added
+- **Editorial Relational Models & Migration 006 (`006_editorial_dossiers_and_review.py`)**:
+  - Implemented `EditorialDossierModel`, `EditorialDossierEntryModel`, and `EditorialDossierReviewModel` in `backend/src/ai_incident_monitor/db/models/editorial.py`.
+  - Established foreign key cascades, indices, and check constraints (`is_human = true OR is_human = 1`).
+  - Added Alembic migration `006_editorial_dossiers_and_review.py` (down_revision: `005`), fully verified across upgrade/downgrade cycles.
+- **Editorial Domain Models & Enums (`ai_incident_monitor.editorial.models`, `enums`)**:
+  - Pydantic v2 domain models: `EditorialDossierSchema`, `EditorialDossierEntrySchema`, `EditorialReviewerAttestationSchema`, `EditorialValidationReport`, `EditorialCandidate`.
+  - Canonical dictionary serialization and SHA-256 content hashing (`compute_content_hash()`).
+  - Immutable research disclaimer (`EDITORIAL_DISCLAIMER_VERSION = "editorial-v1"`, `EDITORIAL_DISCLAIMER_TEXT`).
+- **Editorial Source Selector (`EditorialSourceSelector`)**:
+  - Authoritative workflow: ordinary attributed reporting enters draft dossiers without requiring prior human source approval.
+  - Decoupled from EU screens: incidents without EU screens enter drafts cleanly.
+  - Unapproved or missing EU screens are cleanly omitted with internal documented reasons without blocking ordinary incident reporting.
+  - Fail-closed candidate exclusion only on concrete data integrity gaps (zero evidence, malformed title/summary).
+  - Explicit preservation of conflicting reporting, disputed facts, and allegations.
+- **Deterministic Assembly Engine (`EditorialDossierAssembler`)**:
+  - Pure programmatic assembly with zero LLM or generative inference.
+  - Deterministic entry sorting (severity score descending, incident ID ascending).
+  - Epistemic tri-state separation of established facts, attributed allegations, unknowns, and disputes.
+- **Editorial Safety Validator (`EditorialValidator`)**:
+  - Field-level validation across title, narrative sections, facts, unknowns, and disputes.
+  - Prohibits unadjudicated legal guilt and statutory violation claims while respecting a narrow qualified-language allowlist.
+  - Standalone disclaimer validation avoiding false positives on terms like "compliance".
+- **Review State Machine & Immutability (`EditorialReviewStateMachine`)**:
+  - Strict lifecycle states: `DRAFT`, `ASSEMBLED`, `PENDING_REVIEW`, `APPROVED_INFORMATIONAL`, `REJECTED`, `SUPERSEDED`.
+  - Human review primacy (`Rule 14`): automated agents cannot self-approve.
+  - Single human review checkpoint: one dossier-level sign-off covers the entire multi-entry version.
+  - Approved content is strictly immutable. Source drift detection blocks stale approvals.
+- **Transactional Repository & Cryptographic Audit Log (`EditorialRepository`)**:
+  - Transactional persistence for dossiers, entries, and review attestations.
+  - Sequential SHA-256 hash chaining into `governance_audit_logs`.
+- **Local Review CLI (`ai_incident_monitor.editorial.cli`)**:
+  - Full operational subcommands: `select-candidates`, `assemble-dossier`, `inspect-dossier`, `validate-dossier`, `submit-for-review`, `approve-dossier`, `reject-dossier`, `supersede-dossier`, `verify-audit`.
+  - Supports `--json`, `--dry-run`, non-zero exit codes, and non-TTY execution.
+- **Unit & Integration Test Suites**:
+  - `test_editorial_models.py`: schemas, canonical hashing, attestation validation.
+  - `test_source_selector.py`: source selection policies, EU omission, disputed facts.
+  - `test_dossier_assembly.py`: deterministic ordering, repeatable hashing, aggregations.
+  - `test_editorial_validator.py`: safety linter, disclaimer verification, allowlist.
+  - `test_editorial_review_and_repo.py`: review state transitions, immutability, source drift, audit logs.
+  - `test_editorial_cli.py`: end-to-end CLI workflow, dry runs, json output.
+  - `test_migrations.py`: 006 migration upgrade, foreign keys, selective downgrade.
+
 ## [Phase 5 Increment 2C-3B] - 2026-10-23
 
 ### Added

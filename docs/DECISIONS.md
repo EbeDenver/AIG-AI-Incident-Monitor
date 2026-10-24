@@ -377,3 +377,45 @@
   - Epistemically airtight and legally hedged output safety layer.
   - Complete elimination of automated self-approval or unauthorized legal determination escapes.
   - Fully completes Phase 5 Increment 2C-3B and marks all Phase 5 governance mapping milestones complete.
+
+---
+
+### ADR-020: Editorial Dossier Data Foundation, Review State Machine, and CLI
+* **Date**: 2026-10-23
+* **Status**: RATIFIED
+* **Deciders**: AI Guardians LLC Leadership, Antigravity AI
+* **Context**: The AI Incident Monitor product workflow requires compiling automated observational intelligence into structured, forensically sound research dossiers for human editorial review prior to manual publication on Substack. A clear architectural distinction is required between automated ingestion/selection (which does not require per-incident human sign-off) and final dossier approval (which is the primary human-in-the-loop review checkpoint). Furthermore, optional EU AI Act commentary must adhere to Phase 5 controls without blocking ordinary factual reporting when unavailable or unapproved.
+* **Decision**:
+  1. **Relational Models & Migration 006**:
+     - Implement `EditorialDossierModel`, `EditorialDossierEntryModel`, and `EditorialDossierReviewModel` in `backend/src/ai_incident_monitor/db/models/editorial.py`.
+     - Register models in `db/models/__init__.py` and establish relationships with `IncidentModel` and `EULegalRelevanceScreenModel`.
+     - Author Migration `006_editorial_dossiers_and_review.py` with clean upgrade/downgrade cycles.
+  2. **Authoritative Workflow & Single Review Checkpoint**:
+     - Ordinary attributed reporting enters draft dossiers automatically based on concrete evidence linkage ($\ge 1$ evidence link) and data integrity, without per-incident human approval.
+     - The completed editorial dossier is the primary human-review checkpoint. One human sign-off covers the entire multi-entry dossier version.
+  3. **Optional EU Governance Barrier**:
+     - Ordinary incident reporting does not require an EU screen.
+     - If optional EU commentary is present and `APPROVED_INFORMATIONAL`, it is included with required disclaimers.
+     - If EU commentary is unapproved (`DRAFT`, `PENDING_REVIEW`) or absent, it is cleanly omitted with documented rationale, preserving ordinary incident reporting.
+  4. **Deterministic Assembly Engine (`EditorialDossierAssembler`)**:
+     - Deterministic entry sorting (severity score descending, incident ID ascending).
+     - Epistemic tri-state preservation: distinct handling of established facts, attributed allegations, unknowns, and disputes.
+     - Zero generative/LLM inference. Computes canonical SHA-256 `content_hash`.
+     - Mandatory disclaimer: version `editorial-v1`, text matching `EDITORIAL_DISCLAIMER_TEXT`.
+  5. **Safety Validation Suite (`EditorialValidator`)**:
+     - Field-level validation across title, summaries, facts, unknowns, and disputes.
+     - Prohibits unadjudicated legal guilt and statutory violation claims, while preserving narrow qualified language allowlist.
+     - Separate disclaimer verification prevents false positives on terms like "compliance".
+  6. **Review State Machine & Human Attestation**:
+     - Strict state transitions: `DRAFT` -> `ASSEMBLED` -> `PENDING_REVIEW` -> `APPROVED_INFORMATIONAL` / `REJECTED` -> `SUPERSEDED`.
+     - Approval requires authenticated human reviewer (`is_human=True`, Rule 14), confirmed attestation, matching content hash, zero blocking validation findings, and zero source drift.
+     - Approved dossiers are strictly immutable. Any modification requires a new version or supersession.
+  7. **Append-Only Cryptographic Audit Log**:
+     - Integrates with `governance_audit_logs` using SHA-256 state digests and sequential previous-event-hash linkage.
+  8. **Local Review CLI (`ai_incident_monitor.editorial.cli`)**:
+     - Full operational subcommand suite: `select-candidates`, `assemble-dossier`, `inspect-dossier`, `validate-dossier`, `submit-for-review`, `approve-dossier`, `reject-dossier`, `supersede-dossier`, `verify-audit`.
+     - Supports `--json`, `--dry-run`, non-zero exit codes, and non-TTY execution.
+* **Consequences**:
+  - Establishes the authoritative Phase 6A editorial foundation.
+  - Phase 6B formatted renderers, Substack markdown export, and newsletters remain NOT STARTED.
+  - Manual publication by operator; zero external network egress or distribution.

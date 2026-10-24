@@ -7,6 +7,11 @@ from ai_incident_monitor.db.models.causality import (
 )
 from ai_incident_monitor.db.models.claim import ClaimRecordModel
 from ai_incident_monitor.db.models.common import TimestampMixin
+from ai_incident_monitor.db.models.editorial import (
+    EditorialDossierEntryModel,
+    EditorialDossierModel,
+    EditorialDossierReviewModel,
+)
 from ai_incident_monitor.db.models.evidence import (
     ClaimEvidenceLinkModel,
     EvidenceRecordModel,
@@ -42,6 +47,9 @@ __all__ = [
     "ClaimRecordModel",
     "DedupCandidateModel",
     "DisputedFactModel",
+    "EditorialDossierEntryModel",
+    "EditorialDossierModel",
+    "EditorialDossierReviewModel",
     "EULegalRelevanceScreenModel",
     "EUScreenRuleTraceModel",
     "EvidenceRecordModel",

@@ -2,18 +2,19 @@
 **Project:** AI Incident Monitor
 **Organization:** AI Guardians LLC
 **Document Identifier:** DOC-ERD-001
-**Milestone:** Phase 5 Increment 2C-1 (EU AI Act Informational Relevance Screen Foundation)
+**Milestone:** Phase 6A (Editorial Dossier Foundation & Review CLI)
 **Status:** ACTIVE
 
 ---
 
 ## 1. Relational Database Schema Overview
 
-The AI Incident Monitor persistence foundation comprises 22 relational tables managed via SQLAlchemy 2.0 ORM and Alembic migrations:
+The AI Incident Monitor persistence foundation comprises 25 relational tables managed via SQLAlchemy 2.0 ORM and Alembic migrations:
 - **Core Entities**: `incidents`, `claims`, `evidence_records`, `source_references`, `quote_spans`, `claim_evidence_links`
 - **Epistemic & Causal Layer**: `causal_assessments`, `ai_involvement_assessments`, `uncertainty_records`, `disputed_facts`
 - **Assessment & Severity Layer**: `severity_assessments`
 - **Governance Framework Mapping Layer (Migrations 003, 004, 005)**: `framework_reference_sets`, `framework_controls`, `incident_framework_mappings`, `eu_legal_relevance_screens`, `eu_screen_rule_traces`, `mapping_evidence_links`, `governance_audit_logs`
+- **Editorial Pipeline & Dossier Layer (Migration 006)**: `editorial_dossiers`, `editorial_dossier_entries`, `editorial_dossier_reviews`
 - **Ingestion & Deduplication Layer**: `raw_import_records`, `dedup_candidates`
 - **Governance & Audit Trail**: `human_review_records`, `audit_logs`, `governance_audit_logs`
 
@@ -30,6 +31,12 @@ erDiagram
     incidents ||--o{ dedup_candidates : "matched_in"
     incidents ||--o{ incident_framework_mappings : "mapped_to"
     incidents ||--o{ eu_legal_relevance_screens : "screened_by"
+    incidents ||--o{ editorial_dossier_entries : "included_in"
+
+    editorial_dossiers ||--o{ editorial_dossier_entries : "contains"
+    editorial_dossiers ||--o{ editorial_dossier_reviews : "attested_by"
+    editorial_dossiers ||--o| editorial_dossiers : "supersedes"
+    editorial_dossier_entries }o--o| eu_legal_relevance_screens : "links_optional"
 
     claims ||--o{ claim_evidence_links : "grounded_by"
     claims ||--o{ causal_assessments : "specifies"
@@ -282,5 +289,61 @@ erDiagram
         json payload_before
         json payload_after
         datetime recorded_at
+    }
+
+    editorial_dossiers {
+        string id PK
+        int version
+        string title
+        string scope_type
+        datetime coverage_period_start
+        datetime coverage_period_end
+        string status
+        string content_hash
+        string disclaimer_version
+        text disclaimer_text
+        text methodology_notes
+        json summary_json
+        json metadata_json
+        string generated_by
+        string reviewed_by
+        datetime reviewed_at
+        string supersedes_dossier_id FK
+        string superseded_by_id FK
+        text rejection_reason
+        datetime created_at
+        datetime updated_at
+    }
+
+    editorial_dossier_entries {
+        string id PK
+        string dossier_id FK
+        string incident_id FK
+        int entry_order
+        string entry_type
+        json source_evidence_ids
+        string source_version_hash
+        string eu_screen_id FK
+        string eu_screen_status
+        json content_json
+        datetime created_at
+    }
+
+    editorial_dossier_reviews {
+        string id PK
+        string dossier_id FK
+        int dossier_version
+        string content_hash
+        string reviewer_id
+        string reviewer_name
+        string reviewer_role
+        boolean is_human
+        boolean statement_confirmed
+        text attestation_statement
+        string action
+        text rationale
+        json attestation_json
+        datetime reviewed_at
+        datetime created_at
     }
 ```

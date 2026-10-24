@@ -14,6 +14,7 @@ from ai_incident_monitor.db.models.common import TimestampMixin
 if TYPE_CHECKING:
     from ai_incident_monitor.db.models.causality import AIInvolvementAssessmentModel
     from ai_incident_monitor.db.models.claim import ClaimRecordModel
+    from ai_incident_monitor.db.models.editorial import EditorialDossierEntryModel
     from ai_incident_monitor.db.models.governance import (
         EULegalRelevanceScreenModel,
         IncidentFrameworkMappingModel,
@@ -76,4 +77,8 @@ class IncidentModel(Base, TimestampMixin):
         "EULegalRelevanceScreenModel",
         back_populates="incident",
         cascade="all, delete-orphan",
+    )
+    editorial_entries: Mapped[list[EditorialDossierEntryModel]] = relationship(
+        "EditorialDossierEntryModel",
+        back_populates="incident",
     )

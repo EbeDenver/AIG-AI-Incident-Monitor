@@ -71,7 +71,13 @@ def test_alembic_upgrade_downgrade_cycle(temp_alembic_config: tuple[Config, str,
         "eu_screen_rule_traces",
     }
 
-    all_expected_tables = foundation_tables | governance_tables | inc2c_tables
+    editorial_tables = {
+        "editorial_dossiers",
+        "editorial_dossier_entries",
+        "editorial_dossier_reviews",
+    }
+
+    all_expected_tables = foundation_tables | governance_tables | inc2c_tables | editorial_tables
 
     # 1. Upgrade to 002 (Phase 5 Increment 1 state)
     command.upgrade(alembic_cfg, "002")
@@ -89,11 +95,43 @@ def test_alembic_upgrade_downgrade_cycle(temp_alembic_config: tuple[Config, str,
     screen_cols_004 = {col["name"] for col in inspector_004.get_columns("eu_legal_relevance_screens")}
     assert "screen_version" not in screen_cols_004, "screen_version should not exist at 004"
 
-    # 3. Upgrade to head (005 - Phase 5 Increment 2C-1 state)
+    # 3. Upgrade to 005 (Phase 5 Increment 2C-1/3B state)
+    command.upgrade(alembic_cfg, "005")
+    inspector_005 = inspect(engine)
+    tables_005 = set(inspector_005.get_table_names())
+    assert (foundation_tables | governance_tables | inc2c_tables).issubset(tables_005)
+    assert len(editorial_tables.intersection(tables_005)) == 0, "006 tables should not exist at 005"
+
+    # 4. Upgrade to head (006 - Phase 6A state)
     command.upgrade(alembic_cfg, "head")
     inspector_head = inspect(engine)
     created_tables = set(inspector_head.get_table_names())
     assert all_expected_tables.issubset(created_tables), f"Missing tables: {all_expected_tables - created_tables}"
+
+    # Verify 006 columns exist on editorial_dossiers
+    dossier_cols = {col["name"] for col in inspector_head.get_columns("editorial_dossiers")}
+    expected_006_cols = {
+        "id",
+        "version",
+        "title",
+        "scope_type",
+        "coverage_period_start",
+        "coverage_period_end",
+        "status",
+        "content_hash",
+        "disclaimer_version",
+        "disclaimer_text",
+        "methodology_notes",
+        "summary_json",
+        "metadata_json",
+        "generated_by",
+        "reviewed_by",
+        "reviewed_at",
+        "supersedes_dossier_id",
+        "superseded_by_id",
+        "rejection_reason",
+    }
+    assert expected_006_cols.issubset(dossier_cols), f"Missing 006 columns: {expected_006_cols - dossier_cols}"
 
     # Verify 004 columns exist on incident_framework_mappings
     mapping_cols = {col["name"] for col in inspector_head.get_columns("incident_framework_mappings")}
@@ -127,7 +165,15 @@ def test_alembic_upgrade_downgrade_cycle(temp_alembic_config: tuple[Config, str,
         fk_violations = conn.execute(text("PRAGMA foreign_key_check;")).fetchall()
         assert len(fk_violations) == 0, f"Foreign key check violations: {fk_violations}"
 
-    # 4. Test selective downgrade: 005 -> 004
+    # 5. Test selective downgrade: 006 -> 005
+    command.downgrade(alembic_cfg, "005")
+    inspector_down_to_005 = inspect(engine)
+    tables_down_005 = set(inspector_down_to_005.get_table_names())
+    assert (foundation_tables | governance_tables | inc2c_tables).issubset(tables_down_005)
+    for ed_table in editorial_tables:
+        assert ed_table not in tables_down_005, f"Table {ed_table} must be dropped by 006 downgrade"
+
+    # 6. Test selective downgrade: 005 -> 004
     command.downgrade(alembic_cfg, "004")
     inspector_down_to_004 = inspect(engine)
     tables_down_004 = set(inspector_down_to_004.get_table_names())
