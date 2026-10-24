@@ -22,6 +22,7 @@ from ai_incident_monitor.db.base import Base
 from ai_incident_monitor.db.models.common import TimestampMixin
 
 if TYPE_CHECKING:
+    from ai_incident_monitor.db.models.editorial import EditorialDossierEntryModel
     from ai_incident_monitor.db.models.evidence import EvidenceRecordModel
     from ai_incident_monitor.db.models.incident import IncidentModel
 
@@ -269,6 +270,10 @@ class EULegalRelevanceScreenModel(Base, TimestampMixin):
         "EUScreenRuleTraceModel",
         back_populates="screen",
         cascade="all, delete-orphan",
+    )
+    editorial_entries: Mapped[list[EditorialDossierEntryModel]] = relationship(
+        "EditorialDossierEntryModel",
+        back_populates="eu_screen",
     )
 
     @property

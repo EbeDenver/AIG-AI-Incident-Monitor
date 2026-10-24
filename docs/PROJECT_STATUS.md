@@ -3,8 +3,8 @@
 **Organization:** AI Guardians LLC
 **Document Identifier:** STAT-001
 **Last Updated:** 2026-10-23
-**Current Milestone:** Phase 5 (AIG-ISI Severity Scoring Engine & Governance Mappings) — COMPLETED (Branch: `phase5-inc2c3b-eu-linter-review-gates`)
-**Overall Status:** GREEN (Phase 5 Complete, 652/652 Tests Passing, 0 Failures, Provenance Chain Valid)
+**Current Milestone:** Phase 6A (Editorial Dossier Foundation & Review CLI) — COMPLETED (Branch: `phase6a-editorial-foundation-cli`)
+**Overall Status:** GREEN (Phase 6A Foundation & Review Complete, Provenance Chain Valid)
 
 ---
 
@@ -17,7 +17,8 @@
 | **Phase 3** | **Data Foundation & Manual Import Engine** | SQLAlchemy 2.0 ORM, dual-engine Alembic, repositories, CSV/JSON/XLSX import, CWE-1236 sanitizer, 4-tier dedup, append-only audit, 144 tests | **COMPLETED** | **2026-10-19** |
 | **Phase 4** | **Secure Ingestion Connectors & Provenance** | SSRF defense, RSS/arXiv connectors, OECD adapter, raw staging store, 30-day purge, manifest hash chaining, XML containment, 197 tests | **COMPLETED** | **2026-10-20** |
 | **Phase 5** | **AIG-ISI Scoring & Governance Map** | AIG-ISI engine, factor rationales, OECD/NIST/EU Act mappers, output linter, eligibility gates | **COMPLETED** | **2026-10-23** |
-| **Phase 6** | Editorial Pipeline & Human Review | Substack generator, neutral tone linter, HITL review CLI | Planned | Phase 6 Session |
+| **Phase 6A** | **Editorial Foundation & Review CLI** | Dossier models, Migration 006, source selector, assembly, validator, review state machine, CLI | **COMPLETED** | **2026-10-23** |
+| **Phase 6B** | Editorial Renderers & Substack Export | Substack markdown generator, newsletter templates, publication artifact exports | Planned (NOT STARTED) | Phase 6B Session |
 | **Phase 7** | End-to-End Harness & Observability | Orchestration, telemetry, multi-Mac test suite, monitoring, Cloudflare deployment prep | Planned | Phase 7 Session |
 
 ---
