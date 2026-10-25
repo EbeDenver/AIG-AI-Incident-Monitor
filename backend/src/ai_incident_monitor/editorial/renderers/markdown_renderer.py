@@ -188,7 +188,7 @@ class EditorialMarkdownRenderer(BaseEditorialRenderer):
 
         for idx, entry in enumerate(dossier.entries, start=1):
             lines.append(f"### {idx}. {escape_markdown_text(entry.incident_title)}")
-            
+
             # Entry Metadata line
             entry_meta: list[str] = [f"**Incident ID**: `{entry.incident_id}`"]
             if entry.incident_date_str:
@@ -321,7 +321,7 @@ class EditorialMarkdownRenderer(BaseEditorialRenderer):
         for idx, entry in enumerate(dossier.entries, start=1):
             sev_str = f" [{entry.severity_tier}]" if entry.severity_tier else ""
             lines.append(f"### {idx}. {escape_markdown_text(entry.incident_title)}{sev_str}")
-            
+
             pub = escape_markdown_text(entry.primary_source_publisher or "Reporting Source")
             safe_url = sanitize_url(entry.primary_source_url)
             citation = f"([source: {pub}]({safe_url}))" if safe_url else f"([source: {pub}])"
@@ -360,7 +360,7 @@ class EditorialMarkdownRenderer(BaseEditorialRenderer):
 
         for idx, entry in enumerate(dossier.entries, start=1):
             lines.append(f"### {escape_markdown_text(entry.incident_title)}")
-            
+
             date_str = f"**Date**: {entry.incident_date_str} | " if entry.incident_date_str else ""
             tier_str = f"**Severity**: `{entry.severity_tier}`" if entry.severity_tier else ""
             if date_str or tier_str:
