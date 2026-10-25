@@ -1,63 +1,68 @@
-# NEXT SESSION HANDOFF: Phase 6A Complete / Phase 6B Ready for Planning
+# NEXT SESSION HANDOFF: Phase 6 Complete / Phase 7 Ready for Planning
 **Project:** AI Incident Monitor  
 **Organization:** AI Guardians LLC  
 **Document Identifier:** NEXT-001  
-**Target Milestone:** Phase 6A Completed (Editorial Dossier Foundation & Review CLI); Phase 6B Ready for Planning  
-**Parent Commit:** `ff7c897997c3629e91db51edbf6eca74623f1fa9` (`main`)  
-**Effective Date:** 2026-10-23  
-**Current Branch:** `phase6a-editorial-foundation-cli`  
-**Feature Branch Status:** Implementation complete and verified; ready for review / PR  
+**Target Milestone:** Phase 6 Completed (Phase 6A Foundation/CLI & Phase 6B Renderers/Export); Phase 7 Ready for Planning
+**Parent Commit:** `29a400b862097b67bbc0f16ef7240f2c46088756` (`main`)
+**Effective Date:** 2026-10-24
+**Current Branch:** `phase6b-editorial-renderers-local-export`
+**Feature Branch Status:** Implementation complete and verified; ready for PR review
 
 ---
 
-## 1. Current State: Phase 6A Implemented & Verified
+## 1. Current State: Phase 6B Implemented & Verified
 
-Phase 6A ("Editorial Dossier Foundation & Review CLI") has been fully implemented and verified on branch `phase6a-editorial-foundation-cli`:
+Phase 6B ("Editorial Renderers & Local Dossier Export") has been fully implemented and verified on branch `phase6b-editorial-renderers-local-export`:
 
-- **Branch**: `phase6a-editorial-foundation-cli`
-- **Parent Commit**: `ff7c897997c3629e91db51edbf6eca74623f1fa9` on `main`
+- **Branch**: `phase6b-editorial-renderers-local-export`
+- **Parent Commit**: `29a400b862097b67bbc0f16ef7240f2c46088756` on `main`
+- **Test Suite**: 741 tests passing (including 36 renderer unit tests and 7 export CLI integration tests).
 - **Provenance Integrity**: Verified via `make verify-provenance-chain` (`is_valid: true`, 0 anomalies).
-- **Migration**: Alembic Migration `006_editorial_dossiers_and_review.py` (down_revision: `005`), fully tested via upgrade/downgrade cycle in `test_migrations.py`.
+- **Zero Database Migrations Required**: Phase 6B builds directly upon Migration 006 relational schemas and `governance_audit_logs`.
 
-### Deliverables Landed in Phase 6A:
-1. **Relational Models & Migration 006 (`backend/src/ai_incident_monitor/db/models/editorial.py`)**:
-   - `EditorialDossierModel`: persists structured dossiers, status (`DRAFT`, `ASSEMBLED`, `PENDING_REVIEW`, `APPROVED_INFORMATIONAL`, `REJECTED`, `SUPERSEDED`), canonical `content_hash`, mandatory research disclaimer, methodology notes, and audit fields.
-   - `EditorialDossierEntryModel`: persists individual incident entries with sequential ordering, evidence links, source version hash, optional EU screen linkage, and structured content.
-   - `EditorialDossierReviewModel`: records human reviewer decisions, actions (`APPROVE`, `REJECT`, `SUBMIT_FOR_REVIEW`, `SUPERSEDE`), attestation statement, and `is_human=True` constraint.
-2. **Editorial Domain Schemas (`backend/src/ai_incident_monitor/editorial/models.py`, `enums.py`)**:
-   - Pydantic v2 schemas: `EditorialDossierSchema`, `EditorialDossierEntrySchema`, `EditorialReviewerAttestationSchema`, `EditorialValidationReport`, `EditorialCandidate`.
-   - Immutable disclaimers: `EDITORIAL_DISCLAIMER_VERSION = "editorial-v1"`, `EDITORIAL_DISCLAIMER_TEXT`.
-   - Canonical content dictionary serialization and SHA-256 content hashing.
-3. **Editorial Source Selector (`EditorialSourceSelector`)**:
-   - Enforces authoritative workflow: ordinary attributed reporting enters draft dossiers **without human source approval**.
-   - Decoupled from EU screens: incidents without EU screens enter drafts cleanly.
-   - Unapproved EU screens (`DRAFT`, `PENDING_REVIEW`) are cleanly omitted with documented reasons without blocking ordinary incident reporting.
-   - Disputed facts and attributed allegations are explicitly preserved.
-4. **Deterministic Dossier Assembly Engine (`EditorialDossierAssembler`)**:
-   - Pure programmatic assembly with **zero LLM or generative inference**.
-   - Sorts entries deterministically by severity score descending, incident ID ascending.
-   - Compiles executive summary, key themes, and learning/prevention themes from verified evidence.
-5. **Editorial Safety Validator (`EditorialValidator`)**:
-   - Enforces field-level validation across narrative text, disclaimers, evidence linkage, and epistemic voids.
-   - Blocks unadjudicated legal guilt and statutory violation claims.
-   - Preserves narrow qualified-language allowlist without false positives.
-   - Separately validates mandatory disclaimer text without false positives on words like "compliance".
-6. **Review State Machine & Immutability (`EditorialReviewStateMachine`)**:
-   - Strict transition rules. Automated self-approval is forbidden (`Rule 14`).
-   - Approved dossiers are strictly immutable. Any modification requires a new revision or supersession.
-   - Source drift detection: modifying underlying source/incident records triggers drift alerts and blocks approval until re-assembled.
-7. **Editorial Repository & Cryptographic Audit Log (`EditorialRepository`)**:
-   - Transactional CRUD and lifecycle management.
-   - Chained append-only audit logging into `governance_audit_logs` with SHA-256 state digests and previous-event-hash linkage.
-8. **Local Review CLI (`ai_incident_monitor.editorial.cli`)**:
-   - Subcommands: `select-candidates`, `assemble-dossier`, `inspect-dossier`, `validate-dossier`, `submit-for-review`, `approve-dossier`, `reject-dossier`, `supersede-dossier`, `verify-audit`.
-   - Supports formatted terminal output, `--json`, `--dry-run`, and non-zero exit codes.
+### Deliverables Landed in Phase 6B:
+1. **Deterministic Markdown Renderer (`EditorialMarkdownRenderer`)**:
+   - Implements 3 presentation profiles: `DEEP_DIVE_DOSSIER`, `EXECUTIVE_BRIEF`, and `RAPID_ALERT`.
+   - Supports 2 artifact purposes:
+     - `INTERNAL_REVIEW_COPY`: Working draft rendered with watermark banner and validation findings table.
+     - `APPROVED_EDITORIAL_COPY`: Final draft strictly requiring `APPROVED_INFORMATIONAL` status, zero drift, matching content hash, and zero blocking findings.
+   - Epistemic tri-state formatting: clear visual distinction of established facts, attributed allegations, unknowns, and disputes.
+   - Security sanitization: active HTML tags stripped, markdown table pipe characters escaped, dangerous URL schemes neutralized.
+2. **Deterministic JSON Package Renderer (`EditorialJSONRenderer`)**:
+   - Computes non-self-referential `canonical_payload_hash` over deterministic export payload.
+   - Embeds complete canonical dossier, review metadata, validation report, and allowlisted audit summary (zero tokens, passwords, or internal notes).
+3. **Safe Local Dossier Exporter (`EditorialDossierExporter`)**:
+   - Path traversal defenses and null byte rejection.
+   - Symlink destination rejection.
+   - Collision protection: fails closed (exit code 3) unless `--overwrite` is specified.
+   - Two-stage atomic write pattern (`.tmp_<uuid>_<filename>` $\to$ `os.replace`).
+   - Source drift guard: blocks approved exports if underlying incident records changed after dossier assembly.
+   - Append-only audit logging: records `EXPORT_DOSSIER` events in `governance_audit_logs`.
+   - Local filesystem export to `.data/editorial_exports/` (git-ignored); zero external network calls or automated publication APIs.
+4. **Artifact Provenance Manifest (`EditorialExportManifest`)**:
+   - Captures canonical dossier content hash, payload hash, artifact file SHA-256 digest, renderer/disclaimer versions, and validation report.
+5. **Local Review CLI Subcommand (`export-dossier`)**:
+   - Flags: `--dossier-id`, `--format` (`MARKDOWN`, `JSON`, `ALL`), `--profile`, `--purpose`, `--output-dir`, `--overwrite`, `--dry-run`, `--is-human`, `--non-human`, `--json`.
+   - Standardized exit codes: 0 (success), 1 (validation/input error), 2 (unexpected error), 3 (collision without overwrite), 4 (constitutional violation).
 
 ---
 
 ## 2. Invariants & Scope Boundaries Confirmed
 
-- **Zero Per-Incident Approvals**: Ingestion, processing, and source selection operate autonomously.
+- **Zero External Publishing**: No Substack API, email, webhooks, or social posting. The operator manually publishes from local rendered files.
+- **Single Review Checkpoint**: The dossier remains the sole human sign-off checkpoint; individual incidents require no pre-approval.
+- **Pure Deterministic Generation**: 100% deterministic logic, zero LLM or neural generation.
+- **Clean Scope**: All Phase 6B deliverables reside within the agreed file allowlist.
+
+---
+
+## 3. Recommended Focus for Next Session (Phase 7 Planning)
+
+- **Phase 7: End-to-End Test Harness & Observability**:
+  - Full pipeline integration from live/mock feed ingestion to dossier export.
+  - Telemetry, logging, metrics, and health check endpoints.
+  - Multi-Mac developer test runner and cross-platform verification.
+  - Cloudflare deployment readiness review.
 - **Single Review Checkpoint**: The assembled dossier is the primary human-in-the-loop review checkpoint.
 - **Zero External Egress**: No Substack API, email, webhooks, social publishing, or network requests.
 - **Manual Publication**: Operator reviews locally and publishes manually.

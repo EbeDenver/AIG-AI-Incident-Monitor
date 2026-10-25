@@ -13,6 +13,7 @@ Subcommands:
   reject-dossier        Reject a dossier with documented rationale.
   supersede-dossier     Mark an approved dossier superseded by a newer version.
   verify-audit          Verify cryptographic audit hash chain integrity for a dossier.
+  export-dossier        Export dossier to local Markdown or JSON drafts.
 """
 
 from __future__ import annotations
@@ -27,12 +28,19 @@ from ai_incident_monitor.db.session import get_db_session, get_engine
 from ai_incident_monitor.domain.common import ConstitutionalViolationError
 from ai_incident_monitor.editorial.assembly import EditorialDossierAssembler
 from ai_incident_monitor.editorial.enums import (
+    EditorialArtifactPurpose,
     EditorialDossierStatus,
+    EditorialExportFormat,
+    EditorialPresentationProfile,
     EditorialScopeType,
 )
 from ai_incident_monitor.editorial.models import (
     EDITORIAL_ATTESTATION_STATEMENT,
     EditorialReviewerAttestationSchema,
+)
+from ai_incident_monitor.editorial.renderers import (
+    DEFAULT_EXPORT_DIR,
+    EditorialDossierExporter,
 )
 from ai_incident_monitor.editorial.source_selector import EditorialSourceSelector
 from ai_incident_monitor.editorial.validator import EditorialValidator
@@ -486,6 +494,87 @@ def cmd_verify_audit(args: argparse.Namespace) -> int:
         return 0 if is_valid else 1
 
 
+def cmd_export_dossier(args: argparse.Namespace) -> int:
+    """Export an editorial dossier to local disk under strict safety policies."""
+    eng = get_engine(url=args.db_url)
+    with get_db_session(eng) as session:
+        repo = EditorialRepository(session)
+        exporter = EditorialDossierExporter(repo)
+        try:
+            export_format = EditorialExportFormat(args.format.upper())
+            profile = EditorialPresentationProfile(args.profile.upper())
+
+            purpose_val = args.purpose.upper()
+            if purpose_val in ("REVIEW", "INTERNAL_REVIEW_COPY"):
+                purpose = EditorialArtifactPurpose.INTERNAL_REVIEW_COPY
+            elif purpose_val in ("APPROVED", "APPROVED_EDITORIAL_COPY"):
+                purpose = EditorialArtifactPurpose.APPROVED_EDITORIAL_COPY
+            else:
+                purpose = EditorialArtifactPurpose(purpose_val)
+
+            result = exporter.export(
+                dossier_id=args.dossier_id,
+                export_format=export_format,
+                profile=profile,
+                purpose=purpose,
+                output_dir=args.output_dir,
+                overwrite=args.overwrite,
+                dry_run=args.dry_run,
+                actor_id=args.actor_id,
+                is_human=args.is_human,
+                actor_role=args.actor_role,
+            )
+            session.commit()
+
+            output_data = {
+                "export_id": result.export_id,
+                "dossier_id": result.dossier_id,
+                "dossier_version": result.dossier_version,
+                "format": result.format.value,
+                "profile": result.profile.value,
+                "purpose": result.purpose.value,
+                "output_dir": result.output_dir,
+                "written_files": result.written_files,
+                "canonical_dossier_content_hash": result.manifest.canonical_dossier_content_hash,
+                "canonical_payload_hash": result.manifest.canonical_payload_hash,
+                "artifact_file_hash": result.manifest.artifact_file_hash,
+                "dry_run": result.dry_run,
+            }
+
+            if args.json:
+                print_output(output_data, as_json=True)
+            else:
+                mode_str = "[DRY-RUN] " if result.dry_run else ""
+                print(f"=== {mode_str}Dossier Export Complete ===")
+                print(f"Export ID:      {result.export_id}")
+                print(f"Dossier ID:     {result.dossier_id} (v{result.dossier_version})")
+                print(f"Profile:        {result.profile.value}")
+                print(f"Purpose:        {result.purpose.value}")
+                print(f"Format:         {result.format.value}")
+                print(f"Output Dir:     {result.output_dir}")
+                print("Written Files:")
+                for f in result.written_files:
+                    print(f"  - {f}")
+                print(f"Canonical Dossier Hash: {result.manifest.canonical_dossier_content_hash}")
+                print(f"Payload Hash:           {result.manifest.canonical_payload_hash}")
+                if result.manifest.artifact_file_hash:
+                    print(f"Artifact File Hash:     {result.manifest.artifact_file_hash}")
+
+            return 0
+        except FileExistsError as e:
+            print(f"[COLLISION ERROR] {e}", file=sys.stderr)
+            return 3
+        except ConstitutionalViolationError as e:
+            print(f"[CONSTITUTIONAL VIOLATION] {e}", file=sys.stderr)
+            return 4
+        except (ValueError, KeyError) as e:
+            print(f"[EXPORT ERROR] {e}", file=sys.stderr)
+            return 1
+        except Exception as e:
+            print(f"[UNEXPECTED ERROR] {e}", file=sys.stderr)
+            return 2
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Construct command-line argument parser."""
     parser = argparse.ArgumentParser(
@@ -590,6 +679,88 @@ def build_parser() -> argparse.ArgumentParser:
     p_audit.add_argument("--dossier-id", type=str, required=True, help="Dossier ID")
     p_audit.add_argument("--json", action="store_true", help="Output machine-readable JSON")
     p_audit.set_defaults(func=cmd_verify_audit)
+
+    # export-dossier
+    p_export = subparsers.add_parser("export-dossier", help="Export dossier to local Markdown or JSON drafts.")
+    p_export.add_argument("--dossier-id", type=str, required=True, help="Dossier ID to export")
+    p_export.add_argument(
+        "--format",
+        type=str,
+        default="MARKDOWN",
+        choices=["MARKDOWN", "JSON", "ALL", "markdown", "json", "all"],
+        help="Export artifact format (default: MARKDOWN)",
+    )
+    p_export.add_argument(
+        "--profile",
+        type=str,
+        default="DEEP_DIVE_DOSSIER",
+        choices=[
+            "DEEP_DIVE_DOSSIER",
+            "EXECUTIVE_BRIEF",
+            "RAPID_ALERT",
+            "deep_dive_dossier",
+            "executive_brief",
+            "rapid_alert",
+        ],
+        help="Presentation profile (default: DEEP_DIVE_DOSSIER)",
+    )
+    p_export.add_argument(
+        "--purpose",
+        type=str,
+        default="INTERNAL_REVIEW_COPY",
+        choices=[
+            "INTERNAL_REVIEW_COPY",
+            "APPROVED_EDITORIAL_COPY",
+            "internal_review_copy",
+            "approved_editorial_copy",
+            "REVIEW",
+            "APPROVED",
+            "review",
+            "approved",
+        ],
+        help="Export purpose (default: INTERNAL_REVIEW_COPY)",
+    )
+    p_export.add_argument(
+        "--output-dir",
+        type=str,
+        default=None,
+        help="Destination directory (default: .data/editorial_exports)",
+    )
+    p_export.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Permit overwrite of existing managed exports",
+    )
+    p_export.add_argument(
+        "--actor-id",
+        type=str,
+        default="editorial_exporter",
+        help="Actor initiating export",
+    )
+    p_export.add_argument("--actor-role", type=str, default=None, help="Actor role")
+    p_export.add_argument(
+        "--is-human",
+        action="store_true",
+        default=True,
+        help="Flag confirming human actor",
+    )
+    p_export.add_argument(
+        "--non-human",
+        action="store_false",
+        dest="is_human",
+        help="Flag indicating non-human actor (fails closed under Rule 14 for approved copies)",
+    )
+    p_export.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Perform in-memory export and validation with zero disk/DB writes",
+    )
+    p_export.add_argument(
+        "--json",
+        action="store_true",
+        help="Output machine-readable JSON status",
+    )
+    p_export.set_defaults(func=cmd_export_dossier)
 
     return parser
 

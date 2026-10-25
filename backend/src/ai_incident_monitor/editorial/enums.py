@@ -81,3 +81,27 @@ class EditorialAuditEventType(str, Enum):
     APPROVE_DOSSIER = "APPROVE_DOSSIER"
     REJECT_DOSSIER = "REJECT_DOSSIER"
     SUPERSEDE_DOSSIER = "SUPERSEDE_DOSSIER"
+    EXPORT_DOSSIER = "EXPORT_DOSSIER"
+
+
+class EditorialExportFormat(str, Enum):
+    """Artifact format for local editorial export."""
+
+    MARKDOWN = "MARKDOWN"
+    JSON = "JSON"
+    ALL = "ALL"  # CLI/export selection indicating both Markdown, JSON, and manifest
+
+
+class EditorialPresentationProfile(str, Enum):
+    """Presentation profile controlling editorial depth, structure, and detail level."""
+
+    DEEP_DIVE_DOSSIER = "DEEP_DIVE_DOSSIER"
+    EXECUTIVE_BRIEF = "EXECUTIVE_BRIEF"
+    RAPID_ALERT = "RAPID_ALERT"
+
+
+class EditorialArtifactPurpose(str, Enum):
+    """Operational purpose and governance authority of an exported artifact."""
+
+    INTERNAL_REVIEW_COPY = "INTERNAL_REVIEW_COPY"
+    APPROVED_EDITORIAL_COPY = "APPROVED_EDITORIAL_COPY"

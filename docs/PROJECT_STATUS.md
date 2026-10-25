@@ -2,9 +2,9 @@
 **Project:** AI Incident Monitor
 **Organization:** AI Guardians LLC
 **Document Identifier:** STAT-001
-**Last Updated:** 2026-10-23
-**Current Milestone:** Phase 6A (Editorial Dossier Foundation & Review CLI) — COMPLETED (Branch: `phase6a-editorial-foundation-cli`)
-**Overall Status:** GREEN (Phase 6A Foundation & Review Complete, Provenance Chain Valid)
+**Last Updated:** 2026-10-24
+**Current Milestone:** Phase 6 (Phase 6A Foundation & Phase 6B Renderers/Export Complete) — COMPLETED (Branch: `phase6b-editorial-renderers-local-export`)
+**Overall Status:** GREEN (Phase 6 Complete, 741 Tests Passing, Provenance Chain Valid)
 
 ---
 
@@ -18,7 +18,7 @@
 | **Phase 4** | **Secure Ingestion Connectors & Provenance** | SSRF defense, RSS/arXiv connectors, OECD adapter, raw staging store, 30-day purge, manifest hash chaining, XML containment, 197 tests | **COMPLETED** | **2026-10-20** |
 | **Phase 5** | **AIG-ISI Scoring & Governance Map** | AIG-ISI engine, factor rationales, OECD/NIST/EU Act mappers, output linter, eligibility gates | **COMPLETED** | **2026-10-23** |
 | **Phase 6A** | **Editorial Foundation & Review CLI** | Dossier models, Migration 006, source selector, assembly, validator, review state machine, CLI | **COMPLETED** | **2026-10-23** |
-| **Phase 6B** | Editorial Renderers & Substack Export | Substack markdown generator, newsletter templates, publication artifact exports | Planned (NOT STARTED) | Phase 6B Session |
+| **Phase 6B** | **Editorial Renderers & Local Dossier Export** | Deterministic Markdown/JSON renderers, 3 presentation profiles, export manifest, safe atomic exporter, export CLI | **COMPLETED** | **2026-10-24** |
 | **Phase 7** | End-to-End Harness & Observability | Orchestration, telemetry, multi-Mac test suite, monitoring, Cloudflare deployment prep | Planned | Phase 7 Session |
 
 ---
