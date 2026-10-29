@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Autonomous Systems Incident Monitor</title>
+  <link href="https://synthetic-source.internal/atom" rel="self"/>
+  <updated>2026-10-21T09:00:00Z</updated>
+  <entry>
+    <title>Autonomous Drone Obstacle Detection Blindspot</title>
+    <link href="https://synthetic-source.internal/atom/drone-blindspot-2026"/>
+    <id>urn:uuid:a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d</id>
+    <updated>2026-10-21T08:45:00Z</updated>
+    <summary>Synthetic Scenario: Delivery quadcopter vision subsystem misclassified reflective surface during twilight approach, forcing soft emergency landing.</summary>
+  </entry>
+</feed>

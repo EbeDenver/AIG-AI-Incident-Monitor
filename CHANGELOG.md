@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Phase 7A] - 2026-10-29
+
+### Added
+- **Offline End-to-End Verification Harness (`backend/tests/integration/test_end_to_end_pipeline.py`)**:
+  - Comprehensive 17-scenario end-to-end integration test harness executing the full supported pipeline offline:
+    - `test_01_ordinary_attributed_reporting_without_per_incident_approval`: Ingestion -> containment -> 4-tier deduplication -> evidence graph -> AIG-ISI scoring -> OECD/NIST mapping -> candidate evaluation -> draft dossier assembly without per-incident human sign-off.
+    - `test_02_dossier_creation_and_review_copy_rendering_before_approval`: Assembly and rendering of `INTERNAL_REVIEW_COPY` (Markdown & JSON) prior to approval, with review watermark banner and validation table.
+    - `test_03_successful_explicit_test_human_approval_and_approved_export`: Full lifecycle through review submission, explicit test-human attestation sign-off (Rule 14), status transition to `APPROVED_INFORMATIONAL`, and export as `APPROVED_EDITORIAL_COPY`.
+    - `test_04_duplicate_and_near_duplicate_input_handling`: Strict URL identity deduplication preventing duplicate incident ingestion.
+    - `test_05_malformed_feed_input_resilience`: Ingestion containment and graceful error handling on truncated and corrupt XML feeds.
+    - `test_06_missing_evidence_blocks_dossier_inclusion`: Editorial candidate eligibility exclusion when zero evidence records are linked.
+    - `test_07_invalid_provenance_chain_detection`: Cryptographic hash chain validation detecting altered manifest content or hash divergence.
+    - `test_08_source_and_content_drift_blocks_approval_and_export`: Detection of post-assembly mutations in underlying incident records, blocking human approval and approved export.
+    - `test_09_invalid_reference_data_blocks_governance_mapping`: Tampered or unanchored governance reference data fails closed with `ConstitutionalViolationError`.
+    - `test_10_ineligible_optional_eu_commentary_clean_omission`: Ineligible EU screens (unreviewed, unverified territorial nexus) omitted cleanly without blocking approved exports.
+    - `test_11_database_and_audit_persistence_transaction_rollback`: Database transaction rollback on simulated constraint failure leaves zero orphaned state.
+    - `test_12_interrupted_processing_and_idempotent_retry`: Repeated execution on identical feeds and candidate pools is safe and idempotent.
+    - `test_13_partial_export_failure_and_cleanup`: Path collision protection without `--overwrite`, symlink destination rejection, and null byte injection rejection.
+    - `test_14_unauthorized_and_automated_approval_attempts_blocked`: Autonomous agents (`is_human=False`), empty reviewer IDs, unconfirmed attestations, and unapproved exports strictly blocked by Rule 14.
+    - `test_15_artifact_and_manifest_hash_verification`: Independent SHA-256 verification of disk artifacts against manifest digests.
+    - `test_16_sensitive_data_and_secret_leakage_checks`: Redaction and absence of secrets, tokens, and unrestricted audit fields in exported Markdown and JSON.
+    - `test_17_network_denial_enforcement`: Socket connection attempt denial guard verifying zero external network egress during pipeline execution.
+- **Dedicated Synthetic Test Fixtures (`backend/tests/fixtures/e2e/`)**:
+  - `rss_standard_incident.xml`: Synthetic RSS 2.0 incident feed item.
+  - `atom_standard_incident.xml`: Synthetic Atom 1.0 incident feed item.
+  - `rss_malformed.xml`: Intentionally malformed XML for parser resilience testing.
+  - `rss_prompt_injection.xml`: Adversarial prompt injection payload for containment testing.
+  - `rss_eu_relevant.xml`: Synthetic clinical triage incident for EU AI Act screening.
+  - `synthetic_oecd_incident.json`: Synthetic OECD incident export schema fixture.
+
 ## [Phase 6B] - 2026-10-24
 
 ### Added

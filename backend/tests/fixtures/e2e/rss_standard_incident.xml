@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>AI Safety &amp; Observability News</title>
+    <link>https://synthetic-source.internal/feed</link>
+    <description>Synthetic incident monitoring reporting stream</description>
+    <item>
+      <title>Automated Sorting Robot Arm Deviation</title>
+      <link>https://synthetic-source.internal/incidents/sorting-arm-2026</link>
+      <description>Synthetic Scenario: Autonomous warehouse sorting robot arm experienced trajectory computation error, damaging conveyor belt package guide.</description>
+      <pubDate>Mon, 20 Oct 2026 08:30:00 GMT</pubDate>
+      <guid>https://synthetic-source.internal/incidents/sorting-arm-2026</guid>
+    </item>
+  </channel>
+</rss>

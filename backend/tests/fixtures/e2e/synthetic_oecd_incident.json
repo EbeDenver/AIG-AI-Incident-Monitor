@@ -1,0 +1,13 @@
+[
+  {
+    "id": "OECD-SYNTH-100",
+    "title": "Industrial Robot Assembly Calibration Drift",
+    "description": "Synthetic Scenario: Precision assembly robot exceeded torque limits during engine block machining, requiring shift halt.",
+    "date": "2026-06-15",
+    "url": "https://synthetic-source.internal/reports/robot-drift-100",
+    "harm_type": "Equipment Damage",
+    "system": "Automated Torquer 500",
+    "entity": "Precision Motor Works",
+    "demonstration_notice": "DEMONSTRATION DATA — NOT A REAL INCIDENT"
+  }
+]
