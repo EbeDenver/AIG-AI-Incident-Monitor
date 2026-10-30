@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Phase 7B] - 2026-10-29
+
+### Added
+- **Local Operational Observability & Structured Event Logging (`ai_incident_monitor.observability`)**:
+  - Small, versioned operational event schema (`OperationalEventSchema`, `v1.0.0`) capturing `run_id`, `stage`, `event_type`, `recorded_at_utc`, `duration_ms` (monotonic clock), `outcome`, `reason_code`, safe `record_ids`, and `counts`.
+  - Controlled outcome states: `SUCCEEDED`, `FAILED_TECHNICAL`, `BLOCKED_VALIDATION`, `AWAITING_HUMAN_REVIEW`, and `SKIPPED` (clearly differentiating pending-review or validation stops from technical faults).
+  - Context-safe correlation tracking via `contextvars.ContextVar` (`run_scope`, `stage_scope`) with automatic duration measurement and correlation isolation across concurrent or sequential runs.
+  - Security & data minimization: log injection defenses (CWE-117 newline and CR stripping, null byte removal), credential and token masking (`mask_sensitive_dict`), and safe exception summaries forbidding raw exception locals or stack frames.
+  - Standard-library JSON logger (`ai_incident_monitor.observability`) with fail-soft, non-fatal logging policy (telemetry errors never abort core business transactions, while mandatory audit logs remain fail-closed).
+  - In-memory run metrics collector (`RunMetricsCollector`, `RunMetricsSummary`) with accurate counts: `items_received`, `items_accepted`, `items_rejected`, `duplicates_detected`, `assessments_completed`, `dossiers_assembled`, `validation_blocks`, `review_required_outcomes`, `export_successes`, `export_failures`.
+- **Local Operational Diagnostics Runner & CLI (`ai_incident_monitor.diagnostics`)**:
+  - Safe, non-mutating operational diagnostics runner (`LocalDiagnosticsRunner`) evaluating 6 read-only environment checks:
+    1. `CONFIGURATION`: Verifies database URL and runtime configuration presence with masked credentials.
+    2. `DATABASE`: Verifies connectivity via read-only SQL ping query (`SELECT 1`).
+    3. `SCHEMA`: Inspects table presence (`incidents`, `evidence_records`, `claim_records`, `source_references`, `editorial_dossiers`, `framework_reference_sets`, `governance_audit_logs`) without auto-repair or running migrations.
+    4. `REFERENCE_LIBRARY`: Verifies cryptographic SHA-256 byte digests of OECD, NIST, and EU AI Act YAML files against `frameworks/manifest.json`.
+    5. `STORAGE_PATHS`: Read-only, non-mutating accessibility checks of export and staging paths (zero test files written).
+    6. `PIPELINE_COMPONENTS`: Readiness validation of scoring, validator, and rendering engines.
+  - Standalone diagnostics CLI (`python -m ai_incident_monitor.diagnostics.cli` or `make diagnose`) supporting human-readable formatted table and `--json` machine-readable output.
+  - Integrated `diagnose` subcommand in editorial review CLI (`python -m ai_incident_monitor.editorial.cli diagnose [--json]`).
+  - Standardized exit codes: 0 = HEALTHY, 1 = DEGRADED, 2 = UNHEALTHY.
+- **Service Instrumentation**:
+  - Instrumented `IngestionPipeline.execute_run()` with `stage_scope(OperationalStage.INGESTION)` recording items received, accepted, and deduplicated.
+  - Instrumented `EditorialDossierExporter.export()` with `stage_scope(OperationalStage.LOCAL_EXPORT)` recording export attempts, successes, collisions, and validation blocks.
+- **Unit & Integration Test Suite (31 new tests, 789 total tests passing)**:
+  - `backend/tests/unit/observability/test_models_and_events.py` (11 unit tests).
+  - `backend/tests/unit/observability/test_context_and_metrics.py` (7 unit tests).
+  - `backend/tests/unit/diagnostics/test_diagnostics_runner.py` (9 unit tests).
+  - `backend/tests/integration/test_diagnostics_cli.py` (4 CLI integration tests).
+
 ## [Phase 7A] - 2026-10-29
 
 ### Added

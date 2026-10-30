@@ -3,8 +3,8 @@
 **Organization:** AI Guardians LLC
 **Document Identifier:** STAT-001
 **Last Updated:** 2026-10-29
-**Current Milestone:** Phase 7A (Offline End-to-End Verification Harness Complete) — COMPLETED (Branch: `phase7a-offline-e2e-harness`)
-**Overall Status:** GREEN (Phase 7A Complete, 758 Tests Passing, Provenance Chain Valid)
+**Current Milestone:** Phase 7B (Local Pipeline Observability & Operational Diagnostics) — COMPLETED (Branch: `phase7b-local-observability-diagnostics`)
+**Overall Status:** GREEN (Phase 7B Complete, 789 Tests Passing, Provenance Chain Valid)
 
 ---
 
@@ -20,7 +20,7 @@
 | **Phase 6A** | **Editorial Foundation & Review CLI** | Dossier models, Migration 006, source selector, assembly, validator, review state machine, CLI | **COMPLETED** | **2026-10-23** |
 | **Phase 6B** | **Editorial Renderers & Local Dossier Export** | Deterministic Markdown/JSON renderers, 3 presentation profiles, export manifest, safe atomic exporter, export CLI | **COMPLETED** | **2026-10-24** |
 | **Phase 7A** | **Offline End-to-End Verification Harness** | Offline E2E test suite covering full workflow, synthetic fixtures, 17 failure/edge scenarios, network denial guard | **COMPLETED** | **2026-10-29** |
-| **Phase 7B** | Pipeline Observability & Diagnostics | Telemetry, pipeline health checks, diagnostics CLI, operational metrics | Planned | Phase 7B Session |
+| **Phase 7B** | **Pipeline Observability & Diagnostics** | Telemetry, pipeline health checks, diagnostics CLI, operational metrics | **COMPLETED** | **2026-10-29** |
 
 ---
 
@@ -87,8 +87,10 @@ Based on [`docs/REQUIREMENTS_TRACEABILITY.md`](REQUIREMENTS_TRACEABILITY.md):
   - `VERIFIED (Phase 5 Increment 2C Complete)`: 2 requirements
     - `GOV-003`: EU AI Act categorization screening (delivered across 2C-1, 2C-2, 2C-3A, and 2C-3B; verified by 96 unit tests in test_eu_output_linter.py and test_eu_output_eligibility.py).
     - `LGL-001`: Never assert unadjudicated violations (schema and regex guards in 2C-1/2C-2; deterministic output linter and fail-closed gates in 2C-3B).
-  - `PLANNED (Phases 6–7)`: 21 requirements
-* **Total Verified**: 48 / 69 (69.6%)
+  - `VERIFIED (Phase 7B Observability & Diagnostics)`: 1 requirement
+    - `OPS-001`: Structured JSON logging for all pipeline operations, connector runs, and evaluation cycles (`OperationalEventSchema`, `OperationalJSONLogger`, `stage_scope`, `LocalDiagnosticsRunner`).
+  - `PLANNED (Phases 6–7 / Next Milestones)`: 20 requirements
+* **Total Verified**: 49 / 69 (71.0%)
 
 ---
 
@@ -208,3 +210,35 @@ Phase 5 Increment 1 delivered, verified, and merged to `main` via PR #4 (`19db6c
   - Negative failure resilience: missing evidence, corrupted XML, prompt injection containment, provenance hash divergence, post-assembly source drift, untrusted reference data, ineligible EU commentary exclusion, transaction rollback, symlink and path traversal safety, automated approval denial, and network denial enforcement.
   - Multi-Mac isolation using dynamic `tmp_path` fixtures; zero production code modifications.
   - 17 new integration tests (758 total tests passing, 0 failures, 0 warnings in ~9.05s); provenance chain verified with 0 anomalies.
+
+---
+
+## 10. Phase 7B Delivery Tracking
+
+- [x] **Phase 7B (Verified on `phase7b-local-observability-diagnostics`)**: Local Pipeline Observability & Operational Diagnostics:
+  - **Structured Operational Telemetry (`ai_incident_monitor.observability`)**:
+    - Small, versioned operational event schema (`OperationalEventSchema`, `v1.0.0`) capturing `run_id`, `stage`, `event_type`, `recorded_at_utc`, `duration_ms` (monotonic clock), `outcome`, `reason_code`, safe `record_ids`, and `counts`.
+    - Controlled outcome states: `SUCCEEDED`, `FAILED_TECHNICAL`, `BLOCKED_VALIDATION`, `AWAITING_HUMAN_REVIEW`, and `SKIPPED` (clearly differentiating pending-review or validation stops from technical faults).
+    - Context-safe correlation tracking via `contextvars.ContextVar` (`run_scope`, `stage_scope`) with automatic duration measurement and correlation isolation across concurrent or sequential runs.
+    - Security & data minimization: log injection defenses (CWE-117 newline and CR stripping, null byte removal), credential and token masking (`mask_sensitive_dict`), and safe exception summaries forbidding raw exception locals or stack frames.
+    - Standard-library JSON logger (`ai_incident_monitor.observability`) with fail-soft, non-fatal logging policy (telemetry errors never abort core business transactions, while mandatory audit logs remain fail-closed).
+    - In-memory run metrics collector (`RunMetricsCollector`, `RunMetricsSummary`) with accurate counts: `items_received`, `items_accepted`, `items_rejected`, `duplicates_detected`, `assessments_completed`, `dossiers_assembled`, `validation_blocks`, `review_required_outcomes`, `export_successes`, `export_failures`.
+  - **Local Operational Diagnostics Runner & CLI (`ai_incident_monitor.diagnostics`)**:
+    - Safe, non-mutating operational diagnostics runner (`LocalDiagnosticsRunner`) evaluating 6 read-only environment checks:
+      1. `CONFIGURATION`: Verifies database URL and runtime configuration presence with masked credentials.
+      2. `DATABASE`: Verifies connectivity via read-only SQL ping query (`SELECT 1`).
+      3. `SCHEMA`: Inspects table presence (`incidents`, `evidence_records`, `claim_records`, `source_references`, `editorial_dossiers`, `framework_reference_sets`, `governance_audit_logs`) without auto-repair or running migrations.
+      4. `REFERENCE_LIBRARY`: Verifies cryptographic SHA-256 byte digests of OECD, NIST, and EU AI Act YAML files against `frameworks/manifest.json`.
+      5. `STORAGE_PATHS`: Read-only, non-mutating accessibility checks of export and staging paths (zero test files written).
+      6. `PIPELINE_COMPONENTS`: Readiness validation of scoring, validator, and rendering engines.
+    - Standalone diagnostics CLI (`python -m ai_incident_monitor.diagnostics.cli` or `make diagnose`) supporting human-readable formatted table and `--json` machine-readable output.
+    - Integrated `diagnose` subcommand in editorial review CLI (`python -m ai_incident_monitor.editorial.cli diagnose [--json]`).
+    - Standardized exit codes: 0 = HEALTHY, 1 = DEGRADED, 2 = UNHEALTHY.
+  - **Service Instrumentation**:
+    - Instrumented `IngestionPipeline.execute_run()` with `stage_scope(OperationalStage.INGESTION)` recording items received, accepted, and deduplicated.
+    - Instrumented `EditorialDossierExporter.export()` with `stage_scope(OperationalStage.LOCAL_EXPORT)` recording export attempts, successes, collisions, and validation blocks.
+  - **Unit & Integration Test Suite (31 new tests, 789 total tests passing)**:
+    - `backend/tests/unit/observability/test_models_and_events.py` (11 unit tests).
+    - `backend/tests/unit/observability/test_context_and_metrics.py` (7 unit tests).
+    - `backend/tests/unit/diagnostics/test_diagnostics_runner.py` (9 unit tests).
+    - `backend/tests/integration/test_diagnostics_cli.py` (4 CLI integration tests).
