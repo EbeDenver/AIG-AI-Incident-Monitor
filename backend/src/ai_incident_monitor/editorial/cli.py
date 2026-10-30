@@ -762,6 +762,20 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_export.set_defaults(func=cmd_export_dossier)
 
+    # Subcommand: diagnose
+    p_diag = subparsers.add_parser(
+        "diagnose",
+        help="Run safe, non-mutating operational diagnostic checks across local subsystems",
+    )
+    p_diag.add_argument(
+        "--json",
+        action="store_true",
+        help="Output machine-readable JSON diagnostics report",
+    )
+    p_diag.set_defaults(
+        func=lambda args: __import__("ai_incident_monitor.diagnostics.cli", fromlist=["run_diagnostics_cli"]).run_diagnostics_cli(as_json=args.json)
+    )
+
     return parser
 
 

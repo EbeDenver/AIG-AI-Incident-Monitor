@@ -9,7 +9,7 @@ ALEMBIC ?= $(VENV)/bin/alembic
 RUFF ?= $(VENV)/bin/ruff
 MYPY ?= $(VENV)/bin/mypy
 
-.PHONY: help test test-unit test-integration migrate migrate-down db-up db-down lint format typecheck clean purge-raw-feeds purge-raw-feeds-dry-run import-oecd verify-provenance-chain verify-provenance-chain-dry-run
+.PHONY: help test test-unit test-integration migrate migrate-down db-up db-down lint format typecheck clean purge-raw-feeds purge-raw-feeds-dry-run import-oecd verify-provenance-chain verify-provenance-chain-dry-run diagnose diagnose-json
 
 help:
 	@echo "Available Makefile targets:"
@@ -73,4 +73,10 @@ verify-provenance-chain:
 
 verify-provenance-chain-dry-run:
 	$(PYTHON) -m ai_incident_monitor.ingestion.verify_chain_cli --dry-run
+
+diagnose:
+	$(PYTHON) -m ai_incident_monitor.diagnostics.cli
+
+diagnose-json:
+	$(PYTHON) -m ai_incident_monitor.diagnostics.cli --json
 

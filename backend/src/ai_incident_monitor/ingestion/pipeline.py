@@ -14,6 +14,11 @@ from typing import Any, Optional
 from sqlalchemy.orm import Session
 
 from ai_incident_monitor.deduplication.engine import DeduplicationEngine
+from ai_incident_monitor.observability import (
+    OperationalOutcome,
+    OperationalStage,
+    stage_scope,
+)
 from ai_incident_monitor.ingestion.connectors.base import BaseConnector
 from ai_incident_monitor.ingestion.manifest import (
     DEFAULT_CHAIN_SCOPE,
@@ -100,6 +105,27 @@ class IngestionPipeline:
         builder.approved_source_host = urllib_host(target_url)
         builder.source_url = target_url
 
+        with stage_scope(
+            OperationalStage.INGESTION,
+            run_id=builder.ingestion_run_id,
+            initial_record_ids={"target_url": target_url, "connector": self.connector.name},
+        ) as stage_ctx:
+            return self._execute_run_internal(
+                builder=builder,
+                stage_ctx=stage_ctx,
+                target_url=target_url,
+                etag=etag,
+                last_modified=last_modified,
+            )
+
+    def _execute_run_internal(
+        self,
+        builder: ManifestBuilder,
+        stage_ctx: Any,
+        target_url: str,
+        etag: Optional[str] = None,
+        last_modified: Optional[str] = None,
+    ) -> PipelineExecutionResult:
         # 1. Fetch & parse
         exec_res: ConnectorExecutionResult = self.connector.fetch_and_parse(
             target_url,
@@ -235,16 +261,33 @@ class IngestionPipeline:
                 },
             )
 
-        return PipelineExecutionResult(
-            ingestion_run_id=builder.ingestion_run_id,
-            manifest=final_manifest,
-            items=exec_res.items,
-            envelopes=envelopes,
-            staged_record=staged_record,
-            duplicate_summary=duplicate_summary,
-            quarantined_count=quarantined_count,
-            is_success=exec_res.is_success,
-        )
+            # Record operational metrics
+            stage_ctx.set_count("items_received", len(exec_res.items))
+            stage_ctx.set_count("items_accepted", len(envelopes))
+            stage_ctx.set_count(
+                "duplicates_detected",
+                duplicate_summary.get("tier_1_matches", 0)
+                + duplicate_summary.get("tier_2_matches", 0)
+                + duplicate_summary.get("tier_3_candidates", 0),
+            )
+            if not exec_res.is_success:
+                stage_ctx.set_outcome(
+                    OperationalOutcome.FAILED_TECHNICAL,
+                    reason_code=f"INGESTION_{exec_res.status.value.upper()}",
+                )
+            else:
+                stage_ctx.set_outcome(OperationalOutcome.SUCCEEDED)
+
+            return PipelineExecutionResult(
+                ingestion_run_id=builder.ingestion_run_id,
+                manifest=final_manifest,
+                items=exec_res.items,
+                envelopes=envelopes,
+                staged_record=staged_record,
+                duplicate_summary=duplicate_summary,
+                quarantined_count=quarantined_count,
+                is_success=exec_res.is_success,
+            )
 
 
 def urllib_host(url: str) -> str:

@@ -36,6 +36,11 @@ from ai_incident_monitor.editorial.renderers.json_renderer import EditorialJSONR
 from ai_incident_monitor.editorial.renderers.manifest import EditorialExportManifest
 from ai_incident_monitor.editorial.renderers.markdown_renderer import EditorialMarkdownRenderer
 from ai_incident_monitor.editorial.validator import EditorialValidator
+from ai_incident_monitor.observability import (
+    OperationalOutcome,
+    OperationalStage,
+    stage_scope,
+)
 
 if TYPE_CHECKING:
     from ai_incident_monitor.repositories.editorial_repo import EditorialRepository
@@ -97,6 +102,38 @@ class EditorialDossierExporter:
         actor_role: Optional[str] = None,
     ) -> EditorialExportResult:
         """Export an editorial dossier to local disk under strict safety policies."""
+        with stage_scope(
+            OperationalStage.LOCAL_EXPORT,
+            initial_record_ids={"dossier_id": dossier_id, "purpose": purpose.value},
+        ) as stage_ctx:
+            return self._export_internal(
+                stage_ctx=stage_ctx,
+                dossier_id=dossier_id,
+                export_format=export_format,
+                profile=profile,
+                purpose=purpose,
+                output_dir=output_dir,
+                overwrite=overwrite,
+                dry_run=dry_run,
+                actor_id=actor_id,
+                is_human=is_human,
+                actor_role=actor_role,
+            )
+
+    def _export_internal(
+        self,
+        stage_ctx: Any,
+        dossier_id: str,
+        export_format: EditorialExportFormat,
+        profile: EditorialPresentationProfile,
+        purpose: EditorialArtifactPurpose,
+        output_dir: Optional[str],
+        overwrite: bool,
+        dry_run: bool,
+        actor_id: str,
+        is_human: bool,
+        actor_role: Optional[str],
+    ) -> EditorialExportResult:
         dossier = self.repository.get_dossier(dossier_id)
         if not dossier:
             raise KeyError(f"Dossier '{dossier_id}' not found in repository.")
@@ -248,6 +285,9 @@ class EditorialDossierExporter:
                 rendered_artifacts[primary_filename][0].encode("utf-8")
             ).hexdigest()
             dry_manifest = manifest.model_copy(update={"artifact_file_hash": mock_file_hash})
+            stage_ctx.set_count("export_successes", 1)
+            stage_ctx.set_record_id("export_id", export_id)
+            stage_ctx.set_outcome(OperationalOutcome.SUCCEEDED)
             return EditorialExportResult(
                 export_id=export_id,
                 dossier_id=dossier.id,
@@ -339,6 +379,10 @@ class EditorialDossierExporter:
             actor_role=actor_role,
             details=audit_details,
         )
+
+        stage_ctx.set_count("export_successes", 1)
+        stage_ctx.set_record_id("export_id", export_id)
+        stage_ctx.set_outcome(OperationalOutcome.SUCCEEDED)
 
         return EditorialExportResult(
             export_id=export_id,
