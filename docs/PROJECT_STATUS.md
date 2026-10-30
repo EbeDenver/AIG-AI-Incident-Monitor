@@ -2,9 +2,9 @@
 **Project:** AI Incident Monitor
 **Organization:** AI Guardians LLC
 **Document Identifier:** STAT-001
-**Last Updated:** 2026-10-29
-**Current Milestone:** Phase 7B (Local Pipeline Observability & Operational Diagnostics) — COMPLETED (Branch: `phase7b-local-observability-diagnostics`)
-**Overall Status:** GREEN (Phase 7B Complete, 789 Tests Passing, Provenance Chain Valid)
+**Last Updated:** 2026-10-30
+**Current Milestone:** Phase 8A (Local HTTP Foundation, Session Security & Incident/Diagnostics Explorer) — COMPLETED (Branch: `phase8a-local-ui-security-explorer`)
+**Overall Status:** GREEN (Phase 8A Complete, 816 Tests Passing, Provenance Chain Valid)
 
 ---
 
@@ -21,6 +21,7 @@
 | **Phase 6B** | **Editorial Renderers & Local Dossier Export** | Deterministic Markdown/JSON renderers, 3 presentation profiles, export manifest, safe atomic exporter, export CLI | **COMPLETED** | **2026-10-24** |
 | **Phase 7A** | **Offline End-to-End Verification Harness** | Offline E2E test suite covering full workflow, synthetic fixtures, 17 failure/edge scenarios, network denial guard | **COMPLETED** | **2026-10-29** |
 | **Phase 7B** | **Pipeline Observability & Diagnostics** | Telemetry, pipeline health checks, diagnostics CLI, operational metrics | **COMPLETED** | **2026-10-29** |
+| **Phase 8A** | **Local UI Security & Incident Explorer** | Minimal FastAPI foundation, server-side sessions, loopback binds, CSRF, read-only incident & diagnostics explorer | **COMPLETED** | **2026-10-30** |
 
 ---
 
@@ -242,3 +243,33 @@ Phase 5 Increment 1 delivered, verified, and merged to `main` via PR #4 (`19db6c
     - `backend/tests/unit/observability/test_context_and_metrics.py` (7 unit tests).
     - `backend/tests/unit/diagnostics/test_diagnostics_runner.py` (9 unit tests).
     - `backend/tests/integration/test_diagnostics_cli.py` (4 CLI integration tests).
+
+---
+
+## 11. Phase 8A Delivery Tracking
+
+- [x] **Phase 8A (Verified on `phase8a-local-ui-security-explorer`)**: Local HTTP Foundation, Session Security & Incident/Diagnostics Explorer:
+  - **Minimal FastAPI Foundation & Security Middleware (`ai_incident_monitor.ui`)**:
+    - Application factory `create_app()` strictly enforcing loopback binding (`127.0.0.1` / `localhost`).
+    - `LocalSecurityMiddleware` enforcing host header allowlist, 1MB maximum payload ceiling, strict Origin verification on state changes, and defensive security headers (`nosniff`, `DENY`, `no-referrer`, `CSP: default-src 'self'`).
+  - **Local Development Authentication & Session Security (`ai_incident_monitor.ui.auth`)**:
+    - `LocalCredentialManager` generating 32-byte cryptographically secure token in `.data/.operator_credential` with POSIX `0o600` permissions, symlink rejection (`O_NOFOLLOW`), and constant-time verification.
+    - `ServerSessionManager` maintaining server-side session state with 4-hour idle expiration, 24-hour absolute ceiling, constant-time CSRF verification, and explicit session invalidation on logout.
+    - `LoginRateLimiter` preventing brute-force attacks by blocking after 5 failed attempts per 5-minute sliding window.
+  - **Read-Only Operator Incident Explorer (`ai_incident_monitor.ui.routes.incidents`)**:
+    - Read-only `/incidents` view with status filtering (`NEW`, `ANALYZED`, `VERIFIED`, `REJECTED`) and pagination.
+    - Read-only `/incidents/{id}` view with epistemic tri-state decomposition into 4 evidentiary panels: Confirmed Facts (blue), Attributed Allegations (yellow), Technical Uncertainties (gray), and Disputed Facts (red).
+    - Safe source evidence attribution with link sanitization (safe URL scheme whitelist).
+    - Zero database mutations or background state transitions.
+  - **Read-Only Operational Diagnostics View (`ai_incident_monitor.ui.routes.diagnostics`)**:
+    - Web integration of `LocalDiagnosticsRunner` with overall status indicator, 6 subsystem check cards, and explicit non-mutating execution guarantee notice.
+  - **Accessible Semantic UI & Static Assets**:
+    - Semantic, responsive HTML templates (`base.html`, `login.html`, `list.html`, `detail.html`, `diagnostics.html`) and zero-CDN CSS (`style.css`).
+    - Prominent `LOCAL DEVELOPMENT MODE` warning banner and WCAG-compliant visible focus styling.
+  - **Development CLI Launcher (`ai_incident_monitor.ui.cli`)**:
+    - `python -m ai_incident_monitor.ui.cli [--host 127.0.0.1] [--port 8000]` enforcing loopback binding validation.
+  - **Unit Test Suite (27 new unit tests, 816 total tests passing)**:
+    - `backend/tests/unit/ui/test_auth_session.py` (11 unit tests).
+    - `backend/tests/unit/ui/test_security_middleware.py` (7 unit tests).
+    - `backend/tests/unit/ui/test_incident_routes.py` (6 unit tests).
+    - `backend/tests/unit/ui/test_diagnostics_routes.py` (3 unit tests).

@@ -5,6 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Phase 8A] - 2026-10-30
+
+### Added
+- **Local HTTP Foundation & Session Security (`ai_incident_monitor.ui`)**:
+  - FastAPI ASGI application factory (`create_app`) strictly bound to loopback interfaces (`127.0.0.1` / `localhost`) and rejecting external network binds (`0.0.0.0`, LAN IPs).
+  - Security middleware (`LocalSecurityMiddleware`) enforcing:
+    - Host header allowlist (`127.0.0.1`, `localhost`, `testserver`).
+    - 1MB maximum request payload limit (`HTTP_413_CONTENT_TOO_LARGE`).
+    - Strict cross-origin request protection (Origin header verification on state-changing `POST`/`PUT`/`DELETE` methods).
+    - Hardened security response headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Content-Security-Policy: default-src 'self'`).
+  - Ephemeral local-credential bootstrap (`LocalCredentialManager`):
+    - Generates 32-byte cryptographically secure random token in `.data/.operator_credential` with POSIX `0o600` file permissions.
+    - Automatic token regeneration after 24 hours.
+    - Constant-time token verification (`hmac.compare_digest`).
+    - Symlink rejection (`O_NOFOLLOW`) to prevent symlink traversal attacks.
+  - In-memory server-side session registry (`ServerSessionManager`):
+    - Session lifetime controls: 4-hour idle expiration and 24-hour absolute ceiling.
+    - Per-session cryptographically random 32-byte CSRF token.
+    - Constant-time CSRF token validation against request forms and headers.
+    - Safe session invalidation and cleanup on explicit operator logout.
+  - Bounded in-memory login rate limiter (`LoginRateLimiter`):
+    - Max 5 consecutive failed login attempts per 5-minute sliding window per client IP.
+- **Read-Only Operator Explorer Views (`ai_incident_monitor.ui.routes`)**:
+  - Unauthenticated access redirects securely to `/login` with clean user messaging.
+  - Read-only Incidents List (`/incidents`):
+    - Filterable by review/verification status (`NEW`, `ANALYZED`, `VERIFIED`, `REJECTED`).
+    - Stable deterministic pagination (`page` and `page_size` query params).
+    - Summary badges and navigation links.
+  - Read-only Incident Detail (`/incidents/{incident_id}`):
+    - Clear epistemic decomposition into 4 distinct evidentiary panels: Confirmed Facts (blue), Attributed Allegations (yellow), Technical Uncertainties (gray), and Disputed Facts (red).
+    - Primary evidence source attribution cards with safe link sanitization (restricting URLs to `http://` and `https://` schemes, preventing `javascript:` or `data:` XSS).
+    - Safe rendering of linked AIG-ISI severity assessments and optional EU AI Act relevance screens.
+    - Zero data mutations or background state transitions.
+  - Read-only Operational Diagnostics View (`/diagnostics`):
+    - Web integration of `LocalDiagnosticsRunner` displaying overall health badge and status cards across all 6 diagnostic checks (Configuration, Database, Schema, Reference Library, Storage Paths, Pipeline Components).
+    - Explicit non-mutating execution guarantee notice displayed in UI.
+- **Accessible, Restrained Semantic UI (`ai_incident_monitor.ui.templates`, `static`)**:
+  - Zero external CDN dependencies, remote fonts, or third-party JavaScript libraries.
+  - Prominent "LOCAL DEVELOPMENT MODE" warning banner displayed across all views.
+  - High-contrast, semantic HTML structure with WCAG-compliant visible focus indicators and skip links.
+- **Development Startup CLI (`ai_incident_monitor.ui.cli`)**:
+  - `python -m ai_incident_monitor.ui.cli [--host 127.0.0.1] [--port 8000]`.
+  - Enforces loopback bind validation (`validate_loopback_host`) before starting Uvicorn server.
+  - Displays token path and login instructions in local terminal.
+- **Dependencies (`pyproject.toml`)**:
+  - Added runtime dependencies: `fastapi>=0.111.0`, `uvicorn>=0.30.0`, `jinja2>=3.1.4`, `python-multipart>=0.0.9`.
+  - Added dev test dependency: `httpx>=0.27.0` (zero production imports).
+- **Unit Test Suite (27 new unit tests, 816 total tests passing)**:
+  - `backend/tests/unit/ui/test_auth_session.py` (11 unit tests).
+  - `backend/tests/unit/ui/test_security_middleware.py` (7 unit tests).
+  - `backend/tests/unit/ui/test_incident_routes.py` (6 unit tests).
+  - `backend/tests/unit/ui/test_diagnostics_routes.py` (3 unit tests).
+
 ## [Phase 7B] - 2026-10-29
 
 ### Added
