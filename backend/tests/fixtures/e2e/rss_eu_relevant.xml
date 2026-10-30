@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Regulatory Monitoring Feed</title>
+    <link>https://synthetic-source.internal/eu-feed</link>
+    <description>Synthetic EU-nexus incidents</description>
+    <item>
+      <title>Hospital Patient Triage AI Misclassification</title>
+      <link>https://synthetic-source.internal/incidents/triage-ai-eu</link>
+      <description>Synthetic Scenario: Emergency department patient prioritization model deployed in Berlin clinical facility misclassified acute respiratory distress telemetry as non-urgent.</description>
+      <pubDate>Wed, 22 Oct 2026 14:00:00 GMT</pubDate>
+      <guid>https://synthetic-source.internal/incidents/triage-ai-eu</guid>
+    </item>
+  </channel>
+</rss>

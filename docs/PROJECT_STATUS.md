@@ -2,9 +2,9 @@
 **Project:** AI Incident Monitor
 **Organization:** AI Guardians LLC
 **Document Identifier:** STAT-001
-**Last Updated:** 2026-10-24
-**Current Milestone:** Phase 6 (Phase 6A Foundation & Phase 6B Renderers/Export Complete) — COMPLETED (Branch: `phase6b-editorial-renderers-local-export`)
-**Overall Status:** GREEN (Phase 6 Complete, 741 Tests Passing, Provenance Chain Valid)
+**Last Updated:** 2026-10-29
+**Current Milestone:** Phase 7A (Offline End-to-End Verification Harness Complete) — COMPLETED (Branch: `phase7a-offline-e2e-harness`)
+**Overall Status:** GREEN (Phase 7A Complete, 758 Tests Passing, Provenance Chain Valid)
 
 ---
 
@@ -19,7 +19,8 @@
 | **Phase 5** | **AIG-ISI Scoring & Governance Map** | AIG-ISI engine, factor rationales, OECD/NIST/EU Act mappers, output linter, eligibility gates | **COMPLETED** | **2026-10-23** |
 | **Phase 6A** | **Editorial Foundation & Review CLI** | Dossier models, Migration 006, source selector, assembly, validator, review state machine, CLI | **COMPLETED** | **2026-10-23** |
 | **Phase 6B** | **Editorial Renderers & Local Dossier Export** | Deterministic Markdown/JSON renderers, 3 presentation profiles, export manifest, safe atomic exporter, export CLI | **COMPLETED** | **2026-10-24** |
-| **Phase 7** | End-to-End Harness & Observability | Orchestration, telemetry, multi-Mac test suite, monitoring, Cloudflare deployment prep | Planned | Phase 7 Session |
+| **Phase 7A** | **Offline End-to-End Verification Harness** | Offline E2E test suite covering full workflow, synthetic fixtures, 17 failure/edge scenarios, network denial guard | **COMPLETED** | **2026-10-29** |
+| **Phase 7B** | Pipeline Observability & Diagnostics | Telemetry, pipeline health checks, diagnostics CLI, operational metrics | Planned | Phase 7B Session |
 
 ---
 
@@ -178,3 +179,32 @@ Phase 5 Increment 1 delivered, verified, and merged to `main` via PR #4 (`19db6c
 - [ ] **Increment 2C-3B (Planned - Deferred)**: EU Output Linter and Final Review Gate Integration:
   - Output linter (`eu_output_linter.py`), final external-use eligibility verification integration, reviewer-attestation validation.
 - [ ] **Increment 2D (Planned)**: Governance reporting and publishing workflows.
+
+---
+
+## 8. Phase 6 Delivery Tracking
+
+- [x] **Phase 6A (Verified & Merged to main)**: Editorial Foundations & Review CLI:
+  - Migration 006 relational schema (`006_editorial_dossiers_and_review.py`).
+  - Source selector (`EditorialSourceSelector`), assembly engine (`EditorialDossierAssembler`), validation engine (`EditorialValidator`), review state machine (`EditorialReviewStateMachine`), and typed repository (`EditorialRepository`).
+  - CLI commands (`select-candidates`, `assemble-dossier`, `inspect-dossier`, `submit-for-review`, `approve-dossier`, `reject-dossier`).
+  - 48 tests (705 total tests passing).
+- [x] **Phase 6B (Verified & Merged to main)**: Editorial Renderers & Local Dossier Export:
+  - Deterministic Markdown renderer (`EditorialMarkdownRenderer`) across 3 presentation profiles (`DEEP_DIVE_DOSSIER`, `EXECUTIVE_BRIEF`, `RAPID_ALERT`) and 2 artifact purposes (`INTERNAL_REVIEW_COPY`, `APPROVED_EDITORIAL_COPY`).
+  - Deterministic JSON package renderer (`EditorialJSONRenderer`) with non-self-referential payload hashing.
+  - Safe local exporter (`EditorialDossierExporter`) with collision protection, path traversal defenses, symlink rejection, atomic write, and drift detection.
+  - Export provenance manifest (`EditorialExportManifest`).
+  - Local export CLI (`export-dossier`).
+  - 36 renderer unit tests + 7 CLI integration tests (741 total tests passing).
+
+---
+
+## 9. Phase 7A Delivery Tracking
+
+- [x] **Phase 7A (Verified on `phase7a-offline-e2e-harness`)**: Offline End-to-End Verification Harness:
+  - Dedicated synthetic fixtures under `backend/tests/fixtures/e2e/` (RSS, Atom, malformed XML, prompt injection, EU-relevant, OECD JSON).
+  - Comprehensive 17-scenario offline end-to-end integration test suite (`backend/tests/integration/test_end_to_end_pipeline.py`).
+  - Complete workflow verification: Ingestion $\to$ Deduplication $\to$ Evidence Graph $\to$ Deterministic Scoring/Mapping $\to$ Dossier Assembly $\to$ Review Copy Rendering $\to$ Explicit Test-Human Review (Rule 14) $\to$ Approved Local Export $\to$ Cryptographic Hash Verification.
+  - Negative failure resilience: missing evidence, corrupted XML, prompt injection containment, provenance hash divergence, post-assembly source drift, untrusted reference data, ineligible EU commentary exclusion, transaction rollback, symlink and path traversal safety, automated approval denial, and network denial enforcement.
+  - Multi-Mac isolation using dynamic `tmp_path` fixtures; zero production code modifications.
+  - 17 new integration tests (758 total tests passing, 0 failures, 0 warnings in ~9.05s); provenance chain verified with 0 anomalies.
