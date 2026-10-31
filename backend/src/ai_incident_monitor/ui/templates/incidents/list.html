@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Incidents Explorer — AI Incident Monitor{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="header-titles">
+        <h1 class="page-title">Incidents Explorer</h1>
+        <p class="page-description">Browse and inspect ingested AI safety incidents, factual assertions, and primary sources.</p>
+    </div>
+</div>
+
+<div class="card filter-card">
+    <form method="GET" action="/incidents" class="filter-form">
+        <div class="filter-group">
+            <label for="status-select" class="form-label">Status Filter:</label>
+            <select id="status-select" name="status" class="form-control form-select">
+                <option value="">All Statuses</option>
+                <option value="NEW" {% if status_filter == 'NEW' %}selected{% endif %}>NEW</option>
+                <option value="UNDER_INVESTIGATION" {% if status_filter == 'UNDER_INVESTIGATION' %}selected{% endif %}>UNDER_INVESTIGATION</option>
+                <option value="VERIFIED" {% if status_filter == 'VERIFIED' %}selected{% endif %}>VERIFIED</option>
+                <option value="DISMISSED" {% if status_filter == 'DISMISSED' %}selected{% endif %}>DISMISSED</option>
+            </select>
+        </div>
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-secondary">Apply Filter</button>
+            {% if status_filter %}
+            <a href="/incidents" class="btn btn-link">Reset</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<div class="card table-card">
+    {% if incidents %}
+    <div class="table-responsive">
+        <table class="data-table" aria-label="Incident Records">
+            <thead>
+                <tr>
+                    <th scope="col">Incident ID</th>
+                    <th scope="col">Title</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Claims</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inc in incidents %}
+                <tr>
+                    <td class="cell-mono"><code>{{ inc.id }}</code></td>
+                    <td class="cell-title">{{ inc.title }}</td>
+                    <td>
+                        <span class="badge badge-status badge-{{ inc.status.lower() }}">
+                            [{{ inc.status }}]
+                        </span>
+                    </td>
+                    <td>{{ claim_counts.get(inc.id, 0) }} claims</td>
+                    <td>
+                        <a href="/incidents/{{ inc.id }}" class="btn btn-sm btn-primary">Inspect</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination-bar">
+        <div class="pagination-info">
+            Showing Page {{ page }} of {{ total_pages }} ({{ total_items }} total records)
+        </div>
+        <div class="pagination-controls">
+            {% if page > 1 %}
+            <a href="/incidents?page={{ page - 1 }}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn btn-sm btn-secondary">&laquo; Previous</a>
+            {% else %}
+            <span class="btn btn-sm btn-disabled" aria-disabled="true">&laquo; Previous</span>
+            {% endif %}
+
+            <span class="pagination-current" aria-current="page">{{ page }}</span>
+
+            {% if page < total_pages %}
+            <a href="/incidents?page={{ page + 1 }}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn btn-sm btn-secondary">Next &raquo;</a>
+            {% else %}
+            <span class="btn btn-sm btn-disabled" aria-disabled="true">Next &raquo;</span>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p class="empty-title">No Incident Records Found</p>
+        <p class="empty-subtitle">No records match the current filter criteria or the database is unpopulated.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Log In — AI Incident Monitor{% endblock %}
+
+{% block content %}
+<div class="auth-card-container">
+    <div class="auth-card">
+        <h1 class="card-title">Operator Access</h1>
+        <p class="card-subtitle">
+            Enter the local bootstrap credential generated in <code>.data/.operator_credential</code>.
+        </p>
+
+        {% if error %}
+        <div class="alert alert-error" role="alert">
+            <span class="alert-icon">⚠️</span>
+            <span class="alert-message">{{ error }}</span>
+        </div>
+        {% endif %}
+
+        <form action="/login" method="POST" class="auth-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <div class="form-group">
+                <label for="credential" class="form-label">Bootstrap Credential:</label>
+                <input
+                    type="password"
+                    id="credential"
+                    name="credential"
+                    class="form-control"
+                    required
+                    autofocus
+                    placeholder="Enter 256-bit credential token"
+                    {% if blocked %}disabled{% endif %}
+                >
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" {% if blocked %}disabled{% endif %}>
+                    Authorize Session
+                </button>
+            </div>
+        </form>
+
+        <div class="auth-notice">
+            <p>
+                <strong>Security Notice:</strong> Possession of this local credential grants local explorer inspection access only. It does not establish an authorized human identity for dossier publication under Rule 14.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

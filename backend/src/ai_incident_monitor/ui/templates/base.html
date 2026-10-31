@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Incident Monitor — Operator Explorer{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <header class="app-header">
+        <div class="header-container">
+            <div class="header-brand">
+                <span class="brand-title">AI Incident Monitor</span>
+                <span class="badge badge-dev">LOCAL DEVELOPMENT MODE</span>
+            </div>
+            <nav class="app-nav" aria-label="Main Navigation">
+                {% if session %}
+                <a href="/incidents" class="nav-link {% if request.url.path.startswith('/incidents') %}active{% endif %}">Incidents</a>
+                <a href="/diagnostics" class="nav-link {% if request.url.path.startswith('/diagnostics') %}active{% endif %}">Diagnostics</a>
+                <form action="/logout" method="POST" class="logout-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="btn btn-secondary btn-sm">Log Out</button>
+                </form>
+                {% else %}
+                <a href="/login" class="nav-link">Log In</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-content" class="main-container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="app-footer">
+        <div class="footer-container">
+            <p class="disclaimer-text">
+                <strong>AI Guardians LLC — Local Operator Explorer</strong><br>
+                Internal research and review interface. Display of any incident, claim, or source does not constitute factual verification or editorial approval under Constitutional Rules 1–4.
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

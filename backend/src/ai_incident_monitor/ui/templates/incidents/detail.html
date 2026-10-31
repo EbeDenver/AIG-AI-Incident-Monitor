@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Incident {{ incident.id }} — AI Incident Monitor{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="/incidents">&larr; Back to Incidents List</a>
+</div>
+
+<div class="card incident-overview-card">
+    <div class="incident-header">
+        <div class="incident-titles">
+            <span class="incident-id-badge"><code>{{ incident.id }}</code></span>
+            <h1 class="incident-title">{{ incident.title }}</h1>
+        </div>
+        <div class="incident-status-area">
+            <span class="badge badge-status badge-{{ incident.status.lower() }}">
+                [{{ incident.status }}]
+            </span>
+        </div>
+    </div>
+
+    <div class="incident-summary-box">
+        <h2 class="section-title">Incident Summary</h2>
+        <p class="summary-text">{{ incident.summary }}</p>
+    </div>
+
+    <div class="meta-grid">
+        <div class="meta-item">
+            <span class="meta-label">Date Precision:</span>
+            <span class="meta-value">{{ incident.incident_date_precision }}</span>
+        </div>
+        {% if severity %}
+        <div class="meta-item">
+            <span class="meta-label">AIG-ISI Severity:</span>
+            <span class="meta-value"><strong>{{ severity.severity_tier }}</strong> (Score: {{ severity.composite_score }}/100)</span>
+        </div>
+        {% endif %}
+        {% if eu_screen %}
+        <div class="meta-item">
+            <span class="meta-label">EU AI Act Screen:</span>
+            <span class="meta-value">[{{ eu_screen.review_status }}]</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<section class="epistemic-section" aria-labelledby="epistemic-heading">
+    <h2 id="epistemic-heading" class="section-heading">Epistemic Claims Breakdown (Constitutional Rules 1–4)</h2>
+
+    <!-- 1. Confirmed Facts -->
+    <div class="card claim-category-card fact-card">
+        <div class="claim-category-header">
+            <h3 class="category-title">🔵 Confirmed Facts ({{ facts|length }})</h3>
+            <span class="category-desc">Independently corroborated statements with direct evidence linkage.</span>
+        </div>
+        {% if facts %}
+        <ul class="claims-list">
+            {% for c in facts %}
+            <li class="claim-item">
+                <div class="claim-main">
+                    <p class="claim-text">"{{ c.text }}"</p>
+                    <div class="claim-badges">
+                        <span class="badge badge-subtle">Type: {{ c.type }}</span>
+                        <span class="badge badge-subtle">Confidence: {{ c.confidence }}</span>
+                        {% if c.is_causal %}<span class="badge badge-causal">[CAUSAL]</span>{% endif %}
+                    </div>
+                </div>
+                {% if c.evidence_links %}
+                <div class="evidence-box">
+                    <span class="evidence-title">Primary Evidence & Attribution:</span>
+                    {% for ev in c.evidence_links %}
+                    <div class="evidence-entry">
+                        <span class="evidence-summary">{{ ev.summary }}</span>
+                        <div class="evidence-meta">
+                            Source: <em>{{ ev.source_title }}</em> ({{ ev.publisher }})
+                            {% if ev.source_url %}
+                            &bull; <a href="{{ ev.source_url }}" target="_blank" rel="noopener noreferrer" class="external-link">Original Source &nearr;</a>
+                            {% endif %}
+                            {% if ev.content_hash %}
+                            &bull; <code title="SHA-256 Digest">SHA: {{ ev.content_hash[:12] }}...</code>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="empty-claims-text">No confirmed facts recorded for this incident.</p>
+        {% endif %}
+    </div>
+
+    <!-- 2. Attributed Allegations -->
+    <div class="card claim-category-card allegation-card">
+        <div class="claim-category-header">
+            <h3 class="category-title">🟡 Attributed Allegations ({{ allegations|length }})</h3>
+            <span class="category-desc">Reported assertions attributed to specific sources, not independently verified.</span>
+        </div>
+        {% if allegations %}
+        <ul class="claims-list">
+            {% for c in allegations %}
+            <li class="claim-item">
+                <div class="claim-main">
+                    <p class="claim-text">"{{ c.text }}"</p>
+                    <div class="claim-badges">
+                        <span class="badge badge-subtle">Type: {{ c.type }}</span>
+                        <span class="badge badge-subtle">Confidence: {{ c.confidence }}</span>
+                    </div>
+                </div>
+                {% if c.evidence_links %}
+                <div class="evidence-box">
+                    <span class="evidence-title">Attribution:</span>
+                    {% for ev in c.evidence_links %}
+                    <div class="evidence-entry">
+                        <span class="evidence-summary">{{ ev.summary }}</span>
+                        <div class="evidence-meta">
+                            Source: <em>{{ ev.source_title }}</em> ({{ ev.publisher }})
+                            {% if ev.source_url %}
+                            &bull; <a href="{{ ev.source_url }}" target="_blank" rel="noopener noreferrer" class="external-link">Source &nearr;</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="empty-claims-text">No attributed allegations recorded.</p>
+        {% endif %}
+    </div>
+
+    <!-- 3. Technical Uncertainties -->
+    <div class="card claim-category-card uncertainty-card">
+        <div class="claim-category-header">
+            <h3 class="category-title">⚪ Technical Uncertainties & Unknowns ({{ uncertainties|length }})</h3>
+            <span class="category-desc">Explicit epistemic gaps where facts are unverified or unknown.</span>
+        </div>
+        {% if uncertainties %}
+        <ul class="claims-list">
+            {% for c in uncertainties %}
+            <li class="claim-item">
+                <p class="claim-text">"{{ c.text }}"</p>
+                <div class="claim-badges">
+                    <span class="badge badge-subtle">Status: UNCERTAINTY</span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="empty-claims-text">No unresolved technical uncertainties recorded.</p>
+        {% endif %}
+    </div>
+
+    <!-- 4. Disputed Claims -->
+    <div class="card claim-category-card dispute-card">
+        <div class="claim-category-header">
+            <h3 class="category-title">🔴 Disputed Facts ({{ disputes|length }})</h3>
+            <span class="category-desc">Conflicting accounts across reporting sources requiring explicit contestation tracking.</span>
+        </div>
+        {% if disputes %}
+        <ul class="claims-list">
+            {% for c in disputes %}
+            <li class="claim-item">
+                <p class="claim-text">"{{ c.text }}"</p>
+                <div class="claim-badges">
+                    <span class="badge badge-dispute">[DISPUTED FACT]</span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="empty-claims-text">No active disputes or contested facts recorded.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

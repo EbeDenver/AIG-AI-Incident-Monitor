@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Operational Diagnostics — AI Incident Monitor{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="header-titles">
+        <h1 class="page-title">Operational Diagnostics</h1>
+        <p class="page-description">Real-time, read-only health checks across configuration, database, schemas, and pipeline engines.</p>
+    </div>
+</div>
+
+<div class="card status-overview-card status-overview-{{ report.overall_status.value.lower() }}">
+    <div class="overview-header">
+        <div class="overview-left">
+            <span class="overview-label">Overall Subsystem Status:</span>
+            <span class="badge badge-status-lg badge-{{ report.overall_status.value.lower() }}">
+                [{{ report.overall_status.value }}]
+            </span>
+        </div>
+        <div class="overview-right">
+            <span class="meta-label">Evaluated At:</span>
+            <code class="meta-value">{{ report.evaluated_at_utc.strftime('%Y-%m-%d %H:%M:%S UTC') }}</code>
+            &bull;
+            <span class="meta-label">Exit Code:</span>
+            <code>{{ report.exit_code }}</code>
+        </div>
+    </div>
+</div>
+
+<div class="diagnostics-grid">
+    {% for check in report.checks %}
+    <div class="card check-card check-{{ check.status.value.lower() }}">
+        <div class="check-header">
+            <div class="check-title-group">
+                <span class="check-category"><code>{{ check.category.value }}</code></span>
+                <h2 class="check-name">{{ check.name }}</h2>
+            </div>
+            <span class="badge badge-status badge-{{ check.status.value.lower() }}">
+                [{{ check.status.value }}]
+            </span>
+        </div>
+
+        <div class="check-body">
+            <p class="check-message">{{ check.message }}</p>
+            <div class="check-meta">
+                <span class="meta-label">Reason Code:</span>
+                <code>{{ check.reason_code }}</code>
+            </div>
+            {% if check.details %}
+            <div class="check-details-box">
+                <details>
+                    <summary class="details-summary">View Diagnostic Context</summary>
+                    <pre class="details-pre"><code>{{ check.details | tojson(indent=2) }}</code></pre>
+                </details>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card limitations-card">
+    <h3 class="limitations-title">Diagnostic System Guarantees & Stated Limitations</h3>
+    <ul class="limitations-list">
+        <li><strong>Non-Mutating Execution:</strong> All 6 diagnostic checks are strictly read-only. Diagnostics never write dummy files, execute database migrations, or alter production tables.</li>
+        <li><strong>Schema Compatibility:</strong> Verifies the physical presence of required core tables; does not inspect Alembic revision table version heads.</li>
+        <li><strong>Storage Paths:</strong> Non-mutating directory traversal verifies read/write permission bits without writing temporary probe files. Quota exhaustion cannot be detected prior to write.</li>
+        <li><strong>Zero External Network:</strong> Diagnostics execute zero external HTTP or socket requests. Reference library integrity is verified strictly against local cryptographic digests.</li>
+    </ul>
+</div>
+{% endblock %}
