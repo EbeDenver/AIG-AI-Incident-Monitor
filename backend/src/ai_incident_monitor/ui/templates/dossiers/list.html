@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Editorial Dossiers — AI Incident Monitor{% endblock %}
+
+{% block content %}
+<div class="explorer-header">
+    <div>
+        <h1 class="page-title">Editorial Dossiers Workbench</h1>
+        <p class="page-subtitle">Assemble, inspect, validate, and review multi-entry editorial incident packages.</p>
+    </div>
+    <div class="header-actions">
+        <a href="/dossiers/new" class="btn btn-primary">+ Assemble New Dossier</a>
+    </div>
+</div>
+
+<div class="filter-card">
+    <form action="/dossiers" method="GET" class="filter-form">
+        <div class="form-group inline-group">
+            <label for="status-filter" class="form-label">Filter by Status:</label>
+            <select name="status" id="status-filter" class="form-control">
+                <option value="">All Statuses ({{ total_items }} total)</option>
+                {% for st in statuses %}
+                <option value="{{ st }}" {% if status_filter == st %}selected{% endif %}>{{ st }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-secondary">Apply Filter</button>
+        {% if status_filter %}
+        <a href="/dossiers" class="btn btn-outline">Clear Filter</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="table-container">
+    <table class="data-table" aria-label="Editorial Dossiers Table">
+        <thead>
+            <tr>
+                <th scope="col">Dossier ID</th>
+                <th scope="col">Title</th>
+                <th scope="col">Scope</th>
+                <th scope="col">Version</th>
+                <th scope="col">Status</th>
+                <th scope="col">Entries</th>
+                <th scope="col">Created (UTC)</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if dossiers %}
+            {% for d in dossiers %}
+            <tr>
+                <td class="font-mono"><strong>{{ d.id }}</strong></td>
+                <td>{{ d.title }}</td>
+                <td><span class="badge badge-scope">{{ d.scope_type.value }}</span></td>
+                <td>v{{ d.version }}</td>
+                <td>
+                    <span class="badge badge-status-{{ d.status.value.lower() }}">{{ d.status.value }}</span>
+                </td>
+                <td>{{ d.entries | length }} incident(s)</td>
+                <td class="text-muted">{{ d.created_at.strftime('%Y-%m-%d %H:%M') if d.created_at else 'N/A' }}</td>
+                <td>
+                    <a href="/dossiers/{{ d.id }}" class="btn btn-sm btn-outline">Inspect</a>
+                </td>
+            </tr>
+            {% endfor %}
+            {% else %}
+            <tr>
+                <td colspan="8" class="text-center text-muted" style="padding: 2.5rem;">
+                    No editorial dossiers found matching the criteria. Click "+ Assemble New Dossier" to create one.
+                </td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+{% if total_pages > 1 %}
+<nav class="pagination" aria-label="Dossier Pagination">
+    <div class="pagination-info">
+        Showing Page {{ current_page }} of {{ total_pages }} ({{ total_items }} total dossiers)
+    </div>
+    <div class="pagination-controls">
+        {% if current_page > 1 %}
+        <a href="/dossiers?page={{ current_page - 1 }}&page_size={{ page_size }}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn btn-sm btn-outline">&larr; Previous</a>
+        {% endif %}
+        {% if current_page < total_pages %}
+        <a href="/dossiers?page={{ current_page + 1 }}&page_size={{ page_size }}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn btn-sm btn-outline">Next &rarr;</a>
+        {% endif %}
+    </div>
+</nav>
+{% endif %}
+{% endblock %}

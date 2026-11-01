@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Assemble Editorial Dossier — AI Incident Monitor{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="/dossiers">&larr; Back to Dossiers</a>
+</div>
+
+<div class="explorer-header">
+    <div>
+        <h1 class="page-title">Candidate Incident Selector & Dossier Assembly</h1>
+        <p class="page-subtitle">Select attributed candidate incidents to assemble a structured draft dossier.</p>
+    </div>
+</div>
+
+<div class="notice-card notice-info">
+    <div class="notice-icon">ℹ️</div>
+    <div class="notice-content">
+        <strong>Authoritative Workflow:</strong>
+        Ordinary incident reporting and candidate selection require <em>zero per-incident human approvals</em>.
+        Dossiers enter <code>DRAFT</code> status upon assembly and undergo on-demand validation before formal review.
+    </div>
+</div>
+
+{% if error %}
+<div class="alert alert-error" role="alert">
+    <span class="alert-icon">⚠️</span>
+    <span class="alert-message">{{ error }}</span>
+</div>
+{% endif %}
+
+<form action="/dossiers" method="POST" class="dossier-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <div class="form-section card">
+        <h2 class="card-title">1. Dossier Metadata</h2>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="title" class="form-label">Dossier Title <span class="required">*</span>:</label>
+                <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    class="form-control"
+                    required
+                    placeholder="e.g. Weekly AI Incident Synthesis: Automated Systems Outage & Liability Review"
+                >
+            </div>
+            <div class="form-group">
+                <label for="scope_type" class="form-label">Editorial Scope Type:</label>
+                <select name="scope_type" id="scope_type" class="form-control">
+                    {% for sc in scope_types %}
+                    <option value="{{ sc }}" {% if sc == 'CUSTOM' %}selected{% endif %}>{{ sc }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 1rem;">
+            <label for="methodology_notes" class="form-label">Methodology Notes:</label>
+            <textarea
+                name="methodology_notes"
+                id="methodology_notes"
+                rows="3"
+                class="form-control font-mono"
+            >{{ default_methodology }}</textarea>
+        </div>
+    </div>
+
+    <div class="form-section card" style="margin-top: 1.5rem;">
+        <div class="card-header-flex">
+            <div>
+                <h2 class="card-title">2. Select Candidate Incidents</h2>
+                <p class="card-subtitle">Choose from validated candidate incidents with verified primary evidence links.</p>
+            </div>
+            <div class="selection-counter font-mono">
+                Eligible Candidates: <strong>{{ eligible_candidates | length }}</strong>
+            </div>
+        </div>
+
+        {% if eligible_candidates %}
+        <div class="table-container" style="margin-top: 1rem;">
+            <table class="data-table" aria-label="Eligible Candidates Table">
+                <thead>
+                    <tr>
+                        <th scope="col" style="width: 40px;">Select</th>
+                        <th scope="col">Incident ID</th>
+                        <th scope="col">Title</th>
+                        <th scope="col">Severity Tier</th>
+                        <th scope="col">Evidence Items</th>
+                        <th scope="col">Epistemic Profile</th>
+                        <th scope="col">EU Screen Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in eligible_candidates %}
+                    <tr>
+                        <td style="text-align: center;">
+                            <input
+                                type="checkbox"
+                                name="incident_ids"
+                                value="{{ c.incident_id }}"
+                                id="inc_{{ c.incident_id }}"
+                                class="checkbox-input"
+                            >
+                        </td>
+                        <td class="font-mono">
+                            <label for="inc_{{ c.incident_id }}" style="cursor: pointer;">
+                                <strong>{{ c.incident_id }}</strong>
+                            </label>
+                        </td>
+                        <td>
+                            <label for="inc_{{ c.incident_id }}" style="cursor: pointer;">
+                                {{ c.title }}
+                            </label>
+                        </td>
+                        <td>
+                            <span class="badge badge-tier">{{ c.severity_tier or 'UNSCORED' }}</span>
+                        </td>
+                        <td>{{ c.evidence_ids | length }} source(s)</td>
+                        <td>
+                            <span class="badge-mini badge-fact">{{ c.known_facts | length }} Facts</span>
+                            <span class="badge-mini badge-unknown">{{ c.unknowns | length }} Unknowns</span>
+                            {% if c.disputed_claims %}
+                            <span class="badge-mini badge-dispute">{{ c.disputed_claims | length }} Disputes</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if c.eu_screen_status %}
+                            <span class="badge badge-eu {% if c.eu_screen_eligible %}badge-eu-approved{% else %}badge-eu-unapproved{% endif %}">
+                                {{ c.eu_screen_status }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">None</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding: 2rem; text-align: center;">
+            <p class="text-muted">No eligible candidate incidents available for assembly. Run ingestion or ensure evidence records are linked.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if ineligible_candidates %}
+    <details class="card details-accordion" style="margin-top: 1rem;">
+        <summary class="details-summary font-mono">
+            ⚠️ View Ineligible Incidents ({{ ineligible_candidates | length }} excluded from candidate selection)
+        </summary>
+        <div class="details-content" style="padding-top: 1rem;">
+            <p class="text-muted" style="margin-bottom: 0.75rem;">
+                Under Constitutional Rule 1, incidents lacking verified primary evidence or required descriptive text cannot be assembled into an editorial dossier:
+            </p>
+            <ul class="ineligible-list">
+                {% for inc in ineligible_candidates %}
+                <li>
+                    <strong>{{ inc.incident_id }}:</strong> {{ inc.title or '(No Title)' }} &mdash;
+                    <span class="text-error">{{ inc.exclusion_reasons | join(', ') }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </details>
+    {% endif %}
+
+    <div class="form-actions" style="margin-top: 1.5rem;">
+        <button type="submit" class="btn btn-primary btn-lg" {% if not eligible_candidates %}disabled{% endif %}>
+            Assemble Draft Dossier
+        </button>
+        <a href="/dossiers" class="btn btn-outline">Cancel</a>
+    </div>
+</form>
+{% endblock %}

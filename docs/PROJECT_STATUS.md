@@ -2,9 +2,9 @@
 **Project:** AI Incident Monitor
 **Organization:** AI Guardians LLC
 **Document Identifier:** STAT-001
-**Last Updated:** 2026-10-30
-**Current Milestone:** Phase 8A (Local HTTP Foundation, Session Security & Incident/Diagnostics Explorer) — COMPLETED (Branch: `phase8a-local-ui-security-explorer`)
-**Overall Status:** GREEN (Phase 8A Complete, 816 Tests Passing, Provenance Chain Valid)
+**Last Updated:** 2026-11-01
+**Current Milestone:** Phase 8B (Editorial Dossier Workbench, Validation & Human Review) — IMPLEMENTED & VERIFIED (Branch: `phase8b-dossier-workbench-review`)
+**Overall Status:** GREEN (Phase 8B Complete, 833 Tests Passing, Provenance Chain Valid)
 
 ---
 
@@ -22,6 +22,7 @@
 | **Phase 7A** | **Offline End-to-End Verification Harness** | Offline E2E test suite covering full workflow, synthetic fixtures, 17 failure/edge scenarios, network denial guard | **COMPLETED** | **2026-10-29** |
 | **Phase 7B** | **Pipeline Observability & Diagnostics** | Telemetry, pipeline health checks, diagnostics CLI, operational metrics | **COMPLETED** | **2026-10-29** |
 | **Phase 8A** | **Local UI Security & Incident Explorer** | Minimal FastAPI foundation, server-side sessions, loopback binds, CSRF, read-only incident & diagnostics explorer | **COMPLETED** | **2026-10-30** |
+| **Phase 8B** | **Editorial Dossier Workbench, Validation & Review** | Candidate selector, draft assembly, inspection, validation, step-up reviewer keystore, review/attestation, rejection, supersession, admin CLI | **COMPLETED** | **2026-11-01** |
 
 ---
 
@@ -50,7 +51,7 @@ Based on [`docs/REQUIREMENTS_TRACEABILITY.md`](REQUIREMENTS_TRACEABILITY.md):
     - `SEV-004`: Strict segregation of Actual Harm vs Potential Harm.
     - `SEV-005`: Non-monetization constraint for human dignity and physical harm.
     - `PRI-004`: Sanitized synthetic test fixtures (22 golden + 7 invalid).
-    - `TST-001`: Automated test suite with zero test failures (144 tests pass in 3.50s).
+    - `TST-001`: Automated test suite with zero test failures (833 tests pass in 10.13s).
     - `TST-003`: Negative testing suite validating rejection of ungrounded data.
     - `TST-004`: Property/invariant testing that `UNKNOWN` is never coerced to zero.
     - `AUD-003`: Immutable and append-only assessment records (`frozen=True`).
@@ -273,3 +274,56 @@ Phase 5 Increment 1 delivered, verified, and merged to `main` via PR #4 (`19db6c
     - `backend/tests/unit/ui/test_security_middleware.py` (7 unit tests).
     - `backend/tests/unit/ui/test_incident_routes.py` (6 unit tests).
     - `backend/tests/unit/ui/test_diagnostics_routes.py` (3 unit tests).
+
+---
+
+## 12. Phase 8B Delivery Tracking
+
+- [x] **Phase 8B (Verified on `phase8b-dossier-workbench-review`)**: Editorial Dossier Workbench, Validation & Human Review:
+  - **Dossier Navigation & Listing Interface (`GET /dossiers`)**:
+    - Filterable by lifecycle status (`DRAFT`, `ASSEMBLED`, `PENDING_REVIEW`, `APPROVED_INFORMATIONAL`, `REJECTED`, `SUPERSEDED`).
+    - Stable pagination (`page`, `page_size`) and header navigation integration.
+  - **Candidate Selection & Assembly Workbench (`GET /dossiers/new`, `POST /dossiers`)**:
+    - Candidate selector displaying eligible vs ineligible incidents with explicit exclusion rationales.
+    - Zero per-incident approval required for candidate selection or ingestion.
+    - Dossier assembly producing validated `DRAFT`/`ASSEMBLED` multi-entry packages.
+    - CSRF protection across all state-changing assembly requests.
+  - **Dossier Detail Inspector & Epistemic Breakdown (`GET /dossiers/{id}`)**:
+    - Rich epistemic claims breakdown for each entry: Confirmed Facts (blue), Attributed Allegations (yellow), Technical Uncertainties (gray), and Disputed Facts (red).
+    - Automatic on-demand validation report presentation (blocking vs warnings).
+    - Cryptographic canonical hash calculation and display.
+    - Automated source drift warning when underlying incident or claim hashes change.
+    - Append-only, tamper-evident audit trail history display under application trust assumptions.
+  - **On-Demand Validation Route (`POST /dossiers/{id}/validate`)**:
+    - Triggers full editorial validation rule evaluation and refreshes findings.
+  - **Review Submission Transition (`POST /dossiers/{id}/submit`)**:
+    - Strict validation gating: blocks submission if any blocking validation findings exist.
+    - Transitions dossier status from `DRAFT`/`ASSEMBLED` to `PENDING_REVIEW`.
+    - Records tamper-evident audit event `SUBMIT_FOR_REVIEW`.
+  - **Human Review & Attestation Interface (`GET /dossiers/{id}/review`)**:
+    - Read-only review view displaying exact canonical SHA-256 content hash fingerprint.
+    - Mandatory, un-bypassable statutory non-determination disclaimer (`EDITORIAL_DISCLAIMER_TEXT`).
+    - Exact attestation statement checkbox (`EDITORIAL_ATTESTATION_STATEMENT`).
+    - Step-up reviewer credential input form with rate-limiting notice.
+  - **Step-Up Reviewer Key Verification & Approval (`POST /dossiers/{id}/approve`)**:
+    - Separation of ordinary operator dashboard login from editorial reviewer authorization.
+    - Exact content hash match verification (rejects approval if content hash has drifted).
+    - Source drift verification (rejects approval if underlying incidents or claims have mutated).
+    - Step-up authentication against local Reviewer Keystore (`PBKDF2-HMAC-SHA256`, 100,000 iterations, constant-time `compare_digest`).
+    - Bounded rate limiting (max 3 failed verification attempts per 10 minutes per client).
+    - Invalidation on approval: transitions status to `APPROVED_INFORMATIONAL`.
+    - Generates append-only, tamper-evident audit record `APPROVE_DOSSIER`.
+  - **Documented Rejection & Supersession (`POST /dossiers/{id}/reject`, `POST /dossiers/{id}/supersede`)**:
+    - Mandatory documented rationale for rejections (min 5 characters); transitions to `REJECTED`.
+    - Versioned supersession creating a new DRAFT revision and marking prior version as `SUPERSEDED`.
+  - **Local Reviewer Keystore (`ai_incident_monitor.ui.reviewer_auth`)**:
+    - Secure storage in `.data/.reviewers.json` with POSIX `0o600` file permissions.
+    - Symlink rejection (`O_NOFOLLOW` and pre-check `os.path.islink`) to defend against symlink traversal.
+    - Salted PBKDF2-HMAC-SHA256 password hashing; raw secret keys never persisted or logged.
+    - Reviewer enrollment, key rotation, revocation, and active status checks.
+  - **Reviewer Administration CLI (`ai_incident_monitor.ui.manage_reviewers`)**:
+    - Administrative subcommands: `enroll`, `rotate-key`, `revoke`, and `list`.
+    - Terminal-only execution; ordinary browser sessions cannot elevate or enroll reviewers.
+  - **Unit & Integration Test Suite (17 new unit tests, 833 total tests passing)**:
+    - `backend/tests/unit/ui/test_reviewer_auth.py` (9 unit tests).
+    - `backend/tests/unit/ui/test_dossier_routes.py` (8 unit tests).
