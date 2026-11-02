@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Phase 8B] - 2026-11-01
+
+### Added
+- **Editorial Dossier Workbench & Review Routes (`ai_incident_monitor.ui.routes.dossiers`)**:
+  - Dossier listing view (`GET /dossiers`) with status filtering (`DRAFT`, `ASSEMBLED`, `PENDING_REVIEW`, `APPROVED_INFORMATIONAL`, `REJECTED`, `SUPERSEDED`) and pagination.
+  - Candidate incident selector (`GET /dossiers/new`) displaying eligible vs ineligible candidate incidents with explicit eligibility notes.
+  - Dossier assembly (`POST /dossiers`) enabling selection of attributed incidents, scope types, and methodology notes.
+  - Dossier detail inspector (`GET /dossiers/{id}`) displaying:
+    - Multi-entry incident breakdown with epistemic claims decomposition: Confirmed Facts (blue), Attributed Allegations (yellow), Technical Uncertainties (gray), and Disputed Facts (red).
+    - Optional EU AI Act screening notes preserving ordinary reporting when omitted.
+    - Real-time on-demand validation report with blocking vs warning findings.
+    - Cryptographic canonical content hash computation and display.
+    - Source drift detection warning if underlying incident or claim records have mutated post-assembly.
+    - Tamper-evident audit trail history under application trust assumptions.
+  - On-demand validation route (`POST /dossiers/{id}/validate`) evaluating all editorial rules.
+  - Review submission transition (`POST /dossiers/{id}/submit`) gating on zero blocking validation findings, transitioning to `PENDING_REVIEW`, and writing `SUBMIT_FOR_REVIEW` audit records.
+  - Human review and attestation interface (`GET /dossiers/{id}/review`):
+    - Exact canonical SHA-256 content hash fingerprint display.
+    - Mandatory, un-bypassable statutory non-determination disclaimer (`EDITORIAL_DISCLAIMER_TEXT`).
+    - Reviewer attestation statement checkbox (`EDITORIAL_ATTESTATION_STATEMENT`).
+    - Step-up reviewer credential form with client rate-limiting warning.
+  - Step-up reviewer key verification and approval (`POST /dossiers/{id}/approve`):
+    - Validates reviewer identity and secret key against local Reviewer Keystore.
+    - Enforces exact canonical content hash match.
+    - Re-verifies zero source drift and zero blocking validation findings.
+    - Transitions dossier to `APPROVED_INFORMATIONAL` and logs append-only `APPROVE_DOSSIER` audit event.
+  - Documented rejection (`POST /dossiers/{id}/reject`) requiring documented rationale (minimum 5 chars) and transitioning to `REJECTED`.
+  - Versioned supersession (`POST /dossiers/{id}/supersede`) creating a new DRAFT revision and marking the previous version as `SUPERSEDED`.
+  - CSRF protection across all state-changing `POST` routes.
+- **Local Reviewer Keystore & Step-Up Security (`ai_incident_monitor.ui.reviewer_auth`)**:
+  - Secure local keystore (`ReviewerKeystore`) at `.data/.reviewers.json` locked to POSIX `0o600` file permissions.
+  - Symlink attack defense using `os.path.islink` and `O_NOFOLLOW` flags.
+  - Salted PBKDF2-HMAC-SHA256 password hashing with 100,000 iterations and constant-time digest verification (`hmac.compare_digest`).
+  - Separation of ordinary operator dashboard login from reviewer approval authority (ordinary browser sessions cannot self-enroll or elevate to reviewers).
+  - Reviewer key rate limiter (`ReviewerRateLimiter`) enforcing a ceiling of 3 failed approval attempts per 10-minute sliding window.
+- **Reviewer Administration CLI (`ai_incident_monitor.ui.manage_reviewers`)**:
+  - Terminal-only administration CLI for managing authorized reviewers:
+    - `python -m ai_incident_monitor.ui.manage_reviewers enroll <id> <name> <role>`
+    - `python -m ai_incident_monitor.ui.manage_reviewers rotate-key <id>`
+    - `python -m ai_incident_monitor.ui.manage_reviewers revoke <id>`
+    - `python -m ai_incident_monitor.ui.manage_reviewers list`
+  - Ephemeral key generation; raw secret keys are displayed once to the administrator and never persisted or logged.
+- **Templates & Static Assets (`ai_incident_monitor.ui.templates`, `static`)**:
+  - Added `dossiers/list.html`, `dossiers/new.html`, `dossiers/detail.html`, `dossiers/review.html`.
+  - Integrated "Dossiers" into header navigation in `base.html`.
+  - Added CSS styling for dossier status badges, epistemic quad-grid panels, candidate selection lists, and audit history.
+- **Unit & Integration Test Suite (17 new unit tests, 833 total tests passing)**:
+  - `backend/tests/unit/ui/test_reviewer_auth.py` (9 unit tests).
+  - `backend/tests/unit/ui/test_dossier_routes.py` (8 unit tests).
+
 ## [Phase 8A] - 2026-10-30
 
 ### Added

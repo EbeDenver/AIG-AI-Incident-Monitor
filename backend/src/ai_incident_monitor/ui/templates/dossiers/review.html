@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Human Review Attestation — {{ dossier.title }}{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="/dossiers/{{ dossier.id }}">&larr; Back to Dossier Inspection</a>
+</div>
+
+<div class="explorer-header">
+    <div>
+        <div class="status-badge-row">
+            <span class="badge badge-status-pending_review">PENDING HUMAN REVIEW</span>
+            <span class="badge badge-version">v{{ dossier.version }}</span>
+        </div>
+        <h1 class="page-title" style="margin-top: 0.5rem;">Human Editorial Review &amp; Attestation</h1>
+        <p class="page-subtitle">Formally review and authorize exact dossier version under Constitutional Rules 12, 14, and 15.</p>
+    </div>
+</div>
+
+{% if error %}
+<div class="alert alert-error" role="alert" style="margin-top: 1rem;">
+    <span class="alert-icon">⚠️</span>
+    <span class="alert-message">{{ error }}</span>
+</div>
+{% endif %}
+
+{% if has_drift %}
+<div class="alert alert-error" role="alert" style="margin-top: 1rem;">
+    <span class="alert-icon">⚠️</span>
+    <div class="alert-message">
+        <strong>Source Drift Block:</strong> Underlying incident records have drifted. Approval is strictly blocked:
+        <ul>
+            {% for d in drift_details %}
+            <li>{{ d }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
+{% if validation_report.blocking_count > 0 %}
+<div class="alert alert-error" role="alert" style="margin-top: 1rem;">
+    <span class="alert-icon">⚠️</span>
+    <div class="alert-message">
+        <strong>Validation Block:</strong> Cannot approve dossier with {{ validation_report.blocking_count }} blocking finding(s):
+        <ul>
+            {% for f in validation_report.findings %}
+            {% if f.severity.value == 'BLOCKING' %}
+            <li><strong>{{ f.field_path }}:</strong> {{ f.message }}</li>
+            {% endif %}
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
+<div class="card" style="margin-top: 1.5rem;">
+    <h2 class="card-title">1. Exact Version Cryptographic Fingerprint</h2>
+    <div class="meta-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1rem;">
+        <div class="meta-card">
+            <span class="meta-label">Dossier ID:</span>
+            <span class="font-mono"><strong>{{ dossier.id }}</strong></span>
+        </div>
+        <div class="meta-card">
+            <span class="meta-label">Version:</span>
+            <span class="font-mono"><strong>v{{ dossier.version }}</strong></span>
+        </div>
+        <div class="meta-card">
+            <span class="meta-label">Entries Included:</span>
+            <span><strong>{{ dossier.entries | length }} incident(s)</strong></span>
+        </div>
+        <div class="meta-card" style="grid-column: 1 / -1;">
+            <span class="meta-label">Canonical SHA-256 Content Digest:</span>
+            <code class="font-mono text-break" style="font-size: 0.85rem; color: var(--primary);">{{ current_content_hash }}</code>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 1.5rem;">
+    <h2 class="card-title">2. Scope &amp; Legal Non-Determination Notice</h2>
+    <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.95rem; line-height: 1.5;">
+        {{ disclaimer_text }}
+    </p>
+    <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.85rem;">
+        <em>Disclaimer Version: {{ disclaimer_version }}</em>
+    </p>
+</div>
+
+<div class="card" style="margin-top: 1.5rem;">
+    <h2 class="card-title">3. Official Reviewer Attestation Statement</h2>
+    <blockquote class="attestation-blockquote" style="margin-top: 1rem; padding: 1rem 1.25rem; border-left: 4px solid var(--primary); background: var(--bg-primary); font-style: italic;">
+        "{{ attestation_statement }}"
+    </blockquote>
+</div>
+
+<div class="card" style="margin-top: 1.5rem; border: 2px solid var(--border-color);">
+    <h2 class="card-title">4. Step-Up Reviewer Authorization</h2>
+    <p class="card-subtitle">
+        Enter your authorized human reviewer credentials to formally sign and transition this dossier to <code>APPROVED_INFORMATIONAL</code>.
+    </p>
+
+    <form action="/dossiers/{{ dossier.id }}/approve" method="POST" style="margin-top: 1.5rem;" class="auth-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="expected_version" value="{{ dossier.version }}">
+        <input type="hidden" name="expected_content_hash" value="{{ current_content_hash }}">
+
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label for="reviewer_id" class="form-label">Reviewer ID <span class="required">*</span>:</label>
+                <input
+                    type="text"
+                    id="reviewer_id"
+                    name="reviewer_id"
+                    class="form-control"
+                    required
+                    autofocus
+                    placeholder="e.g. ebe"
+                    {% if has_drift or validation_report.blocking_count > 0 %}disabled{% endif %}
+                >
+            </div>
+            <div class="form-group">
+                <label for="reviewer_key" class="form-label">Reviewer Signing Key <span class="required">*</span>:</label>
+                <input
+                    type="password"
+                    id="reviewer_key"
+                    name="reviewer_key"
+                    class="form-control"
+                    required
+                    placeholder="Enter 256-bit reviewer key"
+                    {% if has_drift or validation_report.blocking_count > 0 %}disabled{% endif %}
+                >
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 1.25rem;">
+            <label class="checkbox-label" style="display: flex; align-items: flex-start; gap: 0.75rem; cursor: pointer;">
+                <input
+                    type="checkbox"
+                    name="statement_confirmed"
+                    value="true"
+                    required
+                    class="checkbox-input"
+                    style="margin-top: 0.25rem;"
+                    {% if has_drift or validation_report.blocking_count > 0 %}disabled{% endif %}
+                >
+                <span>
+                    <strong>I explicitly confirm the editorial attestation statement above.</strong>
+                    I verify that factual statements, attributed allegations, and technical uncertainties have been forensicly reviewed and adhere strictly to AI Guardians editorial integrity standards.
+                </span>
+            </label>
+        </div>
+
+        <div class="form-actions" style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+            <button
+                type="submit"
+                class="btn btn-primary btn-lg"
+                {% if has_drift or validation_report.blocking_count > 0 %}disabled{% endif %}
+            >
+                Authorize &amp; Approve Dossier Version
+            </button>
+            <a href="/dossiers/{{ dossier.id }}" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

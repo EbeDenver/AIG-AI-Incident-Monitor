@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}{{ dossier.title }} — Dossier Detail{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="/dossiers">&larr; Back to Dossiers</a>
+</div>
+
+<div class="explorer-header">
+    <div>
+        <div class="status-badge-row">
+            <span class="badge badge-status-{{ dossier.status.value.lower() }}">{{ dossier.status.value }}</span>
+            <span class="badge badge-scope">{{ dossier.scope_type.value }}</span>
+            <span class="badge badge-version">v{{ dossier.version }}</span>
+        </div>
+        <h1 class="page-title" style="margin-top: 0.5rem;">{{ dossier.title }}</h1>
+        <p class="page-subtitle font-mono">Dossier ID: {{ dossier.id }}</p>
+    </div>
+
+    <div class="header-actions">
+        {% if dossier.status.value in ['DRAFT', 'ASSEMBLED'] %}
+        <form action="/dossiers/{{ dossier.id }}/submit" method="POST" style="display: inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="btn btn-primary">Submit for Human Review &rarr;</button>
+        </form>
+        {% elif dossier.status.value == 'PENDING_REVIEW' %}
+        <a href="/dossiers/{{ dossier.id }}/review" class="btn btn-primary">Review &amp; Approve Version &rarr;</a>
+        <button type="button" class="btn btn-outline-danger" onclick="document.getElementById('reject-card').style.display='block'; window.scrollTo(0, document.body.scrollHeight);">Reject Dossier</button>
+        {% elif dossier.status.value in ['APPROVED_INFORMATIONAL', 'REJECTED'] %}
+        <form action="/dossiers/{{ dossier.id }}/supersede" method="POST" style="display: inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="btn btn-secondary">Create New Revision (Supersede) &rarr;</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+{% if has_drift %}
+<div class="alert alert-error" role="alert">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-message">
+        <strong>Source Drift Detected:</strong> Underlying incident records or claim hashes have drifted since this dossier was assembled.
+        Approval is strictly blocked until resolved or superseded:
+        <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+            {% for d in drift_details %}
+            <li>{{ d }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
+<div class="grid-layout" style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+    <div class="main-column">
+        <!-- Validation Findings Card -->
+        <div class="card">
+            <div class="card-header-flex">
+                <h2 class="card-title">Validation Findings</h2>
+                <div>
+                    {% if validation_report.blocking_count == 0 %}
+                    <span class="badge badge-healthy">0 Blocking Findings</span>
+                    {% else %}
+                    <span class="badge badge-unhealthy">{{ validation_report.blocking_count }} Blocking Finding(s)</span>
+                    {% endif %}
+                    {% if validation_report.warning_count > 0 %}
+                    <span class="badge badge-degraded">{{ validation_report.warning_count }} Warning(s)</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if validation_report.findings %}
+            <div class="findings-list" style="margin-top: 1rem;">
+                {% for f in validation_report.findings %}
+                <div class="finding-item finding-{{ f.severity.value.lower() }}">
+                    <div class="finding-header">
+                        <span class="badge badge-{{ f.severity.value.lower() }}">{{ f.severity.value }}</span>
+                        <code class="font-mono">{{ f.field_path }}</code>
+                    </div>
+                    <p class="finding-message">{{ f.message }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-healthy" style="margin-top: 0.5rem;">
+                ✅ Dossier satisfies all editorial, attribution, and disclaimer validation rules cleanly.
+            </p>
+            {% endif %}
+        </div>
+
+        <!-- Multi-Entry Incident Breakdown -->
+        <div class="card" style="margin-top: 1.5rem;">
+            <h2 class="card-title">Dossier Incident Entries ({{ dossier.entries | length }})</h2>
+            <p class="card-subtitle">Epistemic breakdown of all attributed incident entries compiled in this dossier version.</p>
+
+            <div class="dossier-entries" style="margin-top: 1rem;">
+                {% for entry in dossier.entries %}
+                <article class="dossier-entry-card">
+                    <div class="entry-header">
+                        <span class="font-mono text-muted">Entry #{{ entry.sequence_order }}: {{ entry.incident_id }}</span>
+                        <h3 class="entry-title">{{ entry.title }}</h3>
+                        {% if entry.primary_source_url %}
+                        <p class="entry-source">
+                            <strong>Source:</strong>
+                            <a href="{{ entry.primary_source_url }}" target="_blank" rel="noopener noreferrer">
+                                {{ entry.primary_source_publisher or entry.primary_source_url }}
+                            </a>
+                            {% if entry.primary_source_date %}({{ entry.primary_source_date }}){% endif %}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <div class="entry-summary">
+                        <p>{{ entry.summary }}</p>
+                    </div>
+
+                    <!-- Epistemic Decomposition Panels -->
+                    <div class="epistemic-quad-grid" style="margin-top: 1rem;">
+                        <!-- Facts -->
+                        <div class="epistemic-mini-panel panel-facts">
+                            <h4>Confirmed Facts ({{ entry.known_facts | length }})</h4>
+                            {% if entry.known_facts %}
+                            <ul>
+                                {% for f in entry.known_facts %}
+                                <li>{{ f.statement }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="text-muted">None recorded.</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Allegations -->
+                        <div class="epistemic-mini-panel panel-allegations">
+                            <h4>Attributed Allegations ({{ entry.allegations | length }})</h4>
+                            {% if entry.allegations %}
+                            <ul>
+                                {% for a in entry.allegations %}
+                                <li>{{ a.statement }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="text-muted">None recorded.</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Unknowns -->
+                        <div class="epistemic-mini-panel panel-unknowns">
+                            <h4>Technical Unknowns ({{ entry.unknowns | length }})</h4>
+                            {% if entry.unknowns %}
+                            <ul>
+                                {% for u in entry.unknowns %}
+                                <li>{{ u.statement }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="text-muted">None recorded.</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Disputes -->
+                        <div class="epistemic-mini-panel panel-disputes">
+                            <h4>Disputed Claims ({{ entry.disputes | length }})</h4>
+                            {% if entry.disputes %}
+                            <ul>
+                                {% for d in entry.disputes %}
+                                <li>{{ d.statement }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="text-muted">None recorded.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Optional EU Commentary -->
+                    {% if entry.eu_commentary %}
+                    <div class="eu-commentary-box" style="margin-top: 1rem;">
+                        <strong>EU AI Act Context:</strong> {{ entry.eu_commentary }}
+                    </div>
+                    {% elif entry.omitted_eu_reason %}
+                    <div class="eu-omitted-box" style="margin-top: 0.5rem;">
+                        <span class="text-muted font-mono" style="font-size: 0.85rem;">EU Commentary Note: {{ entry.omitted_eu_reason }}</span>
+                    </div>
+                    {% endif %}
+                </article>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Side Metadata & Review History Column -->
+    <div class="side-column">
+        <!-- Integrity & Hashing Card -->
+        <div class="card">
+            <h3 class="card-title">Cryptographic Integrity</h3>
+            <div class="meta-item">
+                <span class="meta-label">Current Canonical Hash:</span>
+                <code class="font-mono text-break" style="font-size: 0.8rem;">{{ current_content_hash }}</code>
+            </div>
+            {% if dossier.content_hash %}
+            <div class="meta-item">
+                <span class="meta-label">Approved Content Hash:</span>
+                <code class="font-mono text-break" style="font-size: 0.8rem;">{{ dossier.content_hash }}</code>
+            </div>
+            {% endif %}
+            <div class="meta-item">
+                <span class="meta-label">Disclaimer Version:</span>
+                <span>{{ dossier.disclaimer_version }}</span>
+            </div>
+            {% if dossier.supersedes_dossier_id %}
+            <div class="meta-item">
+                <span class="meta-label">Supersedes Dossier:</span>
+                <a href="/dossiers/{{ dossier.supersedes_dossier_id }}" class="font-mono">{{ dossier.supersedes_dossier_id }}</a>
+            </div>
+            {% endif %}
+            {% if dossier.superseded_by_id %}
+            <div class="meta-item">
+                <span class="meta-label">Superseded By:</span>
+                <a href="/dossiers/{{ dossier.superseded_by_id }}" class="font-mono">{{ dossier.superseded_by_id }}</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Review State Card -->
+        <div class="card" style="margin-top: 1.5rem;">
+            <h3 class="card-title">Human Review Status</h3>
+            <div class="meta-item">
+                <span class="meta-label">Reviewed By:</span>
+                <strong>{{ dossier.reviewed_by or 'Not Reviewed' }}</strong>
+            </div>
+            {% if dossier.reviewed_at %}
+            <div class="meta-item">
+                <span class="meta-label">Reviewed At:</span>
+                <span>{{ dossier.reviewed_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+            </div>
+            {% endif %}
+            {% if dossier.rejection_reason %}
+            <div class="meta-item">
+                <span class="meta-label">Rejection Reason:</span>
+                <span class="text-error">{{ dossier.rejection_reason }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Audit Trail Card -->
+        <div class="card" style="margin-top: 1.5rem;">
+            <h3 class="card-title">Tamper-Evident Audit Trail</h3>
+            {% if audit_events %}
+            <ul class="audit-list">
+                {% for evt in audit_events %}
+                <li class="audit-item">
+                    <span class="audit-action font-mono"><strong>{{ evt.transition_type }}</strong></span>
+                    <span class="audit-actor text-muted">by {{ evt.actor_id }} ({{ evt.actor_role or 'Operator' }})</span>
+                    <span class="audit-time font-mono" style="font-size: 0.75rem;">{{ evt.timestamp_utc.strftime('%Y-%m-%d %H:%M UTC') if evt.timestamp_utc and evt.timestamp_utc.strftime else (evt.timestamp_utc[:16] if evt.timestamp_utc else '') }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-muted">No audit events recorded yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Reject Form (hidden until button clicked) -->
+        <div id="reject-card" class="card" style="display: none; margin-top: 1.5rem; border: 1px solid var(--status-unhealthy-border);">
+            <h3 class="card-title text-error">Reject Dossier</h3>
+            <form action="/dossiers/{{ dossier.id }}/reject" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <div class="form-group">
+                    <label for="rejection_reason" class="form-label">Mandatory Rejection Rationale:</label>
+                    <textarea name="rejection_reason" id="rejection_reason" rows="3" class="form-control" required minlength="5" placeholder="Document specific factual, attribution, or evidentiary reasons for rejection..."></textarea>
+                </div>
+                <div class="form-actions" style="margin-top: 0.75rem;">
+                    <button type="submit" class="btn btn-unhealthy btn-sm">Confirm Rejection</button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('reject-card').style.display='none';">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

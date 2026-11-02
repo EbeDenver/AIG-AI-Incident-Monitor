@@ -17,6 +17,7 @@
             <nav class="app-nav" aria-label="Main Navigation">
                 {% if session %}
                 <a href="/incidents" class="nav-link {% if request.url.path.startswith('/incidents') %}active{% endif %}">Incidents</a>
+                <a href="/dossiers" class="nav-link {% if request.url.path.startswith('/dossiers') %}active{% endif %}">Dossiers</a>
                 <a href="/diagnostics" class="nav-link {% if request.url.path.startswith('/diagnostics') %}active{% endif %}">Diagnostics</a>
                 <form action="/logout" method="POST" class="logout-form">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

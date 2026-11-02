@@ -108,6 +108,8 @@ def create_app(
     session_manager: Optional[ServerSessionManager] = None,
     rate_limiter: Optional[LoginRateLimiter] = None,
     allowed_hosts: Optional[Set[str]] = None,
+    reviewer_keystore: Optional[Any] = None,
+    reviewer_rate_limiter: Optional[Any] = None,
 ) -> FastAPI:
     """Create and configure the local operator FastAPI application."""
     root = repo_root or get_repo_root()
@@ -118,6 +120,15 @@ def create_app(
     )
     sess_mgr = session_manager or ServerSessionManager()
     limiter = rate_limiter or LoginRateLimiter()
+
+    from ai_incident_monitor.ui.reviewer_auth import (
+        ReviewerKeystore,
+        ReviewerRateLimiter,
+    )
+    rev_keystore = reviewer_keystore or ReviewerKeystore(
+        storage_path=root / ".data" / ".reviewers.json"
+    )
+    rev_limiter = reviewer_rate_limiter or ReviewerRateLimiter()
 
     app = FastAPI(
         title="AI Incident Monitor — Local Operator Explorer",
@@ -134,6 +145,8 @@ def create_app(
     app.state.credential_manager = cred_mgr
     app.state.session_manager = sess_mgr
     app.state.rate_limiter = limiter
+    app.state.reviewer_keystore = rev_keystore
+    app.state.reviewer_rate_limiter = rev_limiter
 
     # Security middleware
     app.add_middleware(LocalSecurityMiddleware, allowed_hosts=allowed_hosts)
@@ -154,10 +167,12 @@ def create_app(
     from ai_incident_monitor.ui.routes.auth import router as auth_router
     from ai_incident_monitor.ui.routes.incidents import router as incidents_router
     from ai_incident_monitor.ui.routes.diagnostics import router as diagnostics_router
+    from ai_incident_monitor.ui.routes.dossiers import router as dossiers_router
 
     app.include_router(auth_router)
     app.include_router(incidents_router)
     app.include_router(diagnostics_router)
+    app.include_router(dossiers_router)
 
     # Root landing redirect
     @app.get("/", response_class=HTMLResponse)
