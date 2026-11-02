@@ -9,10 +9,11 @@ ALEMBIC ?= $(VENV)/bin/alembic
 RUFF ?= $(VENV)/bin/ruff
 MYPY ?= $(VENV)/bin/mypy
 
-.PHONY: help test test-unit test-integration migrate migrate-down db-up db-down lint format typecheck clean purge-raw-feeds purge-raw-feeds-dry-run import-oecd verify-provenance-chain verify-provenance-chain-dry-run diagnose diagnose-json ingest-cycle ingest-cycle-dry-run generate-launchd-plist validate-launchd-plist
+.PHONY: help test test-unit test-integration migrate migrate-down db-up db-down lint format typecheck clean purge-raw-feeds purge-raw-feeds-dry-run import-oecd verify-provenance-chain verify-provenance-chain-dry-run diagnose diagnose-json ingest-cycle ingest-cycle-dry-run generate-launchd-plist validate-launchd-plist run
 
 help:
 	@echo "Available Makefile targets:"
+	@echo "  run               Launch the local operator explorer web application"
 	@echo "  test              Run full test suite (Phase 2 domain + Phase 3 persistence/import)"
 	@echo "  test-unit         Run unit test suite"
 	@echo "  test-integration  Run migration and import integration tests"
@@ -92,3 +93,5 @@ generate-launchd-plist:
 validate-launchd-plist:
 	$(PYTHON) -m ai_incident_monitor.ingestion.scheduler --validate-only
 
+run:
+	$(PYTHON) -m ai_incident_monitor.ui.cli
