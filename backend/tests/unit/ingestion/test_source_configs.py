@@ -38,6 +38,15 @@ class TestSourceConfiguration:
         assert rss.role == SourceRole.PRIMARY_INCIDENT_REPORT
         assert rss.is_primary_incident_source
 
+    def test_oecd_aim_role_is_primary_incident_source(self) -> None:
+        sources = get_default_sources()
+        oecd_aim = next(s for s in sources if s.source_id == "oecd_aim_live")
+        assert oecd_aim.role == SourceRole.PRIMARY_INCIDENT_REPORT
+        assert oecd_aim.is_primary_incident_source
+        assert oecd_aim.endpoint_url == "https://fail.ticker.io/data/wire.json"
+        assert "fail.ticker.io" in oecd_aim.allowed_hosts
+        assert oecd_aim.enabled is True
+
     def test_oecd_role_is_offline_export(self) -> None:
         sources = get_default_sources()
         oecd = next(s for s in sources if s.source_id == "oecd_export")

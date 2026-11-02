@@ -1,5 +1,17 @@
 [
   {
+    "source_id": "oecd_aim_live",
+    "name": "OECD AI Incidents and Hazards Monitor (Live Feed)",
+    "connector_type": "oecd_aim_feed",
+    "role": "primary_incident_report",
+    "endpoint_url": "https://fail.ticker.io/data/wire.json",
+    "allowed_hosts": ["fail.ticker.io"],
+    "query_params": {},
+    "rate_limit_seconds": 2.0,
+    "enabled": true,
+    "description": "Live syndicated feed of OECD AI Incidents and Hazards Monitor (AIM) events. Provides primary AI incident records linking canonically to oecd.ai."
+  },
+  {
     "source_id": "arxiv_research",
     "name": "arXiv AI Research Papers",
     "connector_type": "arxiv",
@@ -16,7 +28,7 @@
   },
   {
     "source_id": "rss_incident_feed",
-    "name": "Primary AI Incident News Stream",
+    "name": "Custom RSS/Atom Incident Feed",
     "connector_type": "rss",
     "role": "primary_incident_report",
     "endpoint_url": "",
@@ -24,7 +36,7 @@
     "query_params": {},
     "rate_limit_seconds": 1.0,
     "enabled": false,
-    "description": "Primary AI incident reporting feed. Pending operator specification of approved live news or incident feed URL."
+    "description": "Optional secondary RSS/Atom incident feed. Pending operator configuration of custom RSS/Atom URL."
   },
   {
     "source_id": "oecd_export",

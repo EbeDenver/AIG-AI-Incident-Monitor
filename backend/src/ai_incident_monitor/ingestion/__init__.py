@@ -13,6 +13,7 @@ from ai_incident_monitor.ingestion.connectors import (
     ConnectorError,
     ConnectorParseError,
     DisallowedSourceError,
+    OECDAIMFeedConnector,
     RSSConnector,
     sanitize_html_to_snippet,
 )
@@ -106,6 +107,7 @@ __all__ = [
     "DisallowedSourceError",
     "ConnectorParseError",
     "RSSConnector",
+    "OECDAIMFeedConnector",
     "sanitize_html_to_snippet",
     "ArXivConnector",
     "ARXIV_APPROVED_HOST",

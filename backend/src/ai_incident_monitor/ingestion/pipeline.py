@@ -53,6 +53,8 @@ class PipelineExecutionResult:
     quarantined_count: int
     is_success: bool
     error_details: Optional[str] = None
+    etag: Optional[str] = None
+    last_modified: Optional[str] = None
 
 
 class IngestionPipeline:
@@ -289,6 +291,8 @@ class IngestionPipeline:
             quarantined_count=quarantined_count,
             is_success=exec_res.is_success,
             error_details=exec_res.malformed_details,
+            etag=exec_res.etag,
+            last_modified=exec_res.last_modified,
         )
 
 

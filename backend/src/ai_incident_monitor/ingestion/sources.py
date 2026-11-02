@@ -62,6 +62,18 @@ def get_default_sources() -> list[SourceConfig]:
     """Return fallback source definitions if configuration file is not present."""
     return [
         SourceConfig(
+            source_id="oecd_aim_live",
+            name="OECD AI Incidents and Hazards Monitor (Live Feed)",
+            connector_type=ConnectorType.OECD_AIM_FEED,
+            role=SourceRole.PRIMARY_INCIDENT_REPORT,
+            endpoint_url="https://fail.ticker.io/data/wire.json",
+            allowed_hosts=["fail.ticker.io"],
+            query_params={},
+            rate_limit_seconds=2.0,
+            enabled=True,
+            description="Live syndicated feed of OECD AI Incidents and Hazards Monitor (AIM) events. Provides primary AI incident records linking canonically to oecd.ai.",
+        ),
+        SourceConfig(
             source_id="arxiv_research",
             name="arXiv AI Research Papers",
             connector_type=ConnectorType.ARXIV,

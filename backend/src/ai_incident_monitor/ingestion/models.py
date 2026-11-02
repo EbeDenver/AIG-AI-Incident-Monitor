@@ -23,6 +23,7 @@ class ConnectorType(str, Enum):
     ATOM = "atom"
     ARXIV = "arxiv"
     OECD_EXPORT = "oecd_export"
+    OECD_AIM_FEED = "oecd_aim_feed"
     CUSTOM = "custom"
 
 

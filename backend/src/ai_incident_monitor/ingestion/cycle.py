@@ -26,6 +26,7 @@ from sqlalchemy.orm import Session
 from ai_incident_monitor.db.session import get_engine, get_repo_root
 from ai_incident_monitor.ingestion.checkpoints import CheckpointStore, SourceCheckpoint
 from ai_incident_monitor.ingestion.connectors.arxiv import ArXivConnector
+from ai_incident_monitor.ingestion.connectors.oecd_aim import OECDAIMFeedConnector
 from ai_incident_monitor.ingestion.connectors.rss import RSSConnector
 from ai_incident_monitor.ingestion.incident_mapper import IngestionIncidentMapper
 from ai_incident_monitor.ingestion.lock import (
@@ -119,6 +120,7 @@ def run_ingestion_cycle(
     custom_http_client: Optional[SecureHTTPClient] = None,
     db_engine: Optional[Any] = None,
     dry_run: bool = False,
+    force: bool = False,
 ) -> IngestionCycleSummary:
     """Execute complete ingestion cycle across configured sources.
     
@@ -198,8 +200,10 @@ def run_ingestion_cycle(
             limiter = ConnectorRateLimiter(policy=RateLimitPolicy(min_interval_seconds=src.rate_limit_seconds))
             limiter.acquire()
 
-            # Load checkpoint tokens for conditional GET
+            # Load checkpoint tokens for conditional GET unless force=True
             checkpoint = checkpoint_store.get_checkpoint(src.source_id)
+            req_etag = None if force else checkpoint.etag
+            req_last_modified = None if force else checkpoint.last_modified
 
             # Build connector
             http_client = custom_http_client or SecureHTTPClient()
@@ -214,6 +218,12 @@ def run_ingestion_cycle(
                 connector = RSSConnector(
                     http_client=http_client,
                     allowed_source_hosts=set(src.allowed_hosts),
+                    enabled=True,
+                )
+            elif src.connector_type == ConnectorType.OECD_AIM_FEED:
+                connector = OECDAIMFeedConnector(
+                    http_client=http_client,
+                    rate_limit_seconds=src.rate_limit_seconds,
                     enabled=True,
                 )
 
@@ -235,8 +245,8 @@ def run_ingestion_cycle(
 
                     pipe_res = pipeline.execute_run(
                         target_url=src.endpoint_url,
-                        etag=checkpoint.etag,
-                        last_modified=checkpoint.last_modified,
+                        etag=req_etag,
+                        last_modified=req_last_modified,
                     )
 
                     src_summary.records_fetched = len(pipe_res.items)
@@ -255,14 +265,15 @@ def run_ingestion_cycle(
 
                     if pipe_res.manifest.http_status == 304 or not pipe_res.items:
                         src_summary.status = "NOT_MODIFIED"
-                        checkpoint_store.save_checkpoint(
-                            src.source_id,
-                            status="NOT_MODIFIED",
-                            etag=checkpoint.etag,
-                            last_modified=checkpoint.last_modified,
-                            records_fetched=0,
-                            records_skipped=len(pipe_res.items),
-                        )
+                        if not dry_run:
+                            checkpoint_store.save_checkpoint(
+                                src.source_id,
+                                status="NOT_MODIFIED",
+                                etag=pipe_res.etag or checkpoint.etag,
+                                last_modified=pipe_res.last_modified or checkpoint.last_modified,
+                                records_fetched=0,
+                                records_skipped=len(pipe_res.items),
+                            )
                         summary.sources.append(src_summary)
                         continue
 
@@ -305,17 +316,18 @@ def run_ingestion_cycle(
                     has_partial_failure = True
 
                 # Save checkpoint - updating success timestamp only on success
-                checkpoint_store.save_checkpoint(
-                    src.source_id,
-                    status=src_summary.status,
-                    etag=checkpoint.etag,
-                    last_modified=checkpoint.last_modified,
-                    records_fetched=src_summary.records_fetched,
-                    records_created=src_summary.records_created,
-                    records_updated=src_summary.records_updated,
-                    records_skipped=src_summary.records_skipped,
-                    records_failed=src_summary.records_failed,
-                )
+                if not dry_run:
+                    checkpoint_store.save_checkpoint(
+                        src.source_id,
+                        status=src_summary.status,
+                        etag=pipe_res.etag or checkpoint.etag,
+                        last_modified=pipe_res.last_modified or checkpoint.last_modified,
+                        records_fetched=src_summary.records_fetched,
+                        records_created=src_summary.records_created,
+                        records_updated=src_summary.records_updated,
+                        records_skipped=src_summary.records_skipped,
+                        records_failed=src_summary.records_failed,
+                    )
 
             except Exception as src_exc:
                 logger.error(f"Error during ingestion of source '{src.source_id}': {src_exc}")
@@ -379,6 +391,11 @@ def main(argv: Optional[list[str]] = None) -> int:
         action="store_true",
         help="Perform network retrieval and manifest chaining without database persistence.",
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Ignore cached ETags and checkpoints, forcing a full fetch.",
+    )
     args = parser.parse_args(argv)
 
     logging.basicConfig(
@@ -391,6 +408,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         trigger=args.trigger,
         run_id=args.run_id,
         dry_run=args.dry_run,
+        force=args.force,
     )
 
     print(f"[INGESTION CYCLE] Finished in {summary.duration_seconds:.2f}s :: Status: [{summary.overall_status}]")
