@@ -261,7 +261,8 @@ class TestDossierWorkbenchRoutes:
         assert "INC-2026-0002" in res_detail.text
         assert "Confirmed Facts" in res_detail.text
         assert "Validation Findings" in res_detail.text
-        assert "Submit for Human Review" in res_detail.text
+        assert "Preview Artifacts" in res_detail.text
+        assert "Create New Revision (Supersede)" in res_detail.text
 
     def test_csrf_protection_on_all_state_changing_actions(self, dossier_test_setup) -> None:
         """Missing or forged CSRF tokens reject state-changing POST requests with 403 Forbidden."""
@@ -277,13 +278,12 @@ class TestDossierWorkbenchRoutes:
         )
         assert bad_post.status_code == 403
 
-    def test_full_dossier_review_and_approval_lifecycle(self, dossier_test_setup) -> None:
-        """Full lifecycle: Assembly -> Submit -> Review -> Step-Up Approval with valid key."""
+    def test_legacy_editorial_review_endpoints_return_410_gone(self, dossier_test_setup) -> None:
+        """Legacy review and approval endpoints return 410 Gone under the design correction."""
         client = dossier_test_setup["client"]
         sess_mgr = dossier_test_setup["sess_mgr"]
         session = sess_mgr.create_session()
         client.cookies.set(SESSION_COOKIE_NAME, session.session_id)
-        reviewer_key = dossier_test_setup["reviewer_key"]
 
         # 1. Assemble draft dossier
         res_create = client.post(
@@ -299,175 +299,67 @@ class TestDossierWorkbenchRoutes:
         dossier_url = res_create.headers["location"]
         dossier_id = dossier_url.split("/")[-1]
 
-        # 2. Submit for review
+        # 2. Legacy submit returns 410 Gone
         res_submit = client.post(
             f"/dossiers/{dossier_id}/submit",
             data={"csrf_token": session.csrf_token},
             follow_redirects=False,
         )
-        assert res_submit.status_code == 303
+        assert res_submit.status_code == 410
+        assert "retired under design correction" in res_submit.json()["detail"]
 
-        # 3. Access review attestation screen
+        # 3. Legacy review returns 410 Gone
         res_review = client.get(f"/dossiers/{dossier_id}/review")
-        assert res_review.status_code == 200
-        assert "Human Editorial Review &amp; Attestation" in res_review.text or "Human Editorial Review & Attestation" in res_review.text
-        assert EDITORIAL_ATTESTATION_STATEMENT in res_review.text
+        assert res_review.status_code == 410
+        assert "retired under design correction" in res_review.json()["detail"]
 
-        # Extract current content hash rendered on page
-        engine = dossier_test_setup["engine"]
-        with Session(engine) as s:
-            repo = EditorialRepository(s)
-            dos = repo.get_dossier(dossier_id)
-            content_hash = dos.compute_content_hash()
-
-        # 4. Attempt approval with INVALID reviewer key -> 401 Unauthorized
-        res_bad_key = client.post(
-            f"/dossiers/{dossier_id}/approve",
-            data={
-                "reviewer_id": "ebe",
-                "reviewer_key": "wrong_password",
-                "expected_version": 1,
-                "expected_content_hash": content_hash,
-                "statement_confirmed": "true",
-                "csrf_token": session.csrf_token,
-            },
-        )
-        assert res_bad_key.status_code == 401
-        assert "Invalid reviewer key" in res_bad_key.text
-
-        # 5. Attempt approval with UNCONFIRMED statement -> 400 Bad Request
-        res_unconfirmed = client.post(
-            f"/dossiers/{dossier_id}/approve",
-            data={
-                "reviewer_id": "ebe",
-                "reviewer_key": reviewer_key,
-                "expected_version": 1,
-                "expected_content_hash": content_hash,
-                # statement_confirmed omitted
-                "csrf_token": session.csrf_token,
-            },
-        )
-        assert res_unconfirmed.status_code == 400
-        assert "confirm the editorial attestation statement" in res_unconfirmed.text
-
-        # 6. Attempt approval with STALE content hash -> 409 Conflict
-        res_stale = client.post(
-            f"/dossiers/{dossier_id}/approve",
-            data={
-                "reviewer_id": "ebe",
-                "reviewer_key": reviewer_key,
-                "expected_version": 1,
-                "expected_content_hash": "b" * 64,  # mismatched hash
-                "statement_confirmed": "true",
-                "csrf_token": session.csrf_token,
-            },
-        )
-        assert res_stale.status_code == 409
-        assert "Stale page" in res_stale.text
-
-        # 7. Happy path: valid key, matching hash, confirmed statement -> 303 Redirect to detail
+        # 4. Legacy approve returns 410 Gone
         res_approve = client.post(
             f"/dossiers/{dossier_id}/approve",
             data={
                 "reviewer_id": "ebe",
-                "reviewer_key": reviewer_key,
+                "reviewer_key": "some_key",
                 "expected_version": 1,
-                "expected_content_hash": content_hash,
+                "expected_content_hash": "a" * 64,
                 "statement_confirmed": "true",
                 "csrf_token": session.csrf_token,
             },
-            follow_redirects=False,
         )
-        assert res_approve.status_code == 303
+        assert res_approve.status_code == 410
+        assert "retired under design correction" in res_approve.json()["detail"]
 
-        # 8. Verify approved status and audit logging
-        res_approved_detail = client.get(f"/dossiers/{dossier_id}")
-        assert res_approved_detail.status_code == 200
-        assert "APPROVED_INFORMATIONAL" in res_approved_detail.text
-        assert "Reviewed By:" in res_approved_detail.text
-        assert "ebe" in res_approved_detail.text
-        assert "APPROVE_DOSSIER" in res_approved_detail.text
-
-    def test_dossier_rejection_lifecycle(self, dossier_test_setup) -> None:
-        """Rejecting a dossier requires a mandatory reason and records rejection audit event."""
-        client = dossier_test_setup["client"]
-        sess_mgr = dossier_test_setup["sess_mgr"]
-        session = sess_mgr.create_session()
-        client.cookies.set(SESSION_COOKIE_NAME, session.session_id)
-
-        # Create & submit
-        res_create = client.post(
-            "/dossiers",
-            data={
-                "title": "Candidate for Rejection",
-                "incident_ids": ["INC-2026-0001"],
-                "csrf_token": session.csrf_token,
-            },
-            follow_redirects=False,
-        )
-        dossier_id = res_create.headers["location"].split("/")[-1]
-        client.post(f"/dossiers/{dossier_id}/submit", data={"csrf_token": session.csrf_token})
-
-        # Reject with short reason -> 400
-        res_short = client.post(
-            f"/dossiers/{dossier_id}/reject",
-            data={"rejection_reason": "bad", "csrf_token": session.csrf_token},
-        )
-        assert res_short.status_code == 400
-
-        # Reject with proper reason
+        # 5. Legacy reject returns 410 Gone
         res_reject = client.post(
             f"/dossiers/{dossier_id}/reject",
-            data={
-                "rejection_reason": "Factual claims lack sufficient multi-source corroboration.",
-                "csrf_token": session.csrf_token,
-            },
-            follow_redirects=False,
+            data={"rejection_reason": "Testing rejection retirement", "csrf_token": session.csrf_token},
         )
-        assert res_reject.status_code == 303
+        assert res_reject.status_code == 410
+        assert "retired under design correction" in res_reject.json()["detail"]
 
-        # Detail view shows REJECTED
-        res_detail = client.get(f"/dossiers/{dossier_id}")
-        assert "REJECTED" in res_detail.text
-        assert "Factual claims lack sufficient multi-source corroboration." in res_detail.text
-        assert "Create New Revision (Supersede)" in res_detail.text
+        # 6. Verify zero approval records created in db
+        engine = dossier_test_setup["engine"]
+        with Session(engine) as s:
+            repo = EditorialRepository(s)
+            dos = repo.get_dossier(dossier_id)
+            assert dos.status.value in ["DRAFT", "ASSEMBLED"]
+            assert dos.reviewed_by is None
 
     def test_supersede_lifecycle(self, dossier_test_setup) -> None:
-        """Superseding an approved dossier creates a new v2 DRAFT and marks v1 SUPERSEDED."""
+        """Superseding a dossier creates a new v2 DRAFT and marks v1 SUPERSEDED without approval gates."""
         client = dossier_test_setup["client"]
         sess_mgr = dossier_test_setup["sess_mgr"]
         session = sess_mgr.create_session()
         client.cookies.set(SESSION_COOKIE_NAME, session.session_id)
-        reviewer_key = dossier_test_setup["reviewer_key"]
 
-        # Create, submit, approve
+        # Create
         res_create = client.post(
             "/dossiers",
             data={"title": "Original Dossier", "incident_ids": ["INC-2026-0001"], "csrf_token": session.csrf_token},
             follow_redirects=False,
         )
         dossier_id = res_create.headers["location"].split("/")[-1]
-        client.post(f"/dossiers/{dossier_id}/submit", data={"csrf_token": session.csrf_token})
 
-        engine = dossier_test_setup["engine"]
-        with Session(engine) as s:
-            repo = EditorialRepository(s)
-            dos = repo.get_dossier(dossier_id)
-            content_hash = dos.compute_content_hash()
-
-        client.post(
-            f"/dossiers/{dossier_id}/approve",
-            data={
-                "reviewer_id": "ebe",
-                "reviewer_key": reviewer_key,
-                "expected_version": 1,
-                "expected_content_hash": content_hash,
-                "statement_confirmed": "true",
-                "csrf_token": session.csrf_token,
-            },
-        )
-
-        # Supersede
+        # Supersede directly without review/approval
         res_supersede = client.post(
             f"/dossiers/{dossier_id}/supersede",
             data={"rationale": "Updated with additional post-hearing findings.", "csrf_token": session.csrf_token},

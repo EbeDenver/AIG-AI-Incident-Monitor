@@ -5,6 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Phase 8C] - 2026-11-01
+
+### Changed (Design Correction — Mandatory Editorial Approval Removed)
+- **Removal of Mandatory Editorial Approval Gates**:
+  - The application collects and processes incident reports from configured sources, organizes them into dossiers, and provides previews and exports; it does not serve as an editorial approval platform.
+  - Zero incident approval, zero dossier approval, zero reviewer-key ceremony, zero mandatory attestation, and zero approval gates prior to preview, export, or download.
+  - Added `EditorialArtifactPurpose.EXPORTED_SNAPSHOT` as the default artifact purpose, allowing assembled dossiers to be previewed and exported immediately with neutral snapshot headers.
+  - Retired legacy review endpoints (`POST /dossiers/{id}/submit`, `GET /dossiers/{id}/review`, `POST /dossiers/{id}/approve`, `POST /dossiers/{id}/reject`) to return HTTP 410 Gone with explicit retired-workflow notices.
+  - Removed obsolete review action buttons (`Submit for Human Review`, `Review & Approve Version`, `Reject Dossier`) from the active dashboard UI.
+  - Retained historical reviewer storage (`.data/.reviewers.json`) and audit logs as immutable historical data without requiring them for any current workflow.
+  - Retained strict technical validation, reference integrity, path-traversal defenses, CSRF protection, and optional EU commentary eligibility without mandating an EU screen for ordinary reporting.
+
+### Added
+- **Artifact Previews & Export Delivery Routes (`ai_incident_monitor.ui.routes.packages`, `routes.dossiers`)**:
+  - Interactive in-browser artifact preview (`GET /dossiers/{dossier_id}/preview`):
+    - Presentation profile selector (`DEEP_DIVE_DOSSIER`, `EXECUTIVE_BRIEF`, `RAPID_ALERT`).
+    - Format switcher between Markdown and JSON Package.
+    - Neutral dossier snapshot banner with operator responsibility notice (`Dossier Artifact Preview (Version N)`).
+    - Safe autoescaping protecting against script injection from untrusted source texts.
+    - In-browser "Copy Content" clipboard action.
+    - Strictly non-mutating `GET` route with zero database or audit mutations.
+  - Managed export package creation (`POST /dossiers/{dossier_id}/export`):
+    - Bridges dashboard UI to domain `EditorialDossierExporter` without duplicating or weakening rules.
+    - Defaults to `EXPORTED_SNAPSHOT`, generating deterministic export packages (`snapshot_{dossier_id}_v{version}_{profile}.md`).
+    - Source drift guard: rejects export if underlying incident or claim records have mutated since assembly (HTTP 400).
+    - Accidental collision protection: raises HTTP 409 Conflict if package files already exist, unless `overwrite=True` is explicitly checked.
+    - Preserves optional EU commentary eligibility without mandating an EU screen for ordinary incidents.
+    - Records append-only, tamper-evident audit event `EXPORT_DOSSIER` with authenticated human actor identity.
+    - CSRF protection across all state-changing export submissions.
+  - Package management list view (`GET /packages`):
+    - Scans `.data/editorial_exports/` for valid `*.manifest.json` sidecars (symlinks ignored).
+    - Filterable by `dossier_id` and artifact `purpose`.
+    - Displays presentation profile, version, format, export timestamp, and direct inspection/download links.
+  - Package detail inspector (`GET /packages/{export_id}`):
+    - Validates export ID format (`SAFE_EXPORT_ID_PATTERN`).
+    - Inspects cryptographic provenance manifest: canonical dossier content hash, canonical payload hash, artifact file hash, renderer version, disclaimer version.
+    - Displays underlying source record provenance hashes bound to the export package.
+    - Lists all associated physical artifact files (.md, .json, .manifest.json) with size and SHA-256 digests.
+  - Secure authenticated file downloads (`GET /packages/{export_id}/download/{filename}`):
+    - Authenticated session required (unauthenticated requests redirect to `/login`).
+    - Strict regex validation on `export_id` and `filename` rejecting `..`, `/`, `\`, null bytes, or malformed input.
+    - Package association validation: downloads strictly confined to files belonging to the specified export ID.
+    - Directory traversal and confinement defense: verifies target path is relative to export root and rejects symlinks.
+    - Proper MIME types (`text/markdown`, `application/json`) and `Content-Disposition: attachment; filename="..."` headers.
+- **Templates & Navigation Integration (`ai_incident_monitor.ui.templates`)**:
+  - Added `dossiers/preview.html` for in-browser artifact inspection.
+  - Added `packages/list.html` and `packages/detail.html` for package management and manifest inspection.
+  - Added "Preview Artifacts &rarr;" link and "Export Package" card to `dossiers/detail.html`.
+  - Added "Packages" link to main navigation bar in `base.html`.
+- **Unit Test Suite (17 unit tests in test_export_package_routes.py, 849 total tests passing)**:
+  - `backend/tests/unit/ui/test_export_package_routes.py` (17 unit tests).
+  - `backend/tests/unit/ui/test_dossier_routes.py` (updated to verify 410 Gone for legacy approval endpoints).
+
 ## [Phase 8B] - 2026-11-01
 
 ### Added

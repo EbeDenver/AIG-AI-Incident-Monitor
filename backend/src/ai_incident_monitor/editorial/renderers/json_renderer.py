@@ -41,7 +41,7 @@ class EditorialJSONRenderer(BaseEditorialRenderer):
         self,
         dossier: EditorialDossierSchema,
         profile: EditorialPresentationProfile = EditorialPresentationProfile.DEEP_DIVE_DOSSIER,
-        purpose: EditorialArtifactPurpose = EditorialArtifactPurpose.INTERNAL_REVIEW_COPY,
+        purpose: EditorialArtifactPurpose = EditorialArtifactPurpose.EXPORTED_SNAPSHOT,
         validation_report: Optional[EditorialValidationReport] = None,
         audit_records: Optional[list[dict[str, Any]]] = None,
     ) -> tuple[str, str]:
@@ -66,6 +66,12 @@ class EditorialJSONRenderer(BaseEditorialRenderer):
             if validation_report and validation_report.blocking_count > 0:
                 raise ValueError(
                     f"Cannot render APPROVED_EDITORIAL_COPY: dossier has "
+                    f"{validation_report.blocking_count} blocking validation finding(s)."
+                )
+        elif purpose == EditorialArtifactPurpose.EXPORTED_SNAPSHOT:
+            if validation_report and validation_report.blocking_count > 0:
+                raise ValueError(
+                    f"Cannot render EXPORTED_SNAPSHOT: dossier has "
                     f"{validation_report.blocking_count} blocking validation finding(s)."
                 )
 

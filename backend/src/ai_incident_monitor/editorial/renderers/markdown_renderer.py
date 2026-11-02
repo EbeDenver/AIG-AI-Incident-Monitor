@@ -44,7 +44,7 @@ class EditorialMarkdownRenderer(BaseEditorialRenderer):
         self,
         dossier: EditorialDossierSchema,
         profile: EditorialPresentationProfile = EditorialPresentationProfile.DEEP_DIVE_DOSSIER,
-        purpose: EditorialArtifactPurpose = EditorialArtifactPurpose.INTERNAL_REVIEW_COPY,
+        purpose: EditorialArtifactPurpose = EditorialArtifactPurpose.EXPORTED_SNAPSHOT,
         validation_report: Optional[EditorialValidationReport] = None,
     ) -> tuple[str, str]:
         """Render the dossier into deterministic Markdown.
@@ -70,6 +70,12 @@ class EditorialMarkdownRenderer(BaseEditorialRenderer):
                     f"Cannot render APPROVED_EDITORIAL_COPY: dossier has "
                     f"{validation_report.blocking_count} blocking validation finding(s)."
                 )
+        elif purpose == EditorialArtifactPurpose.EXPORTED_SNAPSHOT:
+            if validation_report and validation_report.blocking_count > 0:
+                raise ValueError(
+                    f"Cannot render EXPORTED_SNAPSHOT: dossier has "
+                    f"{validation_report.blocking_count} blocking validation finding(s)."
+                )
 
         lines: list[str] = []
 
@@ -81,11 +87,18 @@ class EditorialMarkdownRenderer(BaseEditorialRenderer):
                 "editorial verification, fact-checking, and tone review. Do not distribute externally.*"
             )
             lines.append("")
-        else:
+        elif purpose == EditorialArtifactPurpose.APPROVED_EDITORIAL_COPY:
             lines.append("> **[AI GUARDIANS RESEARCH DOSSIER — APPROVED PUBLICATION DRAFT]**")
             lines.append(
                 f"> *Formal human editorial review completed by {dossier.reviewed_by or 'editorial board'}. "
                 "Approved for manual publication.*"
+            )
+            lines.append("")
+        else:
+            lines.append("> **[AI GUARDIANS RESEARCH DOSSIER — EXPORTED SNAPSHOT]**")
+            lines.append(
+                "> *Notice: Technical research dossier compiled from verified observational and reporting sources. "
+                "Manual external publication remains the responsibility of the operator.*"
             )
             lines.append("")
 
