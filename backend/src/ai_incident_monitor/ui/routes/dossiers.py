@@ -351,13 +351,9 @@ async def preview_dossier_artifact(
         validator = EditorialValidator()
         v_report = validator.validate_dossier(dossier)
 
-        # Allow pre-approval preview using INTERNAL_REVIEW_COPY
+        # Render preview using neutral EXPORTED_SNAPSHOT
         is_approved = (dossier.status == EditorialDossierStatus.APPROVED_INFORMATIONAL)
-        purpose = (
-            EditorialArtifactPurpose.APPROVED_EDITORIAL_COPY
-            if is_approved and v_report.blocking_count == 0
-            else EditorialArtifactPurpose.INTERNAL_REVIEW_COPY
-        )
+        purpose = EditorialArtifactPurpose.EXPORTED_SNAPSHOT
 
         audit_records = []
         if format_clean == "json":
@@ -433,311 +429,46 @@ async def validate_dossier_route(
     return RedirectResponse(url=f"/dossiers/{dossier_id}", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@router.post("/dossiers/{dossier_id}/submit", response_class=HTMLResponse)
-async def submit_dossier_for_review(
-    request: Request,
-    dossier_id: str,
-    csrf_token: str = Form(...),
-) -> Response:
-    """Transition dossier from DRAFT/ASSEMBLED to PENDING_REVIEW."""
+RETIRED_APPROVAL_DETAIL = (
+    "The editorial review and approval workflow has been retired under design correction. "
+    "Dossiers are directly usable, previewable, and exportable without approval."
+)
+
+
+@router.post("/dossiers/{dossier_id}/submit")
+async def submit_dossier_for_review(request: Request, dossier_id: str) -> Response:
+    """Retired editorial workflow endpoint (returns 410 Gone)."""
     session = _get_authenticated_session(request)
     if not session:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-
-    if not _verify_csrf(request, csrf_token):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: Invalid CSRF token.")
-
-    engine = request.app.state.db_engine
-    with Session(engine) as db_session:
-        repo = EditorialRepository(db_session)
-        try:
-            repo.submit_for_review(
-                dossier_id=dossier_id,
-                actor_id=session.actor_id,
-                is_human=session.is_human,
-                actor_role=session.role,
-            )
-            db_session.commit()
-        except KeyError:
-            raise HTTPException(status_code=404, detail=f"Dossier '{dossier_id}' not found.")
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc))
-
-    return RedirectResponse(url=f"/dossiers/{dossier_id}", status_code=status.HTTP_303_SEE_OTHER)
+    raise HTTPException(status_code=status.HTTP_410_GONE, detail=RETIRED_APPROVAL_DETAIL)
 
 
-@router.get("/dossiers/{dossier_id}/review", response_class=HTMLResponse)
+@router.get("/dossiers/{dossier_id}/review")
 async def review_attestation_page(request: Request, dossier_id: str) -> Response:
-    """Review and attestation screen for human reviewer approval."""
+    """Retired editorial workflow endpoint (returns 410 Gone)."""
     session = _get_authenticated_session(request)
     if not session:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-
-    engine = request.app.state.db_engine
-    templates = request.app.state.templates
-
-    with Session(engine) as db_session:
-        repo = EditorialRepository(db_session)
-        dossier = repo.get_dossier(dossier_id)
-        if not dossier:
-            raise HTTPException(status_code=404, detail=f"Dossier '{dossier_id}' not found.")
-
-        if dossier.status != EditorialDossierStatus.PENDING_REVIEW:
-            return RedirectResponse(url=f"/dossiers/{dossier_id}", status_code=status.HTTP_303_SEE_OTHER)
-
-        validator = EditorialValidator()
-        validation_report = validator.validate_dossier(dossier)
-        has_drift, drift_details = repo.check_source_drift(dossier)
-
-    current_hash = dossier.compute_content_hash()
-
-    return templates.TemplateResponse(
-        request=request,
-        name="dossiers/review.html",
-        context={
-            "session": session,
-            "dossier": dossier,
-            "current_content_hash": current_hash,
-            "validation_report": validation_report,
-            "has_drift": has_drift,
-            "drift_details": drift_details,
-            "attestation_statement": EDITORIAL_ATTESTATION_STATEMENT,
-            "disclaimer_text": EDITORIAL_DISCLAIMER_TEXT,
-            "disclaimer_version": EDITORIAL_DISCLAIMER_VERSION,
-            "csrf_token": session.csrf_token,
-            "error": None,
-        },
-    )
+    raise HTTPException(status_code=status.HTTP_410_GONE, detail=RETIRED_APPROVAL_DETAIL)
 
 
-@router.post("/dossiers/{dossier_id}/approve", response_class=HTMLResponse)
-async def approve_dossier_route(
-    request: Request,
-    dossier_id: str,
-    reviewer_id: str = Form(...),
-    reviewer_key: str = Form(...),
-    expected_version: int = Form(...),
-    expected_content_hash: str = Form(...),
-    statement_confirmed: bool = Form(default=False),
-    csrf_token: str = Form(...),
-) -> Response:
-    """Step-up reviewer approval verifying reviewer key, exact content hash, and drift."""
+@router.post("/dossiers/{dossier_id}/approve")
+async def approve_dossier_route(request: Request, dossier_id: str) -> Response:
+    """Retired editorial workflow endpoint (returns 410 Gone)."""
     session = _get_authenticated_session(request)
     if not session:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-
-    if not _verify_csrf(request, csrf_token):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: Invalid CSRF token.")
-
-    client_ip = request.client.host if request.client else "127.0.0.1"
-    rate_limiter: ReviewerRateLimiter = request.app.state.reviewer_rate_limiter
-    keystore: ReviewerKeystore = request.app.state.reviewer_keystore
-
-    # 1. Rate limiter check
-    is_blocked, cooldown = rate_limiter.is_blocked(f"{client_ip}:{reviewer_id}")
-    if is_blocked:
-        return _render_review_error(
-            request,
-            dossier_id,
-            f"Too many failed approval attempts. Reviewer locked for {int(cooldown)} seconds.",
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-        )
-
-    # 2. Verify reviewer credentials via keystore
-    is_valid, err_reason, reviewer_record = keystore.verify_reviewer_key(
-        reviewer_id=reviewer_id,
-        candidate_key=reviewer_key,
-    )
-    if not is_valid or not reviewer_record:
-        rate_limiter.record_failure(f"{client_ip}:{reviewer_id}")
-        return _render_review_error(
-            request,
-            dossier_id,
-            err_reason or "Invalid reviewer credentials or inactive reviewer.",
-            status_code=status.HTTP_401_UNAUTHORIZED,
-        )
-
-    # 3. Statement confirmation check
-    if not statement_confirmed:
-        return _render_review_error(
-            request,
-            dossier_id,
-            "You must explicitly confirm the editorial attestation statement.",
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
-
-    engine = request.app.state.db_engine
-    with Session(engine) as db_session:
-        repo = EditorialRepository(db_session)
-        dossier = repo.get_dossier(dossier_id)
-        if not dossier:
-            raise HTTPException(status_code=404, detail=f"Dossier '{dossier_id}' not found.")
-
-        # 4. State check
-        if dossier.status != EditorialDossierStatus.PENDING_REVIEW:
-            return _render_review_error(
-                request,
-                dossier_id,
-                f"Cannot approve dossier in status '{dossier.status.value}'. Must be PENDING_REVIEW.",
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # 5. Stale-page / Concurrency check: Exact version and content hash match
-        current_hash = dossier.compute_content_hash()
-        if dossier.version != expected_version:
-            return _render_review_error(
-                request,
-                dossier_id,
-                f"Stale page: Dossier version changed (displayed version {expected_version}, current version {dossier.version}).",
-                status_code=status.HTTP_409_CONFLICT,
-            )
-
-        if current_hash != expected_content_hash.strip():
-            return _render_review_error(
-                request,
-                dossier_id,
-                "Stale page: Dossier content hash changed since review page was rendered. Please refresh.",
-                status_code=status.HTTP_409_CONFLICT,
-            )
-
-        # 6. Source drift check
-        has_drift, drift_details = repo.check_source_drift(dossier)
-        if has_drift:
-            return _render_review_error(
-                request,
-                dossier_id,
-                f"Cannot approve: Underlying source records have drifted: {'; '.join(drift_details)}",
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            )
-
-        # 7. Validation report check
-        validator = EditorialValidator()
-        validation_report = validator.validate_dossier(dossier)
-        if not validation_report.is_valid or validation_report.blocking_count > 0:
-            blocking_reasons = [
-                f"{f.field_path}: {f.message}"
-                for f in validation_report.findings
-                if f.severity.value == "BLOCKING"
-            ]
-            return _render_review_error(
-                request,
-                dossier_id,
-                f"Cannot approve: {validation_report.blocking_count} blocking validation finding(s): {'; '.join(blocking_reasons)}",
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            )
-
-        # 8. Construct validated attestation schema with server-side identity injection
-        attestation = EditorialReviewerAttestationSchema(
-            reviewer_id=reviewer_record.reviewer_id,
-            reviewer_name=reviewer_record.reviewer_name,
-            reviewer_role=reviewer_record.reviewer_role,
-            is_human=True,
-            statement_confirmed=True,
-            content_hash=current_hash,
-            dossier_id=dossier_id,
-            dossier_version=dossier.version,
-            attested_at=datetime.now(timezone.utc),
-            source_snapshots_verified=True,
-            editorial_standards_verified=True,
-        )
-
-        # 9. Commit atomic approval
-        repo.approve_dossier(
-            dossier_id=dossier_id,
-            attestation=attestation,
-            validation_report=validation_report,
-        )
-        db_session.commit()
-
-    # Reset failed attempts upon successful approval
-    rate_limiter.reset(f"{client_ip}:{reviewer_id}")
-
-    return RedirectResponse(url=f"/dossiers/{dossier_id}", status_code=status.HTTP_303_SEE_OTHER)
+    raise HTTPException(status_code=status.HTTP_410_GONE, detail=RETIRED_APPROVAL_DETAIL)
 
 
-def _render_review_error(
-    request: Request,
-    dossier_id: str,
-    error_msg: str,
-    status_code: int = 400,
-) -> Response:
-    """Helper to render review page with error."""
-    session = _get_authenticated_session(request)
-    engine = request.app.state.db_engine
-    templates = request.app.state.templates
-
-    with Session(engine) as db_session:
-        repo = EditorialRepository(db_session)
-        dossier = repo.get_dossier(dossier_id)
-        if not dossier:
-            raise HTTPException(status_code=404, detail="Dossier not found.")
-        validator = EditorialValidator()
-        validation_report = validator.validate_dossier(dossier)
-        has_drift, drift_details = repo.check_source_drift(dossier)
-
-    current_hash = dossier.compute_content_hash()
-
-    return templates.TemplateResponse(
-        request=request,
-        name="dossiers/review.html",
-        context={
-            "session": session,
-            "dossier": dossier,
-            "current_content_hash": current_hash,
-            "validation_report": validation_report,
-            "has_drift": has_drift,
-            "drift_details": drift_details,
-            "attestation_statement": EDITORIAL_ATTESTATION_STATEMENT,
-            "disclaimer_text": EDITORIAL_DISCLAIMER_TEXT,
-            "disclaimer_version": EDITORIAL_DISCLAIMER_VERSION,
-            "csrf_token": session.csrf_token,
-            "error": error_msg,
-        },
-        status_code=status_code,
-    )
-
-
-@router.post("/dossiers/{dossier_id}/reject", response_class=HTMLResponse)
-async def reject_dossier_route(
-    request: Request,
-    dossier_id: str,
-    rejection_reason: str = Form(...),
-    reviewer_id: Optional[str] = Form(default=None),
-    csrf_token: str = Form(...),
-) -> Response:
-    """Reject a dossier with mandatory documented rationale."""
+@router.post("/dossiers/{dossier_id}/reject")
+async def reject_dossier_route(request: Request, dossier_id: str) -> Response:
+    """Retired editorial workflow endpoint (returns 410 Gone)."""
     session = _get_authenticated_session(request)
     if not session:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-
-    if not _verify_csrf(request, csrf_token):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: Invalid CSRF token.")
-
-    reason_clean = rejection_reason.strip()
-    if not reason_clean or len(reason_clean) < 5:
-        raise HTTPException(
-            status_code=400,
-            detail="Rejection reason must be at least 5 characters long.",
-        )
-
-    r_id = reviewer_id.strip() if reviewer_id and reviewer_id.strip() else session.actor_id
-
-    engine = request.app.state.db_engine
-    with Session(engine) as db_session:
-        repo = EditorialRepository(db_session)
-        try:
-            repo.reject_dossier(
-                dossier_id=dossier_id,
-                reviewer_id=r_id,
-                is_human=True,
-                rejection_reason=reason_clean,
-                reviewer_role=session.role,
-            )
-            db_session.commit()
-        except (KeyError, ValueError) as exc:
-            raise HTTPException(status_code=400, detail=str(exc))
-
-    return RedirectResponse(url=f"/dossiers/{dossier_id}", status_code=status.HTTP_303_SEE_OTHER)
+    raise HTTPException(status_code=status.HTTP_410_GONE, detail=RETIRED_APPROVAL_DETAIL)
 
 
 @router.post("/dossiers/{dossier_id}/supersede", response_class=HTMLResponse)

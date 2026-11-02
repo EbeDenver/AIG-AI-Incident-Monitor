@@ -3,8 +3,8 @@
 **Organization:** AI Guardians LLC
 **Document Identifier:** STAT-001
 **Last Updated:** 2026-11-01
-**Current Milestone:** Phase 8C (Artifact Previews, Export Delivery & Operator Diagnostics Dashboard/Package Management) — IMPLEMENTED & VERIFIED ON BRANCH `phase8c-artifact-previews-exports`
-**Overall Status:** GREEN (Phase 8C Implemented, 849 Tests Passing, Provenance Chain Valid)
+**Current Milestone:** Phase 8C (Artifact Previews, Export Delivery & Operator Diagnostics Dashboard/Package Management; Design Correction Applied) — IMPLEMENTED & VERIFIED ON BRANCH `phase8c-artifact-previews-exports`
+**Overall Status:** GREEN (Phase 8C Implemented with Design Correction, 849 Tests Passing, Provenance Chain Valid)
 
 ---
 
@@ -23,7 +23,7 @@
 | **Phase 7B** | **Pipeline Observability & Diagnostics** | Telemetry, pipeline health checks, diagnostics CLI, operational metrics | **COMPLETED** | **2026-10-29** |
 | **Phase 8A** | **Local UI Security & Incident Explorer** | Minimal FastAPI foundation, server-side sessions, loopback binds, CSRF, read-only incident & diagnostics explorer | **COMPLETED** | **2026-10-30** |
 | **Phase 8B** | **Editorial Dossier Workbench, Validation & Review** | Candidate selector, draft assembly, inspection, validation, step-up reviewer keystore, review/attestation, rejection, supersession, admin CLI | **COMPLETED** | **2026-11-01** |
-| **Phase 8C** | **Artifact Previews, Export Delivery & Package Management** | Interactive artifact previews, 3 presentation profiles, export creation, package management, secure downloads, path traversal defense, 849 tests | **COMPLETED (Branch)** | **2026-11-01** |
+| **Phase 8C** | **Artifact Previews, Export Delivery & Package Management** | Interactive artifact previews, 3 presentation profiles, export creation, package management, secure downloads, path traversal defense, design correction (mandatory approval removed, legacy endpoints return 410 Gone), 849 tests | **COMPLETED (Branch)** | **2026-11-01** |
 
 ---
 

@@ -20,20 +20,10 @@
 
     <div class="header-actions">
         <a href="/dossiers/{{ dossier.id }}/preview" class="btn btn-outline">Preview Artifacts &rarr;</a>
-        {% if dossier.status.value in ['DRAFT', 'ASSEMBLED'] %}
-        <form action="/dossiers/{{ dossier.id }}/submit" method="POST" style="display: inline;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-            <button type="submit" class="btn btn-primary">Submit for Human Review &rarr;</button>
-        </form>
-        {% elif dossier.status.value == 'PENDING_REVIEW' %}
-        <a href="/dossiers/{{ dossier.id }}/review" class="btn btn-primary">Review &amp; Approve Version &rarr;</a>
-        <button type="button" class="btn btn-outline-danger" onclick="document.getElementById('reject-card').style.display='block'; window.scrollTo(0, document.body.scrollHeight);">Reject Dossier</button>
-        {% elif dossier.status.value in ['APPROVED_INFORMATIONAL', 'REJECTED'] %}
         <form action="/dossiers/{{ dossier.id }}/supersede" method="POST" style="display: inline;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <button type="submit" class="btn btn-secondary">Create New Revision (Supersede) &rarr;</button>
         </form>
-        {% endif %}
     </div>
 </div>
 
@@ -41,8 +31,7 @@
 <div class="alert alert-error" role="alert">
     <div class="alert-icon">⚠️</div>
     <div class="alert-message">
-        <strong>Source Drift Detected:</strong> Underlying incident records or claim hashes have drifted since this dossier was assembled.
-        Approval is strictly blocked until resolved or superseded:
+        <strong>Source Drift Detected:</strong> Underlying incident records or claim hashes have drifted since this dossier version was assembled. Consider superseding this dossier to capture latest source updates:
         <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
             {% for d in drift_details %}
             <li>{{ d }}</li>
@@ -223,13 +212,16 @@
             {% endif %}
         </div>
 
-        <!-- Review State Card -->
+        <!-- Review State Card (Historical) -->
+        {% if dossier.reviewed_by or dossier.rejection_reason %}
         <div class="card" style="margin-top: 1.5rem;">
-            <h3 class="card-title">Human Review Status</h3>
+            <h3 class="card-title">Historical Review Status</h3>
+            {% if dossier.reviewed_by %}
             <div class="meta-item">
                 <span class="meta-label">Reviewed By:</span>
-                <strong>{{ dossier.reviewed_by or 'Not Reviewed' }}</strong>
+                <strong>{{ dossier.reviewed_by }}</strong>
             </div>
+            {% endif %}
             {% if dossier.reviewed_at %}
             <div class="meta-item">
                 <span class="meta-label">Reviewed At:</span>
@@ -243,6 +235,7 @@
             </div>
             {% endif %}
         </div>
+        {% endif %}
 
         <!-- Export Package Card -->
         <div class="card" style="margin-top: 1.5rem;">
@@ -273,12 +266,9 @@
                 <div class="form-group" style="margin-top: 0.5rem;">
                     <label for="export-purpose" class="form-label" style="font-size: 0.85rem;">Artifact Purpose:</label>
                     <select name="purpose" id="export-purpose" class="form-control" style="font-size: 0.85rem;">
-                        {% if dossier.status.value == 'APPROVED_INFORMATIONAL' %}
-                        <option value="APPROVED_EDITORIAL_COPY" selected>APPROVED_EDITORIAL_COPY (Final Package)</option>
-                        <option value="INTERNAL_REVIEW_COPY">INTERNAL_REVIEW_COPY (Draft Working Copy)</option>
-                        {% else %}
-                        <option value="INTERNAL_REVIEW_COPY" selected>INTERNAL_REVIEW_COPY (Draft Working Copy)</option>
-                        {% endif %}
+                        <option value="EXPORTED_SNAPSHOT" selected>EXPORTED_SNAPSHOT (Deterministic Snapshot)</option>
+                        <option value="APPROVED_EDITORIAL_COPY">APPROVED_EDITORIAL_COPY (Legacy Approved Format)</option>
+                        <option value="INTERNAL_REVIEW_COPY">INTERNAL_REVIEW_COPY (Internal Draft Format)</option>
                     </select>
                 </div>
 
@@ -311,22 +301,6 @@
             {% else %}
             <p class="text-muted">No audit events recorded yet.</p>
             {% endif %}
-        </div>
-
-        <!-- Reject Form (hidden until button clicked) -->
-        <div id="reject-card" class="card" style="display: none; margin-top: 1.5rem; border: 1px solid var(--status-unhealthy-border);">
-            <h3 class="card-title text-error">Reject Dossier</h3>
-            <form action="/dossiers/{{ dossier.id }}/reject" method="POST">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <div class="form-group">
-                    <label for="rejection_reason" class="form-label">Mandatory Rejection Rationale:</label>
-                    <textarea name="rejection_reason" id="rejection_reason" rows="3" class="form-control" required minlength="5" placeholder="Document specific factual, attribution, or evidentiary reasons for rejection..."></textarea>
-                </div>
-                <div class="form-actions" style="margin-top: 0.75rem;">
-                    <button type="submit" class="btn btn-unhealthy btn-sm">Confirm Rejection</button>
-                    <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('reject-card').style.display='none';">Cancel</button>
-                </div>
-            </form>
         </div>
     </div>
 </div>

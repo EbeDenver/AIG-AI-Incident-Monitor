@@ -7,19 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Phase 8C] - 2026-11-01
 
+### Changed (Design Correction — Mandatory Editorial Approval Removed)
+- **Removal of Mandatory Editorial Approval Gates**:
+  - The application collects and processes incident reports from configured sources, organizes them into dossiers, and provides previews and exports; it does not serve as an editorial approval platform.
+  - Zero incident approval, zero dossier approval, zero reviewer-key ceremony, zero mandatory attestation, and zero approval gates prior to preview, export, or download.
+  - Added `EditorialArtifactPurpose.EXPORTED_SNAPSHOT` as the default artifact purpose, allowing assembled dossiers to be previewed and exported immediately with neutral snapshot headers.
+  - Retired legacy review endpoints (`POST /dossiers/{id}/submit`, `GET /dossiers/{id}/review`, `POST /dossiers/{id}/approve`, `POST /dossiers/{id}/reject`) to return HTTP 410 Gone with explicit retired-workflow notices.
+  - Removed obsolete review action buttons (`Submit for Human Review`, `Review & Approve Version`, `Reject Dossier`) from the active dashboard UI.
+  - Retained historical reviewer storage (`.data/.reviewers.json`) and audit logs as immutable historical data without requiring them for any current workflow.
+  - Retained strict technical validation, reference integrity, path-traversal defenses, CSRF protection, and optional EU commentary eligibility without mandating an EU screen for ordinary reporting.
+
 ### Added
 - **Artifact Previews & Export Delivery Routes (`ai_incident_monitor.ui.routes.packages`, `routes.dossiers`)**:
   - Interactive in-browser artifact preview (`GET /dossiers/{dossier_id}/preview`):
     - Presentation profile selector (`DEEP_DIVE_DOSSIER`, `EXECUTIVE_BRIEF`, `RAPID_ALERT`).
     - Format switcher between Markdown and JSON Package.
-    - Pre-approval draft preview permitted with prominent warning banner (`UNAPPROVED DRAFT — INTERNAL REVIEW COPY ONLY`).
-    - Approved copies labeled with `APPROVED EDITORIAL COPY` badge and reviewer attribution.
+    - Neutral dossier snapshot banner with operator responsibility notice (`Dossier Artifact Preview (Version N)`).
     - Safe autoescaping protecting against script injection from untrusted source texts.
     - In-browser "Copy Content" clipboard action.
     - Strictly non-mutating `GET` route with zero database or audit mutations.
   - Managed export package creation (`POST /dossiers/{dossier_id}/export`):
     - Bridges dashboard UI to domain `EditorialDossierExporter` without duplicating or weakening rules.
-    - Gated eligibility: blocks `APPROVED_EDITORIAL_COPY` export on unapproved dossiers (HTTP 400).
+    - Defaults to `EXPORTED_SNAPSHOT`, generating deterministic export packages (`snapshot_{dossier_id}_v{version}_{profile}.md`).
     - Source drift guard: rejects export if underlying incident or claim records have mutated since assembly (HTTP 400).
     - Accidental collision protection: raises HTTP 409 Conflict if package files already exist, unless `overwrite=True` is explicitly checked.
     - Preserves optional EU commentary eligibility without mandating an EU screen for ordinary incidents.
@@ -45,8 +54,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `packages/list.html` and `packages/detail.html` for package management and manifest inspection.
   - Added "Preview Artifacts &rarr;" link and "Export Package" card to `dossiers/detail.html`.
   - Added "Packages" link to main navigation bar in `base.html`.
-- **Unit Test Suite (16 new unit tests, 849 total tests passing)**:
-  - `backend/tests/unit/ui/test_export_package_routes.py` (16 unit tests).
+- **Unit Test Suite (17 unit tests in test_export_package_routes.py, 849 total tests passing)**:
+  - `backend/tests/unit/ui/test_export_package_routes.py` (17 unit tests).
+  - `backend/tests/unit/ui/test_dossier_routes.py` (updated to verify 410 Gone for legacy approval endpoints).
 
 ## [Phase 8B] - 2026-11-01
 

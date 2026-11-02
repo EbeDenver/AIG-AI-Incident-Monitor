@@ -103,5 +103,6 @@ class EditorialPresentationProfile(str, Enum):
 class EditorialArtifactPurpose(str, Enum):
     """Operational purpose and governance authority of an exported artifact."""
 
+    EXPORTED_SNAPSHOT = "EXPORTED_SNAPSHOT"
     INTERNAL_REVIEW_COPY = "INTERNAL_REVIEW_COPY"
     APPROVED_EDITORIAL_COPY = "APPROVED_EDITORIAL_COPY"

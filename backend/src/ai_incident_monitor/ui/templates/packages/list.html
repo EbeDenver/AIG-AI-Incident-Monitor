@@ -62,6 +62,8 @@
                 <td>
                     {% if pkg.artifact_purpose.value == 'APPROVED_EDITORIAL_COPY' %}
                     <span class="badge badge-healthy">APPROVED</span>
+                    {% elif pkg.artifact_purpose.value == 'EXPORTED_SNAPSHOT' %}
+                    <span class="badge badge-scope">SNAPSHOT</span>
                     {% else %}
                     <span class="badge badge-warning">REVIEW COPY</span>
                     {% endif %}

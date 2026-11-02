@@ -267,7 +267,7 @@ async def export_dossier_route(
     dossier_id: str,
     profile: str = Form(default=EditorialPresentationProfile.DEEP_DIVE_DOSSIER.value),
     format: str = Form(default=EditorialExportFormat.MARKDOWN.value),
-    purpose: str = Form(default=EditorialArtifactPurpose.APPROVED_EDITORIAL_COPY.value),
+    purpose: str = Form(default=EditorialArtifactPurpose.EXPORTED_SNAPSHOT.value),
     overwrite: bool = Form(default=False),
     csrf_token: Optional[str] = Form(default=None),
 ) -> Response:

@@ -23,24 +23,13 @@
     </div>
 </div>
 
-{% if not is_approved %}
-<div class="alert alert-warning" role="alert" style="margin-top: 1rem;">
-    <div class="alert-icon">⚠️</div>
+<div class="alert alert-info" role="alert" style="margin-top: 1rem;">
+    <div class="alert-icon">ℹ️</div>
     <div class="alert-message">
-        <strong>UNAPPROVED DRAFT — INTERNAL REVIEW COPY ONLY:</strong>
-        This artifact preview is an unapproved working draft prepared for internal editorial evaluation under Constitutional Rules 1–4.
-        It does not constitute an approved publication package.
+        <strong>Dossier Artifact Preview (Version {{ dossier.version }}):</strong>
+        Deterministic rendering generated from active dossier content. External publication remains the operator's responsibility outside the system.
     </div>
 </div>
-{% else %}
-<div class="alert alert-healthy" role="alert" style="margin-top: 1rem;">
-    <div class="alert-icon">✅</div>
-    <div class="alert-message">
-        <strong>APPROVED EDITORIAL COPY:</strong>
-        This artifact corresponds to approved dossier version {{ dossier.version }} (Reviewed by {{ dossier.reviewed_by or 'Authorized Editor' }}).
-    </div>
-</div>
-{% endif %}
 
 <!-- Selector Controls Card -->
 <div class="filter-card" style="margin-top: 1.5rem;">

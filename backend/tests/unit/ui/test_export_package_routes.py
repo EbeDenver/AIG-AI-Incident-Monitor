@@ -16,6 +16,7 @@ from starlette.testclient import TestClient
 
 from ai_incident_monitor.db.base import Base
 from ai_incident_monitor.db.models.claim import ClaimRecordModel
+from ai_incident_monitor.db.models.editorial import EditorialDossierModel
 from ai_incident_monitor.db.models.evidence import ClaimEvidenceLinkModel, EvidenceRecordModel
 from ai_incident_monitor.db.models.governance import GovernanceAuditLogModel
 from ai_incident_monitor.db.models.incident import IncidentModel
@@ -165,34 +166,14 @@ def _create_dossier(
     assert res_post.status_code == 303
     dossier_id = res_post.headers["location"].split("/")[-1]
 
-    if status in (EditorialDossierStatus.PENDING_REVIEW, EditorialDossierStatus.APPROVED_INFORMATIONAL):
-        res_sub = client.post(
-            f"/dossiers/{dossier_id}/submit",
-            data={"csrf_token": session.csrf_token},
-            follow_redirects=False,
-        )
-        assert res_sub.status_code == 303
-
     if status == EditorialDossierStatus.APPROVED_INFORMATIONAL:
         engine = setup_data["engine"]
         with Session(engine) as s:
-            repo = EditorialRepository(s)
-            dos = repo.get_dossier(dossier_id)
-            chash = dos.compute_content_hash()
-
-        res_app = client.post(
-            f"/dossiers/{dossier_id}/approve",
-            data={
-                "reviewer_id": setup_data["reviewer_rec"].reviewer_id,
-                "reviewer_key": setup_data["reviewer_key"],
-                "expected_version": 1,
-                "expected_content_hash": chash,
-                "statement_confirmed": "true",
-                "csrf_token": session.csrf_token,
-            },
-            follow_redirects=False,
-        )
-        assert res_app.status_code == 303
+            row = s.execute(select(EditorialDossierModel).where(EditorialDossierModel.id == dossier_id)).scalar_one()
+            row.status = EditorialDossierStatus.APPROVED_INFORMATIONAL.value
+            row.reviewed_by = "ebe"
+            row.reviewed_at = datetime.now(timezone.utc)
+            s.commit()
 
     return dossier_id
 
@@ -210,8 +191,8 @@ class TestExportPackageRoutes:
         assert client.get("/packages/exp_123/download/file.md", follow_redirects=False).status_code == 303
         assert client.post("/dossiers/dos_123/export", data={}, follow_redirects=False).status_code == 303
 
-    def test_draft_preview_renders_with_unapproved_warning_and_profiles(self, package_test_setup) -> None:
-        """Draft dossier preview displays prominent warning banner, profiles, and safe content."""
+    def test_draft_preview_renders_with_neutral_snapshot_banner_and_profiles(self, package_test_setup) -> None:
+        """Draft dossier preview displays neutral snapshot banner, profiles, and safe content."""
         client = package_test_setup["client"]
         sess_mgr = package_test_setup["sess_mgr"]
         session = sess_mgr.create_session()
@@ -222,8 +203,8 @@ class TestExportPackageRoutes:
         # GET markdown preview
         res = client.get(f"/dossiers/{dossier_id}/preview")
         assert res.status_code == 200
-        assert "UNAPPROVED DRAFT — INTERNAL REVIEW COPY ONLY" in res.text
-        assert "INTERNAL_REVIEW_COPY" in res.text or "INTERNAL REVIEW COPY" in res.text
+        assert "Dossier Artifact Preview (Version 1)" in res.text
+        assert "External publication remains the operator's responsibility outside the system" in res.text
         assert "Weekly Algorithmic Risk Digest" in res.text
         assert "INC-2026-0001" in res.text
         assert "DEEP_DIVE_DOSSIER" in res.text
@@ -245,11 +226,11 @@ class TestExportPackageRoutes:
 
         res = client.get(f"/dossiers/{dossier_id}/preview?format=json")
         assert res.status_code == 200
-        assert "INTERNAL_REVIEW_COPY" in res.text
+        assert "EXPORTED_SNAPSHOT" in res.text
         assert "&#34;package_version&#34;" in res.text or '"package_version"' in res.text
 
     def test_approved_dossier_preview(self, package_test_setup) -> None:
-        """Approved dossier preview indicates approved copy without draft banner."""
+        """Historical approved dossier preview renders neutral snapshot banner cleanly."""
         client = package_test_setup["client"]
         sess_mgr = package_test_setup["sess_mgr"]
         session = sess_mgr.create_session()
@@ -259,8 +240,8 @@ class TestExportPackageRoutes:
 
         res = client.get(f"/dossiers/{dossier_id}/preview")
         assert res.status_code == 200
-        assert "UNAPPROVED DRAFT — INTERNAL REVIEW COPY ONLY" not in res.text
-        assert "APPROVED EDITORIAL COPY" in res.text
+        assert "Dossier Artifact Preview (Version 1)" in res.text
+        assert "Weekly Algorithmic Risk Digest" in res.text
 
     def test_preview_get_routes_are_strictly_non_mutating(self, package_test_setup) -> None:
         """Viewing previews must never mutate business records or add audit logs."""
@@ -321,6 +302,49 @@ class TestExportPackageRoutes:
         )
         assert res.status_code == 400
         assert "Cannot export APPROVED_EDITORIAL_COPY" in res.text
+
+    def test_export_package_creation_exported_snapshot_for_draft_dossier(self, package_test_setup) -> None:
+        """Assembled/draft dossier exports cleanly as EXPORTED_SNAPSHOT without approval gates."""
+        client = package_test_setup["client"]
+        sess_mgr = package_test_setup["sess_mgr"]
+        session = sess_mgr.create_session()
+        client.cookies.set(SESSION_COOKIE_NAME, session.session_id)
+
+        dossier_id = _create_dossier(package_test_setup, session=session, status=EditorialDossierStatus.DRAFT)
+        tmp_path = package_test_setup["tmp_path"]
+
+        res = client.post(
+            f"/dossiers/{dossier_id}/export",
+            data={
+                "profile": "DEEP_DIVE_DOSSIER",
+                "format": "MARKDOWN",
+                "purpose": "EXPORTED_SNAPSHOT",
+                "csrf_token": session.csrf_token,
+            },
+            follow_redirects=False,
+        )
+        assert res.status_code == 303
+        redirect_url = res.headers["location"]
+        assert redirect_url.startswith("/packages/exp_")
+        export_id = redirect_url.split("/")[-1]
+
+        export_dir = tmp_path / DEFAULT_EXPORT_DIR
+        manifest_files = list(export_dir.glob("*.manifest.json"))
+        matched = False
+        for mf in manifest_files:
+            with open(mf, "r", encoding="utf-8") as f:
+                manifest_data = json.load(f)
+                if manifest_data["export_id"] == export_id:
+                    matched = True
+                    assert manifest_data["dossier_id"] == dossier_id
+                    assert manifest_data["artifact_purpose"] == "EXPORTED_SNAPSHOT"
+                    assert manifest_data["output_filename"] == f"snapshot_{dossier_id}_v1_deep_dive_dossier.md"
+        assert matched
+
+        # Download artifact and assert neutral banner
+        res_dl = client.get(f"/packages/{export_id}/download/snapshot_{dossier_id}_v1_deep_dive_dossier.md")
+        assert res_dl.status_code == 200
+        assert "AI GUARDIANS RESEARCH DOSSIER — EXPORTED SNAPSHOT" in res_dl.text
 
     def test_export_package_creation_internal_review_copy_success(self, package_test_setup) -> None:
         """Draft dossier can be exported as INTERNAL_REVIEW_COPY, writing files and audit record."""

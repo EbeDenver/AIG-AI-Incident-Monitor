@@ -24,37 +24,44 @@ Phase 8C ("Artifact Previews, Export Delivery & Package Management") has been fu
 
 ---
 
-## 2. Key Phase 8C Capabilities Delivered
+## 2. Key Phase 8C Capabilities Delivered (Including Design Correction)
 
-1. **Interactive In-Browser Artifact Previews (`GET /dossiers/{id}/preview`)**:
+1. **Design Correction — Removal of Mandatory Editorial Approval Gates**:
+   - The application is an incident collection, dossier preparation, preview, and export tool, NOT an editorial approval platform.
+   - Zero incident approval, zero dossier approval, zero reviewer-key ceremony, zero mandatory attestation, and zero approval gates prior to preview, export, or download.
+   - Added `EditorialArtifactPurpose.EXPORTED_SNAPSHOT` as the default export and preview purpose.
+   - Retired legacy review endpoints (`POST /dossiers/{id}/submit`, `GET /dossiers/{id}/review`, `POST /dossiers/{id}/approve`, `POST /dossiers/{id}/reject`) to return HTTP 410 Gone with explicit retired-workflow messages.
+   - Removed obsolete review action buttons (`Submit for Human Review`, `Review & Approve Version`, `Reject Dossier`) from the active dashboard UI.
+   - Preserved historical reviewer credentials in `.data/.reviewers.json` and historical review audit events without making them prerequisites for active workflows.
+
+2. **Interactive In-Browser Artifact Previews (`GET /dossiers/{id}/preview`)**:
    - Supports presentation profiles: `DEEP_DIVE_DOSSIER`, `EXECUTIVE_BRIEF`, `RAPID_ALERT`.
    - Format toggle between Markdown (`.md`) and JSON Package (`.json`).
-   - Pre-approval inspection permitted for draft dossiers with prominent warning banner (`UNAPPROVED DRAFT — INTERNAL REVIEW COPY ONLY`).
-   - Approved copies clearly labeled with `APPROVED EDITORIAL COPY` badge and reviewer attribution.
+   - Renders neutral dossier snapshot banner (`Dossier Artifact Preview (Version N)`) with operator publication responsibility notice.
    - Jinja2 autoescaping prevents script injection from untrusted source texts.
    - Non-mutating `GET` route with zero database or audit mutations.
 
-2. **Managed Export Package Creation (`POST /dossiers/{id}/export`)**:
+3. **Managed Export Package Creation (`POST /dossiers/{id}/export`)**:
    - Bridges dashboard UI to domain `EditorialDossierExporter` without duplicating or weakening rules.
-   - Rejects `APPROVED_EDITORIAL_COPY` export on unapproved dossiers (HTTP 400).
-   - Enforces source drift check: rejects export if underlying incident or claim records have mutated since assembly (HTTP 400).
+   - Defaults to `EXPORTED_SNAPSHOT` (`snapshot_{dossier_id}_v{version}_{profile}.md`), allowing assembled dossiers to be exported immediately without requiring an APPROVED state.
+   - Source drift guard: rejects export if underlying incident or claim records have mutated since assembly (HTTP 400).
    - Accidental collision protection: raises HTTP 409 Conflict if package files already exist, unless `overwrite=True` is explicitly checked.
    - Preserves optional EU commentary eligibility without mandating an EU screen for ordinary incidents.
    - Records append-only, tamper-evident audit event `EXPORT_DOSSIER` with authenticated human actor identity.
    - CSRF protection across all state-changing export submissions.
 
-3. **Package Management & Deliverables List (`GET /packages`)**:
+4. **Package Management & Deliverables List (`GET /packages`)**:
    - Scans `.data/editorial_exports/` for valid `*.manifest.json` sidecars (symlinks ignored).
    - Filterable by `dossier_id` and artifact `purpose`.
    - Displays presentation profile, version, format, export timestamp, and direct inspection/download links.
 
-4. **Package Detail Inspector (`GET /packages/{export_id}`)**:
+5. **Package Detail Inspector (`GET /packages/{export_id}`)**:
    - Validates export ID format (`SAFE_EXPORT_ID_PATTERN`).
    - Inspects cryptographic provenance manifest: canonical dossier content hash, canonical payload hash, artifact file hash, renderer version, disclaimer version.
    - Displays underlying source record provenance hashes bound to the export package.
    - Lists all associated physical artifact files (.md, .json, .manifest.json) with size and SHA-256 digests.
 
-5. **Secure Authenticated Downloads (`GET /packages/{export_id}/download/{filename}`)**:
+6. **Secure Authenticated Downloads (`GET /packages/{export_id}/download/{filename}`)**:
    - Authenticated session required (unauthenticated requests redirect to `/login`).
    - Strict regex validation on `export_id` and `filename` rejecting `..`, `/`, `\`, null bytes, or malformed input.
    - Package association validation: downloads strictly confined to files belonging to the specified export ID.
@@ -66,9 +73,8 @@ Phase 8C ("Artifact Previews, Export Delivery & Package Management") has been fu
 ## 3. Invariants & Scope Boundaries Confirmed
 
 - **Strictly Offline & Local**: Bound only to loopback; all tests execute in-process via Starlette/FastAPI TestClient with zero network sockets.
-- **Sole Primary Editorial Checkpoint**: Dossier candidate selection and ingestion require zero per-incident human approvals. The sole primary checkpoint is deliberate human approval of the exact final multi-entry dossier version.
-- **Zero Biological Human-Presence Verification**: No biometrics, liveness detection, camera, or fingerprint verification; reviewer key is an authorization boundary, not a proof-of-biological-presence mechanism.
-- **Manual Publication**: Substack publication remains strictly manual. No automated publication or network publishing APIs were introduced.
+- **No Editorial Approval Gates**: Ingestion, candidate selection, dossier assembly, previews, exports, and downloads require zero approval checkpoints.
+- **Manual Publication**: Substack publication remains strictly manual outside the application.
 - **No Background Services**: No background ingestion, daemon services, or scheduled tasks.
 
 ---

@@ -93,7 +93,7 @@ class EditorialDossierExporter:
         dossier_id: str,
         export_format: EditorialExportFormat = EditorialExportFormat.MARKDOWN,
         profile: EditorialPresentationProfile = EditorialPresentationProfile.DEEP_DIVE_DOSSIER,
-        purpose: EditorialArtifactPurpose = EditorialArtifactPurpose.INTERNAL_REVIEW_COPY,
+        purpose: EditorialArtifactPurpose = EditorialArtifactPurpose.EXPORTED_SNAPSHOT,
         output_dir: Optional[str] = None,
         overwrite: bool = False,
         dry_run: bool = False,
@@ -182,6 +182,17 @@ class EditorialDossierExporter:
                     f"Cannot export APPROVED_EDITORIAL_COPY with blocking validation finding(s): "
                     f"{'; '.join(blocking_reasons)}"
                 )
+        elif purpose == EditorialArtifactPurpose.EXPORTED_SNAPSHOT:
+            if v_report.blocking_count > 0:
+                blocking_reasons = [
+                    f"{f.field_path}: {f.message}"
+                    for f in v_report.findings
+                    if f.severity.value == "BLOCKING"
+                ]
+                raise ValueError(
+                    f"Cannot export EXPORTED_SNAPSHOT with blocking validation finding(s): "
+                    f"{'; '.join(blocking_reasons)}"
+                )
 
         # 3. Retrieve allowlisted audit records for JSON package
         audit_records = self._fetch_allowlisted_audit_records(dossier.id)
@@ -190,7 +201,12 @@ class EditorialDossierExporter:
         rendered_artifacts: dict[str, tuple[str, str, EditorialExportFormat]] = {}
         # Mapping: filename -> (rendered_content_string, canonical_payload_hash, format)
 
-        purpose_slug = "review" if purpose == EditorialArtifactPurpose.INTERNAL_REVIEW_COPY else "approved"
+        if purpose == EditorialArtifactPurpose.INTERNAL_REVIEW_COPY:
+            purpose_slug = "review"
+        elif purpose == EditorialArtifactPurpose.APPROVED_EDITORIAL_COPY:
+            purpose_slug = "approved"
+        else:
+            purpose_slug = "snapshot"
         profile_slug = profile.value.lower()
         base_name = f"{purpose_slug}_{dossier.id}_v{dossier.version}_{profile_slug}"
 

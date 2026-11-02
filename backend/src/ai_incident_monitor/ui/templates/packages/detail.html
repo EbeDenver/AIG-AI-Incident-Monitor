@@ -14,6 +14,8 @@
             <span class="badge badge-version">v{{ manifest.dossier_version }}</span>
             {% if manifest.artifact_purpose.value == 'APPROVED_EDITORIAL_COPY' %}
             <span class="badge badge-healthy">APPROVED EDITORIAL COPY</span>
+            {% elif manifest.artifact_purpose.value == 'EXPORTED_SNAPSHOT' %}
+            <span class="badge badge-scope">EXPORTED SNAPSHOT</span>
             {% else %}
             <span class="badge badge-warning">INTERNAL REVIEW COPY</span>
             {% endif %}
