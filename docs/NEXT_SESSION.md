@@ -3,10 +3,10 @@
 **Organization:** AI Guardians LLC
 **Document Identifier:** NEXT-001
 **Target Milestone:** Phase 8B Completed (Editorial Dossier Workbench, Validation & Human Review); Phase 8C Ready for Planning
-**Parent Baseline Commit:** `155ba68d89bf035ef846bba102ebec49131fbf6c` (`main`)
+**Parent Baseline Commit:** `cbb075585be8510a1c8ee15f5619773a768b0f9a` (`main`)
 **Effective Date:** 2026-11-01
-**Current Branch:** `phase8b-dossier-workbench-review`
-**Feature Branch Status:** Implementation complete and verified; ready for PR review and merge
+**Current Branch:** `main`
+**Feature Branch Status:** Phase 8B squashed and merged (PR #16); verified on `main`; Phase 8C ready for planning
 
 ---
 

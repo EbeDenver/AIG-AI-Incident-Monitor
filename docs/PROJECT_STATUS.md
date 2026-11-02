@@ -3,7 +3,7 @@
 **Organization:** AI Guardians LLC
 **Document Identifier:** STAT-001
 **Last Updated:** 2026-11-01
-**Current Milestone:** Phase 8B (Editorial Dossier Workbench, Validation & Human Review) — IMPLEMENTED & VERIFIED (Branch: `phase8b-dossier-workbench-review`)
+**Current Milestone:** Phase 8B (Editorial Dossier Workbench, Validation & Human Review) — COMPLETED & MERGED (PR #16, Commit: `cbb0755`)
 **Overall Status:** GREEN (Phase 8B Complete, 833 Tests Passing, Provenance Chain Valid)
 
 ---
