@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+		<key>PYTHONUNBUFFERED</key>
+		<string>1</string>
+		<key>REPO_ROOT</key>
+		<string>/Volumes/SanDiskOne/AI Projects/AIG-AI-Incident-Monitor/AIG-AI-Incident-Monitor</string>
+	</dict>
+	<key>Label</key>
+	<string>com.aiguardians.incident-monitor.ingest</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Volumes/SanDiskOne/AI Projects/AIG-AI-Incident-Monitor/AIG-AI-Incident-Monitor/.venv/bin/python</string>
+		<string>-m</string>
+		<string>ai_incident_monitor.ingestion.cycle</string>
+		<string>--trigger</string>
+		<string>scheduled</string>
+	</array>
+	<key>RunAtLoad</key>
+	<false/>
+	<key>StandardErrorPath</key>
+	<string>/Volumes/SanDiskOne/AI Projects/AIG-AI-Incident-Monitor/AIG-AI-Incident-Monitor/.data/logs/ingestion_stderr.log</string>
+	<key>StandardOutPath</key>
+	<string>/Volumes/SanDiskOne/AI Projects/AIG-AI-Incident-Monitor/AIG-AI-Incident-Monitor/.data/logs/ingestion_stdout.log</string>
+	<key>StartInterval</key>
+	<integer>3600</integer>
+	<key>WorkingDirectory</key>
+	<string>/Volumes/SanDiskOne/AI Projects/AIG-AI-Incident-Monitor/AIG-AI-Incident-Monitor</string>
+</dict>
+</plist>

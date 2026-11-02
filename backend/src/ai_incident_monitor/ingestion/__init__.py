@@ -49,6 +49,27 @@ from ai_incident_monitor.ingestion.pipeline import (
     IngestionPipeline,
     PipelineExecutionResult,
 )
+from ai_incident_monitor.ingestion.checkpoints import CheckpointStore, SourceCheckpoint
+from ai_incident_monitor.ingestion.lock import (
+    ActiveRunInfo,
+    IngestionActiveConflictError,
+    IngestionLock,
+)
+from ai_incident_monitor.ingestion.incident_mapper import IngestionIncidentMapper
+from ai_incident_monitor.ingestion.sources import (
+    SourceConfig,
+    SourceRole,
+    load_source_configs,
+)
+from ai_incident_monitor.ingestion.cycle import (
+    IngestionCycleSummary,
+    SourceExecutionSummary,
+    run_ingestion_cycle,
+)
+from ai_incident_monitor.ingestion.scheduler import (
+    generate_launchd_plist_bytes,
+    validate_launchd_plist_bytes,
+)
 from ai_incident_monitor.ingestion.purge import (
     PurgeAuditEvent,
     PurgeResult,
@@ -123,4 +144,19 @@ __all__ = [
     # Ingestion Pipeline
     "IngestionPipeline",
     "PipelineExecutionResult",
+    # Automated Monitoring, Sources & Concurrency
+    "CheckpointStore",
+    "SourceCheckpoint",
+    "IngestionLock",
+    "IngestionActiveConflictError",
+    "ActiveRunInfo",
+    "IngestionIncidentMapper",
+    "SourceConfig",
+    "SourceRole",
+    "load_source_configs",
+    "run_ingestion_cycle",
+    "IngestionCycleSummary",
+    "SourceExecutionSummary",
+    "generate_launchd_plist_bytes",
+    "validate_launchd_plist_bytes",
 ]

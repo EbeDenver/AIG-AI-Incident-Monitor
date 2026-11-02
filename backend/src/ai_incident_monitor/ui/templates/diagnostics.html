@@ -1,15 +1,178 @@
 {% extends "base.html" %}
 
-{% block title %}Operational Diagnostics — AI Incident Monitor{% endblock %}
+{% block title %}Operational Diagnostics & Ingestion Status — AI Incident Monitor{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div class="header-titles">
-        <h1 class="page-title">Operational Diagnostics</h1>
-        <p class="page-description">Real-time, read-only health checks across configuration, database, schemas, and pipeline engines.</p>
+        <h1 class="page-title">Operational Diagnostics & Ingestion Monitor</h1>
+        <p class="page-description">Real-time health verification, scheduled ingestion tracking, and automated source monitoring.</p>
+    </div>
+    <div class="header-actions">
+        <form method="POST" action="/diagnostics/refresh" class="inline-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+            <button type="submit" class="btn btn-primary" id="btn-refresh-incidents">
+                Refresh Incidents Now &rarr;
+            </button>
+        </form>
     </div>
 </div>
 
+{% if request.query_params.get('refresh') == 'started' %}
+<div class="card alert-card alert-info" style="border-left: 4px solid var(--color-primary, #1a73e8); margin-bottom: 1.5rem; padding: 1rem 1.25rem;">
+    <strong>Collection Cycle Initiated:</strong> Ingestion run <code>{{ request.query_params.get('run_id') }}</code> was triggered in the background. It will execute rate-limited collection, deduplication, and persistence without holding this request open.
+</div>
+{% elif request.query_params.get('refresh') == 'conflict' %}
+<div class="card alert-card alert-warning" style="border-left: 4px solid var(--color-warning, #f2994a); margin-bottom: 1.5rem; padding: 1rem 1.25rem;">
+    <strong>Ingestion Active:</strong> An ingestion run (<code>{{ request.query_params.get('run_id') }}</code>) is already actively running. Overlapping concurrent executions are prohibited by the concurrency lock.
+</div>
+{% endif %}
+
+<!-- Automated Ingestion & Source Health Section -->
+<div class="card status-overview-card" style="margin-bottom: 2rem;">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border, #e0e0e0); padding-bottom: 0.75rem; margin-bottom: 1rem;">
+        <h2 class="card-title" style="margin: 0; font-size: 1.25rem;">Automated Ingestion & Monitoring Status</h2>
+        <span class="badge badge-scope">UNATTENDED COLLECTION</span>
+    </div>
+
+    <div class="overview-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="metric-item">
+            <span class="meta-label">Configured Frequency:</span>
+            <div style="font-size: 1.1rem; font-weight: 600;">{{ configured_frequency }}</div>
+        </div>
+        <div class="metric-item">
+            <span class="meta-label">macOS launchd Scheduler:</span>
+            <div>
+                {% if scheduler_status == 'INSTALLED' %}
+                <span class="badge badge-healthy">[INSTALLED]</span>
+                {% else %}
+                <span class="badge badge-subtle">[NOT INSTALLED]</span>
+                {% endif %}
+            </div>
+            <small style="color: #666;">LaunchAgent template at config/launchd/</small>
+        </div>
+        <div class="metric-item">
+            <span class="meta-label">Active Concurrency Lock:</span>
+            <div>
+                {% if active_run %}
+                <span class="badge badge-warning">[ACTIVE: {{ active_run.trigger | upper }}]</span>
+                <small style="display: block;">Run: <code>{{ active_run.run_id }}</code> (PID {{ active_run.pid }})</small>
+                {% else %}
+                <span class="badge badge-healthy">[IDLE / NO RUN ACTIVE]</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="metric-item">
+            <span class="meta-label">Last Ingestion Run:</span>
+            <div>
+                {% if latest_summary %}
+                <span class="badge badge-{{ latest_summary.overall_status.lower() }}">[{{ latest_summary.overall_status }}]</span>
+                <small style="display: block; color: #666;">{{ latest_summary.finished_at_utc or latest_summary.started_at_utc }}</small>
+                {% else %}
+                <span class="badge badge-subtle">[NEVER RUN]</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <h3 style="font-size: 1rem; margin: 1rem 0 0.5rem 0;">Configured Ingestion Sources</h3>
+    <table class="data-table" aria-label="Ingestion Sources">
+        <thead>
+            <tr>
+                <th>Source Name</th>
+                <th>Epistemic Role</th>
+                <th>Endpoint / Host</th>
+                <th>Enabled</th>
+                <th>Last Run</th>
+                <th>Last Success</th>
+                <th>Last Cycle Metrics</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for src in sources %}
+            {% set cp = checkpoints.get(src.source_id) %}
+            <tr>
+                <td>
+                    <strong>{{ src.name }}</strong>
+                    <div style="font-size: 0.8rem; color: #666;"><code>{{ src.source_id }}</code></div>
+                </td>
+                <td>
+                    {% if src.role.value == 'primary_incident_report' %}
+                    <span class="badge badge-fact">Primary Incident</span>
+                    {% elif src.role.value == 'supplementary_research_context' %}
+                    <span class="badge badge-subtle">Research Context</span>
+                    {% else %}
+                    <span class="badge badge-scope">Offline Export</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <code style="font-size: 0.8rem;">
+                        {% if src.endpoint_url %}
+                            {{ src.endpoint_url[:35] }}{% if src.endpoint_url | length > 35 %}...{% endif %}
+                        {% else %}
+                            (none configured)
+                        {% endif %}
+                    </code>
+                </td>
+                <td>
+                    {% if src.enabled %}
+                    <span class="badge badge-ok">ENABLED</span>
+                    {% else %}
+                    <span class="badge badge-subtle">DISABLED</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if cp and cp.last_run_utc %}
+                    <small><code>{{ cp.last_run_utc[:19] }}</code></small>
+                    {% else %}
+                    <span style="color: #999;">&mdash;</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if cp and cp.last_success_utc %}
+                    <small><code>{{ cp.last_success_utc[:19] }}</code></small>
+                    {% else %}
+                    <span style="color: #999;">&mdash;</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if cp %}
+                    <small>
+                        Fetched: {{ cp.records_fetched }} &bull; New: {{ cp.records_created }} &bull; Dedup: {{ cp.records_updated }}
+                    </small>
+                    {% else %}
+                    <span style="color: #999;">&mdash;</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if cp %}
+                    <span class="badge badge-{{ cp.last_status.lower() }}">[{{ cp.last_status }}]</span>
+                    {% if cp.error_message %}
+                    <div style="color: #d32f2f; font-size: 0.75rem; max-width: 150px; overflow: hidden; text-overflow: ellipsis;" title="{{ cp.error_message }}">
+                        {{ cp.error_message }}
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <span class="badge badge-subtle">[NEVER_RUN]</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if latest_summary %}
+    <div style="margin-top: 1rem;">
+        <details>
+            <summary class="details-summary">View Last Ingestion Cycle Payload (Run ID: <code>{{ latest_summary.run_id }}</code>)</summary>
+            <pre class="details-pre"><code>{{ latest_summary | tojson(indent=2) }}</code></pre>
+        </details>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Subsystem Diagnostics Overview -->
 <div class="card status-overview-card status-overview-{{ report.overall_status.value.lower() }}">
     <div class="overview-header">
         <div class="overview-left">
@@ -67,6 +230,10 @@
         <li><strong>Schema Compatibility:</strong> Verifies the physical presence of required core tables; does not inspect Alembic revision table version heads.</li>
         <li><strong>Storage Paths:</strong> Non-mutating directory traversal verifies read/write permission bits without writing temporary probe files. Quota exhaustion cannot be detected prior to write.</li>
         <li><strong>Zero External Network:</strong> Diagnostics execute zero external HTTP or socket requests. Reference library integrity is verified strictly against local cryptographic digests.</li>
+        <li><strong>Zero Approval Gates (Phase 8C Invariant):</strong> Newly ingested incidents immediately appear in the Incident Explorer without requiring reviewer keys, attestation, or editorial approval.</li>
+        <li><strong>Epistemic Separation:</strong> Academic preprints and supplementary research signals are recorded as context references; only verified incident reporting feeds populate the primary incidents table.</li>
+        <li><strong>Shared Concurrency:</strong> CLI, scheduled, and portal-triggered runs share the same advisory file lock (<code>.data/ingestion.lock</code>) with stale process recovery.</li>
+        <li><strong>Durable Checkpoints:</strong> Successful collection records durable HTTP ETags and timestamps in <code>.data/ingestion_checkpoints.json</code>. Success timestamps are never updated on failed sources.</li>
     </ul>
 </div>
 {% endblock %}

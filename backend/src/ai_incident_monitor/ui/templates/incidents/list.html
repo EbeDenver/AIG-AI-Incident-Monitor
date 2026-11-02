@@ -8,6 +8,14 @@
         <h1 class="page-title">Incidents Explorer</h1>
         <p class="page-description">Browse and inspect ingested AI safety incidents, factual assertions, and primary sources.</p>
     </div>
+    <div class="header-actions">
+        <form method="POST" action="/diagnostics/refresh" class="inline-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+            <button type="submit" class="btn btn-primary" id="btn-refresh-incidents-explorer">
+                Refresh Incidents Now &rarr;
+            </button>
+        </form>
+    </div>
 </div>
 
 <div class="card filter-card">

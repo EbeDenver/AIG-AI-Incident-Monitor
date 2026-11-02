@@ -52,6 +52,7 @@ class PipelineExecutionResult:
     duplicate_summary: dict[str, int]
     quarantined_count: int
     is_success: bool
+    error_details: Optional[str] = None
 
 
 class IngestionPipeline:
@@ -261,33 +262,34 @@ class IngestionPipeline:
                 },
             )
 
-            # Record operational metrics
-            stage_ctx.set_count("items_received", len(exec_res.items))
-            stage_ctx.set_count("items_accepted", len(envelopes))
-            stage_ctx.set_count(
-                "duplicates_detected",
-                duplicate_summary.get("tier_1_matches", 0)
-                + duplicate_summary.get("tier_2_matches", 0)
-                + duplicate_summary.get("tier_3_candidates", 0),
+        # Record operational metrics
+        stage_ctx.set_count("items_received", len(exec_res.items))
+        stage_ctx.set_count("items_accepted", len(envelopes))
+        stage_ctx.set_count(
+            "duplicates_detected",
+            duplicate_summary.get("tier_1_matches", 0)
+            + duplicate_summary.get("tier_2_matches", 0)
+            + duplicate_summary.get("tier_3_candidates", 0),
+        )
+        if not exec_res.is_success:
+            stage_ctx.set_outcome(
+                OperationalOutcome.FAILED_TECHNICAL,
+                reason_code=f"INGESTION_{exec_res.status.value.upper()}",
             )
-            if not exec_res.is_success:
-                stage_ctx.set_outcome(
-                    OperationalOutcome.FAILED_TECHNICAL,
-                    reason_code=f"INGESTION_{exec_res.status.value.upper()}",
-                )
-            else:
-                stage_ctx.set_outcome(OperationalOutcome.SUCCEEDED)
+        else:
+            stage_ctx.set_outcome(OperationalOutcome.SUCCEEDED)
 
-            return PipelineExecutionResult(
-                ingestion_run_id=builder.ingestion_run_id,
-                manifest=final_manifest,
-                items=exec_res.items,
-                envelopes=envelopes,
-                staged_record=staged_record,
-                duplicate_summary=duplicate_summary,
-                quarantined_count=quarantined_count,
-                is_success=exec_res.is_success,
-            )
+        return PipelineExecutionResult(
+            ingestion_run_id=builder.ingestion_run_id,
+            manifest=final_manifest,
+            items=exec_res.items,
+            envelopes=envelopes,
+            staged_record=staged_record,
+            duplicate_summary=duplicate_summary,
+            quarantined_count=quarantined_count,
+            is_success=exec_res.is_success,
+            error_details=exec_res.malformed_details,
+        )
 
 
 def urllib_host(url: str) -> str:

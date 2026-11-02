@@ -9,7 +9,7 @@ ALEMBIC ?= $(VENV)/bin/alembic
 RUFF ?= $(VENV)/bin/ruff
 MYPY ?= $(VENV)/bin/mypy
 
-.PHONY: help test test-unit test-integration migrate migrate-down db-up db-down lint format typecheck clean purge-raw-feeds purge-raw-feeds-dry-run import-oecd verify-provenance-chain verify-provenance-chain-dry-run diagnose diagnose-json
+.PHONY: help test test-unit test-integration migrate migrate-down db-up db-down lint format typecheck clean purge-raw-feeds purge-raw-feeds-dry-run import-oecd verify-provenance-chain verify-provenance-chain-dry-run diagnose diagnose-json ingest-cycle ingest-cycle-dry-run generate-launchd-plist validate-launchd-plist
 
 help:
 	@echo "Available Makefile targets:"
@@ -79,4 +79,16 @@ diagnose:
 
 diagnose-json:
 	$(PYTHON) -m ai_incident_monitor.diagnostics.cli --json
+
+ingest-cycle:
+	$(PYTHON) -m ai_incident_monitor.ingestion.cycle --trigger cli
+
+ingest-cycle-dry-run:
+	$(PYTHON) -m ai_incident_monitor.ingestion.cycle --trigger cli --dry-run
+
+generate-launchd-plist:
+	$(PYTHON) -m ai_incident_monitor.ingestion.scheduler
+
+validate-launchd-plist:
+	$(PYTHON) -m ai_incident_monitor.ingestion.scheduler --validate-only
 

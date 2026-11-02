@@ -1,0 +1,41 @@
+[
+  {
+    "source_id": "arxiv_research",
+    "name": "arXiv AI Research Papers",
+    "connector_type": "arxiv",
+    "role": "supplementary_research_context",
+    "endpoint_url": "https://export.arxiv.org/api/query",
+    "allowed_hosts": ["export.arxiv.org"],
+    "query_params": {
+      "search_query": "cat:cs.AI AND (incident OR safety OR \"failure mode\")",
+      "max_results": 25
+    },
+    "rate_limit_seconds": 3.0,
+    "enabled": false,
+    "description": "Supplementary academic research context. Ingested papers provide research signals and citations; they are not classified as primary incidents."
+  },
+  {
+    "source_id": "rss_incident_feed",
+    "name": "Primary AI Incident News Stream",
+    "connector_type": "rss",
+    "role": "primary_incident_report",
+    "endpoint_url": "",
+    "allowed_hosts": [],
+    "query_params": {},
+    "rate_limit_seconds": 1.0,
+    "enabled": false,
+    "description": "Primary AI incident reporting feed. Pending operator specification of approved live news or incident feed URL."
+  },
+  {
+    "source_id": "oecd_export",
+    "name": "OECD AI Incidents Monitor (Official Export)",
+    "connector_type": "oecd_export",
+    "role": "offline_official_export",
+    "endpoint_url": "file://local",
+    "allowed_hosts": [],
+    "query_params": {},
+    "rate_limit_seconds": 0.0,
+    "enabled": true,
+    "description": "Official OECD AIM export files. Processed via manual offline workflow (DEC-P4-001); skipped during unattended polling."
+  }
+]
