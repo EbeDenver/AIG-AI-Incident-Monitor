@@ -19,6 +19,7 @@
     </div>
 
     <div class="header-actions">
+        <a href="/dossiers/{{ dossier.id }}/preview" class="btn btn-outline">Preview Artifacts &rarr;</a>
         {% if dossier.status.value in ['DRAFT', 'ASSEMBLED'] %}
         <form action="/dossiers/{{ dossier.id }}/submit" method="POST" style="display: inline;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
@@ -241,6 +242,57 @@
                 <span class="text-error">{{ dossier.rejection_reason }}</span>
             </div>
             {% endif %}
+        </div>
+
+        <!-- Export Package Card -->
+        <div class="card" style="margin-top: 1.5rem;">
+            <h3 class="card-title">Export Package</h3>
+            <p class="text-muted" style="font-size: 0.85rem;">Compile deterministic publication or review package to local storage.</p>
+
+            <form action="/dossiers/{{ dossier.id }}/export" method="POST" style="margin-top: 1rem;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                <div class="form-group">
+                    <label for="export-profile" class="form-label" style="font-size: 0.85rem;">Presentation Profile:</label>
+                    <select name="profile" id="export-profile" class="form-control" style="font-size: 0.85rem;">
+                        {% for p in profiles %}
+                        <option value="{{ p }}">{{ p }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-top: 0.5rem;">
+                    <label for="export-format" class="form-label" style="font-size: 0.85rem;">Format:</label>
+                    <select name="format" id="export-format" class="form-control" style="font-size: 0.85rem;">
+                        {% for f in formats %}
+                        <option value="{{ f }}">{{ f }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-top: 0.5rem;">
+                    <label for="export-purpose" class="form-label" style="font-size: 0.85rem;">Artifact Purpose:</label>
+                    <select name="purpose" id="export-purpose" class="form-control" style="font-size: 0.85rem;">
+                        {% if dossier.status.value == 'APPROVED_INFORMATIONAL' %}
+                        <option value="APPROVED_EDITORIAL_COPY" selected>APPROVED_EDITORIAL_COPY (Final Package)</option>
+                        <option value="INTERNAL_REVIEW_COPY">INTERNAL_REVIEW_COPY (Draft Working Copy)</option>
+                        {% else %}
+                        <option value="INTERNAL_REVIEW_COPY" selected>INTERNAL_REVIEW_COPY (Draft Working Copy)</option>
+                        {% endif %}
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-top: 0.5rem;">
+                    <label style="font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="overwrite" value="true">
+                        <span>Overwrite existing package if collision</span>
+                    </label>
+                </div>
+
+                <div style="margin-top: 1rem;">
+                    <button type="submit" class="btn btn-secondary btn-sm" style="width: 100%;">Create Export Package &darr;</button>
+                </div>
+            </form>
         </div>
 
         <!-- Audit Trail Card -->

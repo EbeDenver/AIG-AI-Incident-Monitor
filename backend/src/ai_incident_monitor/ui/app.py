@@ -168,11 +168,13 @@ def create_app(
     from ai_incident_monitor.ui.routes.incidents import router as incidents_router
     from ai_incident_monitor.ui.routes.diagnostics import router as diagnostics_router
     from ai_incident_monitor.ui.routes.dossiers import router as dossiers_router
+    from ai_incident_monitor.ui.routes.packages import router as packages_router
 
     app.include_router(auth_router)
     app.include_router(incidents_router)
     app.include_router(diagnostics_router)
     app.include_router(dossiers_router)
+    app.include_router(packages_router)
 
     # Root landing redirect
     @app.get("/", response_class=HTMLResponse)

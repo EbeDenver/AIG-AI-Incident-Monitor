@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Export Packages — AI Incident Monitor{% endblock %}
+
+{% block content %}
+<div class="explorer-header">
+    <div>
+        <h1 class="page-title">Export Packages &amp; Deliverables</h1>
+        <p class="page-subtitle">Inspect, verify provenance, and download managed publication and review packages.</p>
+    </div>
+</div>
+
+<div class="filter-card">
+    <form action="/packages" method="GET" class="filter-form">
+        <div class="form-group inline-group">
+            <label for="dossier-id-filter" class="form-label">Filter by Dossier ID:</label>
+            <input type="text" name="dossier_id" id="dossier-id-filter" class="form-control" value="{{ filter_dossier_id }}" placeholder="e.g. dossier_5189baf89ba5">
+        </div>
+
+        <div class="form-group inline-group">
+            <label for="purpose-filter" class="form-label">Purpose:</label>
+            <select name="purpose" id="purpose-filter" class="form-control">
+                <option value="">All Purposes ({{ total_packages }} total)</option>
+                {% for p in purposes %}
+                <option value="{{ p }}" {% if filter_purpose == p %}selected{% endif %}>{{ p }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-secondary">Apply Filter</button>
+        {% if filter_dossier_id or filter_purpose %}
+        <a href="/packages" class="btn btn-outline">Clear Filter</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="table-container">
+    <table class="data-table" aria-label="Export Packages Table">
+        <thead>
+            <tr>
+                <th scope="col">Export ID</th>
+                <th scope="col">Dossier ID</th>
+                <th scope="col">Version</th>
+                <th scope="col">Purpose</th>
+                <th scope="col">Profile</th>
+                <th scope="col">Format</th>
+                <th scope="col">Exported At (UTC)</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if packages %}
+            {% for pkg in packages %}
+            <tr>
+                <td class="font-mono">
+                    <a href="/packages/{{ pkg.export_id }}"><strong>{{ pkg.export_id }}</strong></a>
+                </td>
+                <td class="font-mono">
+                    <a href="/dossiers/{{ pkg.dossier_id }}">{{ pkg.dossier_id }}</a>
+                </td>
+                <td>v{{ pkg.dossier_version }}</td>
+                <td>
+                    {% if pkg.artifact_purpose.value == 'APPROVED_EDITORIAL_COPY' %}
+                    <span class="badge badge-healthy">APPROVED</span>
+                    {% else %}
+                    <span class="badge badge-warning">REVIEW COPY</span>
+                    {% endif %}
+                </td>
+                <td>{{ pkg.presentation_profile.value }}</td>
+                <td><span class="badge badge-scope">{{ pkg.format.value }}</span></td>
+                <td class="font-mono" style="font-size: 0.8rem;">{{ pkg.exported_at_utc[:16] }} UTC</td>
+                <td>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <a href="/packages/{{ pkg.export_id }}" class="btn btn-sm btn-outline">Inspect</a>
+                        <a href="/packages/{{ pkg.export_id }}/download/{{ pkg.output_filename }}" class="btn btn-sm btn-primary">Download</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+            {% else %}
+            <tr>
+                <td colspan="8" class="text-muted" style="text-align: center; padding: 2rem;">
+                    No export packages generated yet. Export a dossier from the Dossier Inspector view.
+                </td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Package {{ manifest.export_id }} — AI Incident Monitor{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="/packages">&larr; Back to Packages</a>
+</div>
+
+<div class="explorer-header">
+    <div>
+        <div class="status-badge-row">
+            <span class="badge badge-scope">{{ manifest.presentation_profile.value }}</span>
+            <span class="badge badge-version">v{{ manifest.dossier_version }}</span>
+            {% if manifest.artifact_purpose.value == 'APPROVED_EDITORIAL_COPY' %}
+            <span class="badge badge-healthy">APPROVED EDITORIAL COPY</span>
+            {% else %}
+            <span class="badge badge-warning">INTERNAL REVIEW COPY</span>
+            {% endif %}
+        </div>
+        <h1 class="page-title" style="margin-top: 0.5rem;">Export Package: {{ manifest.export_id }}</h1>
+        <p class="page-subtitle font-mono">
+            Dossier: <a href="/dossiers/{{ manifest.dossier_id }}">{{ manifest.dossier_id }}</a> &bull; Exported: {{ manifest.exported_at_utc[:19] }} UTC
+        </p>
+    </div>
+
+    <div class="header-actions">
+        <a href="/packages/{{ manifest.export_id }}/download/{{ manifest.output_filename }}" class="btn btn-primary">Download Primary File &darr;</a>
+    </div>
+</div>
+
+<div class="grid-layout" style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+    <div class="main-column">
+        <!-- Package Files Card -->
+        <div class="card">
+            <h2 class="card-title">Package Files &amp; Downloads</h2>
+            <p class="card-subtitle">All physical artifact files and cryptographic sidecars compiled for this export identity.</p>
+
+            <table class="data-table" style="margin-top: 1rem;" aria-label="Package Files Table">
+                <thead>
+                    <tr>
+                        <th scope="col">Filename</th>
+                        <th scope="col">Size</th>
+                        <th scope="col">SHA-256 Digest</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in files %}
+                    <tr>
+                        <td class="font-mono">
+                            {% if f.is_manifest %}
+                            <span class="text-muted">📄 {{ f.filename }}</span>
+                            {% else %}
+                            <strong>📦 {{ f.filename }}</strong>
+                            {% endif %}
+                        </td>
+                        <td class="font-mono" style="font-size: 0.85rem;">{{ (f.size_bytes / 1024)|round(1) }} KB</td>
+                        <td class="font-mono" style="font-size: 0.75rem;">
+                            {% if f.file_hash %}
+                            <code title="{{ f.file_hash }}">{{ f.file_hash[:16] }}...</code>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="/packages/{{ manifest.export_id }}/download/{{ f.filename }}" class="btn btn-sm btn-outline">Download</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Source Version Hashes Card -->
+        <div class="card" style="margin-top: 1.5rem;">
+            <h2 class="card-title">Source Record Provenance</h2>
+            <p class="card-subtitle">Exact underlying source record version hashes bound to this export.</p>
+
+            <table class="data-table" style="margin-top: 1rem;" aria-label="Source Version Hashes Table">
+                <thead>
+                    <tr>
+                        <th scope="col">Incident ID</th>
+                        <th scope="col">Source Version Hash (SHA-256)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inc_id, s_hash in manifest.source_version_hashes.items() %}
+                    <tr>
+                        <td class="font-mono"><a href="/incidents/{{ inc_id }}">{{ inc_id }}</a></td>
+                        <td class="font-mono" style="font-size: 0.8rem;"><code>{{ s_hash }}</code></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Side Provenance Column -->
+    <div class="side-column">
+        <!-- Cryptographic Hashes Card -->
+        <div class="card">
+            <h3 class="card-title">Cryptographic Provenance</h3>
+
+            <div class="meta-item">
+                <span class="meta-label">Canonical Dossier Content Hash:</span>
+                <code class="font-mono text-break" style="font-size: 0.8rem;">{{ manifest.canonical_dossier_content_hash }}</code>
+            </div>
+
+            <div class="meta-item">
+                <span class="meta-label">Canonical Payload Hash:</span>
+                <code class="font-mono text-break" style="font-size: 0.8rem;">{{ manifest.canonical_payload_hash }}</code>
+            </div>
+
+            <div class="meta-item">
+                <span class="meta-label">Artifact File Hash:</span>
+                <code class="font-mono text-break" style="font-size: 0.8rem;">{{ manifest.artifact_file_hash or 'Pending' }}</code>
+            </div>
+
+            <div class="meta-item">
+                <span class="meta-label">Renderer Version:</span>
+                <span class="font-mono" style="font-size: 0.85rem;">{{ manifest.renderer_version }}</span>
+            </div>
+
+            <div class="meta-item">
+                <span class="meta-label">Disclaimer Version:</span>
+                <span class="font-mono" style="font-size: 0.85rem;">{{ manifest.disclaimer_version }}</span>
+            </div>
+        </div>
+
+        <!-- Review & Verification Card -->
+        <div class="card" style="margin-top: 1.5rem;">
+            <h3 class="card-title">Review &amp; Validation</h3>
+
+            <div class="meta-item">
+                <span class="meta-label">Validation Status:</span>
+                {% if manifest.validation_status == 'PASSED' %}
+                <span class="badge badge-healthy">PASSED (0 Blocking)</span>
+                {% else %}
+                <span class="badge badge-unhealthy">FAILED ({{ manifest.blocking_finding_count }} Blocking)</span>
+                {% endif %}
+            </div>
+
+            <div class="meta-item">
+                <span class="meta-label">Reviewed By:</span>
+                <span><strong>{{ manifest.reviewed_by or 'Not Recorded' }}</strong></span>
+            </div>
+
+            {% if manifest.reviewed_at %}
+            <div class="meta-item">
+                <span class="meta-label">Reviewed At:</span>
+                <span class="font-mono" style="font-size: 0.85rem;">{{ manifest.reviewed_at[:16] }} UTC</span>
+            </div>
+            {% endif %}
+
+            <div class="meta-item">
+                <span class="meta-label">Artifact Purpose:</span>
+                <span>{{ manifest.artifact_purpose.value }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

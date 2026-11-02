@@ -3,8 +3,8 @@
 **Organization:** AI Guardians LLC
 **Document Identifier:** STAT-001
 **Last Updated:** 2026-11-01
-**Current Milestone:** Phase 8B (Editorial Dossier Workbench, Validation & Human Review) — COMPLETED & MERGED (PR #16, Commit: `cbb0755`)
-**Overall Status:** GREEN (Phase 8B Complete, 833 Tests Passing, Provenance Chain Valid)
+**Current Milestone:** Phase 8C (Artifact Previews, Export Delivery & Operator Diagnostics Dashboard/Package Management) — IMPLEMENTED & VERIFIED ON BRANCH `phase8c-artifact-previews-exports`
+**Overall Status:** GREEN (Phase 8C Implemented, 849 Tests Passing, Provenance Chain Valid)
 
 ---
 
@@ -23,6 +23,7 @@
 | **Phase 7B** | **Pipeline Observability & Diagnostics** | Telemetry, pipeline health checks, diagnostics CLI, operational metrics | **COMPLETED** | **2026-10-29** |
 | **Phase 8A** | **Local UI Security & Incident Explorer** | Minimal FastAPI foundation, server-side sessions, loopback binds, CSRF, read-only incident & diagnostics explorer | **COMPLETED** | **2026-10-30** |
 | **Phase 8B** | **Editorial Dossier Workbench, Validation & Review** | Candidate selector, draft assembly, inspection, validation, step-up reviewer keystore, review/attestation, rejection, supersession, admin CLI | **COMPLETED** | **2026-11-01** |
+| **Phase 8C** | **Artifact Previews, Export Delivery & Package Management** | Interactive artifact previews, 3 presentation profiles, export creation, package management, secure downloads, path traversal defense, 849 tests | **COMPLETED (Branch)** | **2026-11-01** |
 
 ---
 
@@ -51,7 +52,7 @@ Based on [`docs/REQUIREMENTS_TRACEABILITY.md`](REQUIREMENTS_TRACEABILITY.md):
     - `SEV-004`: Strict segregation of Actual Harm vs Potential Harm.
     - `SEV-005`: Non-monetization constraint for human dignity and physical harm.
     - `PRI-004`: Sanitized synthetic test fixtures (22 golden + 7 invalid).
-    - `TST-001`: Automated test suite with zero test failures (833 tests pass in 10.13s).
+    - `TST-001`: Automated test suite with zero test failures (849 tests pass in ~11s).
     - `TST-003`: Negative testing suite validating rejection of ungrounded data.
     - `TST-004`: Property/invariant testing that `UNKNOWN` is never coerced to zero.
     - `AUD-003`: Immutable and append-only assessment records (`frozen=True`).
@@ -327,3 +328,43 @@ Phase 5 Increment 1 delivered, verified, and merged to `main` via PR #4 (`19db6c
   - **Unit & Integration Test Suite (17 new unit tests, 833 total tests passing)**:
     - `backend/tests/unit/ui/test_reviewer_auth.py` (9 unit tests).
     - `backend/tests/unit/ui/test_dossier_routes.py` (8 unit tests).
+
+---
+
+## 13. Phase 8C Delivery Tracking
+
+- [x] **Phase 8C (Verified on `phase8c-artifact-previews-exports`)**: Artifact Previews, Export Delivery & Operator Diagnostics Dashboard/Package Management:
+  - **In-Browser Interactive Artifact Previews (`GET /dossiers/{dossier_id}/preview`)**:
+    - Supports presentation profiles (`DEEP_DIVE_DOSSIER`, `EXECUTIVE_BRIEF`, `RAPID_ALERT`).
+    - Format switcher for Markdown (`.md`) and JSON Package (`.json`).
+    - Pre-approval inspection permitted for draft dossiers; prominent warning banner (`UNAPPROVED DRAFT — INTERNAL REVIEW COPY ONLY`) displayed for unapproved copies.
+    - Approved copies clearly labeled with `APPROVED EDITORIAL COPY` badge and reviewer attribution.
+    - Strict autoescaping prevents HTML/script injection from untrusted source texts.
+    - In-browser "Copy Content" clipboard action.
+    - Strictly non-mutating `GET` route with zero audit records written.
+  - **Managed Export Package Creation (`POST /dossiers/{dossier_id}/export`)**:
+    - Bridges dashboard UI to domain `EditorialDossierExporter` without duplicating or weakening rules.
+    - Gated eligibility: blocks `APPROVED_EDITORIAL_COPY` export on unapproved dossiers (HTTP 400).
+    - Source drift guard: rejects export if underlying incident or claim records have mutated since assembly (HTTP 400).
+    - Preserves optional EU commentary eligibility without mandating an EU screen for ordinary incidents.
+    - Accidental collision protection: raises HTTP 409 Conflict if package files already exist, unless `overwrite=True` is explicitly checked.
+    - Atomic file writes using staging temp files and directory confinement.
+    - Records append-only, tamper-evident audit event `EXPORT_DOSSIER` with authenticated human actor identity.
+    - CSRF protection across all state-changing export submissions.
+  - **Package Management & Deliverables List (`GET /packages`)**:
+    - Scans `.data/editorial_exports/` for valid `*.manifest.json` sidecars (symlinks ignored).
+    - Filterable by `dossier_id` and artifact `purpose`.
+    - Displays presentation profile, version, format, export timestamp, and direct inspection/download links.
+  - **Package Detail Inspector (`GET /packages/{export_id}`)**:
+    - Validates export ID format (`SAFE_EXPORT_ID_PATTERN`).
+    - Inspects cryptographic provenance manifest: canonical dossier content hash, canonical payload hash, artifact file hash, renderer version, disclaimer version.
+    - Displays underlying source record provenance hashes bound to the export package.
+    - Lists all associated physical artifact files (.md, .json, .manifest.json) with size and SHA-256 digests.
+  - **Secure Authenticated Downloads (`GET /packages/{export_id}/download/{filename}`)**:
+    - Authenticated session required (unauthenticated requests redirect to `/login`).
+    - Strict regex validation on `export_id` and `filename` rejecting `..`, `/`, `\`, null bytes, or malformed input.
+    - Package association validation: downloads strictly confined to files belonging to the specified export ID.
+    - Directory traversal and confinement defense: verifies target path is relative to export root and rejects symlinks.
+    - Proper MIME types (`text/markdown`, `application/json`) and `Content-Disposition: attachment; filename="..."` headers.
+  - **Unit Test Suite (16 new unit tests, 849 total tests passing)**:
+    - `backend/tests/unit/ui/test_export_package_routes.py` (16 unit tests).

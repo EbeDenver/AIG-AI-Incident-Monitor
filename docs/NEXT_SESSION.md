@@ -1,92 +1,84 @@
-# NEXT SESSION HANDOFF: Phase 8B Complete / Phase 8C Ready for Planning
+# NEXT SESSION HANDOFF: Phase 8C Complete / Phase 8 Pre-Release Review
 **Project:** AI Incident Monitor
 **Organization:** AI Guardians LLC
 **Document Identifier:** NEXT-001
-**Target Milestone:** Phase 8B Completed (Editorial Dossier Workbench, Validation & Human Review); Phase 8C Ready for Planning
-**Parent Baseline Commit:** `cbb075585be8510a1c8ee15f5619773a768b0f9a` (`main`)
+**Target Milestone:** Phase 8C Completed (Artifact Previews, Export Delivery & Operator Diagnostics Dashboard/Package Management)
+**Parent Baseline Commit:** `9de2b97a7dda63a0c6910b987d2e862f73108fcd` (`main`)
 **Effective Date:** 2026-11-01
-**Current Branch:** `main`
-**Feature Branch Status:** Phase 8B squashed and merged (PR #16); verified on `main`; Phase 8C ready for planning
+**Current Branch:** `phase8c-artifact-previews-exports`
+**Feature Branch Status:** Phase 8C implemented and verified on branch; awaiting review and squash-merge
 
 ---
 
-## 1. Current State: Phase 8B Implemented & Verified
+## 1. Current State: Phase 8C Implemented & Verified
 
-Phase 8B ("Editorial Dossier Workbench, Validation & Human Review") has been fully implemented, secured, and verified on branch `phase8b-dossier-workbench-review`:
+Phase 8C ("Artifact Previews, Export Delivery & Package Management") has been fully implemented, secured, and verified on branch `phase8c-artifact-previews-exports`:
 
-- **Branch**: `phase8b-dossier-workbench-review` (tracking `origin/phase8b-dossier-workbench-review`)
-- **Parent Commit**: `155ba68d89bf035ef846bba102ebec49131fbf6c` on `main`
-- **Test Suite**: 833 tests passing (816 baseline regression tests + 17 new unit tests) in ~10.13s with 0 failures and 0 test suite warnings.
+- **Branch**: `phase8c-artifact-previews-exports` (tracking `origin/phase8c-artifact-previews-exports`)
+- **Parent Commit**: `9de2b97a7dda63a0c6910b987d2e862f73108fcd` on `main`
+- **Test Suite**: 849 tests passing (833 baseline regression tests + 16 new unit tests) in ~11s with 0 failures and 0 test suite warnings.
 - **Provenance Integrity**: Verified via `make verify-provenance-chain` (`is_valid: true`, 0 anomalies).
-- **Zero Database Migrations Required**: Fully utilizes existing relational schema (Migrations 001–006 intact).
+- **Git Hygiene**: `git diff --check origin/main...HEAD` clean with zero whitespace errors.
+- **Zero Database Migrations Required**: Zero schema alterations (Migrations 001–006 intact); package metadata discovered via manifest sidecars in `.data/editorial_exports/`.
 - **Zero New Runtime Dependencies**: Uses existing FastAPI, Jinja2, SQLAlchemy, and standard library components; development HTTPX used strictly in-process via TestClient.
 
 ---
 
-## 2. Key Phase 8B Capabilities Delivered
+## 2. Key Phase 8C Capabilities Delivered
 
-1. **Editorial Candidate Selection & Dossier Assembly Workbench (`GET /dossiers/new`, `POST /dossiers`)**:
-   - Operator incident candidate selector displaying eligible vs ineligible incidents with explicit exclusion reasons.
-   - Zero per-incident approval required for candidate selection or ordinary ingestion.
-   - Multi-entry dossier assembly with methodology notes and configurable scope types (`WEEKLY`, `THEMATIC`, `CUSTOM`).
-   - CSRF protection across all state-changing assembly endpoints.
+1. **Interactive In-Browser Artifact Previews (`GET /dossiers/{id}/preview`)**:
+   - Supports presentation profiles: `DEEP_DIVE_DOSSIER`, `EXECUTIVE_BRIEF`, `RAPID_ALERT`.
+   - Format toggle between Markdown (`.md`) and JSON Package (`.json`).
+   - Pre-approval inspection permitted for draft dossiers with prominent warning banner (`UNAPPROVED DRAFT — INTERNAL REVIEW COPY ONLY`).
+   - Approved copies clearly labeled with `APPROVED EDITORIAL COPY` badge and reviewer attribution.
+   - Jinja2 autoescaping prevents script injection from untrusted source texts.
+   - Non-mutating `GET` route with zero database or audit mutations.
 
-2. **Dossier Inspector & Epistemic Decomposition (`GET /dossiers/{id}`)**:
-   - Epistemic tri-state breakdown for every attributed entry: Confirmed Facts (blue), Attributed Allegations (yellow), Technical Uncertainties (gray), and Disputed Facts (red).
-   - On-demand validation findings card categorizing blocking violations vs warnings.
-   - Cryptographic canonical content hash computation and display.
-   - Real-time source drift detection warning if underlying incident or claim records mutate post-assembly.
-   - Audit trail card displaying append-only, tamper-evident governance events under application trust assumptions.
+2. **Managed Export Package Creation (`POST /dossiers/{id}/export`)**:
+   - Bridges dashboard UI to domain `EditorialDossierExporter` without duplicating or weakening rules.
+   - Rejects `APPROVED_EDITORIAL_COPY` export on unapproved dossiers (HTTP 400).
+   - Enforces source drift check: rejects export if underlying incident or claim records have mutated since assembly (HTTP 400).
+   - Accidental collision protection: raises HTTP 409 Conflict if package files already exist, unless `overwrite=True` is explicitly checked.
+   - Preserves optional EU commentary eligibility without mandating an EU screen for ordinary incidents.
+   - Records append-only, tamper-evident audit event `EXPORT_DOSSIER` with authenticated human actor identity.
+   - CSRF protection across all state-changing export submissions.
 
-3. **On-Demand Validation & Review Submission Transitions (`POST /dossiers/{id}/validate`, `POST /dossiers/{id}/submit`)**:
-   - On-demand validation re-evaluates all editorial rules without mutating dossier content.
-   - Submission gating strictly forbids submitting dossiers with blocking validation findings.
-   - Transitions state to `PENDING_REVIEW` and records `SUBMIT_FOR_REVIEW` audit record.
+3. **Package Management & Deliverables List (`GET /packages`)**:
+   - Scans `.data/editorial_exports/` for valid `*.manifest.json` sidecars (symlinks ignored).
+   - Filterable by `dossier_id` and artifact `purpose`.
+   - Displays presentation profile, version, format, export timestamp, and direct inspection/download links.
 
-4. **Human Review & Attestation Interface (`GET /dossiers/{id}/review`)**:
-   - Read-only review display showing the exact canonical SHA-256 content hash fingerprint.
-   - Prominent statutory non-determination disclaimer (`EDITORIAL_DISCLAIMER_TEXT`).
-   - Attestation statement checkbox (`EDITORIAL_ATTESTATION_STATEMENT`) confirming deliberate review under Constitutional Rules 1–4.
-   - Reviewer credential step-up input form with rate-limiting notice.
+4. **Package Detail Inspector (`GET /packages/{export_id}`)**:
+   - Validates export ID format (`SAFE_EXPORT_ID_PATTERN`).
+   - Inspects cryptographic provenance manifest: canonical dossier content hash, canonical payload hash, artifact file hash, renderer version, disclaimer version.
+   - Displays underlying source record provenance hashes bound to the export package.
+   - Lists all associated physical artifact files (.md, .json, .manifest.json) with size and SHA-256 digests.
 
-5. **Step-Up Reviewer Key Verification & Approval (`POST /dossiers/{id}/approve`)**:
-   - Strict separation between ordinary operator dashboard sessions and reviewer authority.
-   - Verification against local Reviewer Keystore (`.data/.reviewers.json`) using salted PBKDF2-HMAC-SHA256 (100,000 iterations) and constant-time digest comparison.
-   - Rejects approval if content hash has drifted, if underlying sources have drifted, or if blocking validation findings exist.
-   - Rate limiting: max 3 failed verification attempts per 10 minutes per client.
-   - Successful approval transitions dossier to `APPROVED_INFORMATIONAL` and generates an append-only, tamper-evident audit log.
-
-6. **Documented Rejection & Supersession (`POST /dossiers/{id}/reject`, `POST /dossiers/{id}/supersede`)**:
-   - Mandatory documented rationale (minimum 5 characters) for all rejections.
-   - Versioned supersession creates a new DRAFT revision and marks previous version as `SUPERSEDED`.
-
-7. **Local Reviewer Keystore & Administrative CLI (`ai_incident_monitor.ui.reviewer_auth`, `manage_reviewers`)**:
-   - File permissions locked to POSIX `0o600`.
-   - Symlink rejection (`O_NOFOLLOW` and pre-check `os.path.islink`) prevents symlink attacks.
-   - Administrative CLI (`python -m ai_incident_monitor.ui.manage_reviewers`) supporting `enroll`, `rotate-key`, `revoke`, and `list`.
-   - Raw keys are generated ephemerally, displayed once to the administrator, and never stored or logged.
+5. **Secure Authenticated Downloads (`GET /packages/{export_id}/download/{filename}`)**:
+   - Authenticated session required (unauthenticated requests redirect to `/login`).
+   - Strict regex validation on `export_id` and `filename` rejecting `..`, `/`, `\`, null bytes, or malformed input.
+   - Package association validation: downloads strictly confined to files belonging to the specified export ID.
+   - Directory traversal and confinement defense: verifies target path is relative to export root and rejects symlinks.
+   - Proper MIME types (`text/markdown`, `application/json`) and `Content-Disposition: attachment; filename="..."` headers.
 
 ---
 
 ## 3. Invariants & Scope Boundaries Confirmed
 
-- **Strict Separation of Auth from Background Services**: Web session expiration or browser closure does not affect background processing; background jobs have zero approval authority and do not use operator sessions.
 - **Strictly Offline & Local**: Bound only to loopback; all tests execute in-process via Starlette/FastAPI TestClient with zero network sockets.
 - **Sole Primary Editorial Checkpoint**: Dossier candidate selection and ingestion require zero per-incident human approvals. The sole primary checkpoint is deliberate human approval of the exact final multi-entry dossier version.
 - **Zero Biological Human-Presence Verification**: No biometrics, liveness detection, camera, or fingerprint verification; reviewer key is an authorization boundary, not a proof-of-biological-presence mechanism.
-- **Manual Publication**: Substack publication remains strictly manual.
-- **Phase 8C Scope Preserved**: Export/download endpoints, presentation profile selections, and publication previews remain strictly NOT STARTED.
+- **Manual Publication**: Substack publication remains strictly manual. No automated publication or network publishing APIs were introduced.
+- **No Background Services**: No background ingestion, daemon services, or scheduled tasks.
 
 ---
 
-## 4. Preparation for Next Session (Phase 8C Planning)
+## 4. Preparation for Next Session (Post-Phase 8C / Phase 9 Planning)
 
-Following PR review and squash-merge of `phase8b-dossier-workbench-review`:
+Following PR review and squash-merge of `phase8c-artifact-previews-exports`:
 1. Post-merge verification on `main`:
    - Fast-forward synchronize `main`.
-   - Run full 833-test regression suite.
+   - Run full 849-test regression suite.
    - Run `make verify-provenance-chain`.
-2. Phase 8C Scope Planning:
-   - Plan Phase 8C ("Publication Preview, Export Delivery & Operator Diagnostics Dashboard").
-   - Wire existing Phase 6B export renderers (Markdown, JSON, Substack copy) to the local UI.
-   - Maintain strict offline development boundaries and manual publication workflow.
+2. Future Milestone Planning (Phase 9+):
+   - Review operational readiness and release tagging.

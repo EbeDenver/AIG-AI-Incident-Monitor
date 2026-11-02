@@ -36,7 +36,10 @@ from ai_incident_monitor.editorial.assembly import (
     EditorialDossierAssembler,
 )
 from ai_incident_monitor.editorial.enums import (
+    EditorialArtifactPurpose,
     EditorialDossierStatus,
+    EditorialExportFormat,
+    EditorialPresentationProfile,
     EditorialScopeType,
 )
 from ai_incident_monitor.editorial.models import (
@@ -46,6 +49,8 @@ from ai_incident_monitor.editorial.models import (
     EditorialDossierSchema,
     EditorialReviewerAttestationSchema,
 )
+from ai_incident_monitor.editorial.renderers.json_renderer import EditorialJSONRenderer
+from ai_incident_monitor.editorial.renderers.markdown_renderer import EditorialMarkdownRenderer
 from ai_incident_monitor.editorial.review import EditorialReviewStateMachine
 from ai_incident_monitor.editorial.source_selector import EditorialSourceSelector
 from ai_incident_monitor.editorial.validator import EditorialValidator
@@ -305,7 +310,108 @@ async def dossier_detail(request: Request, dossier_id: str) -> Response:
             "drift_details": drift_details,
             "audit_events": audit_events,
             "reviews": reviews,
+            "profiles": [p.value for p in EditorialPresentationProfile],
+            "formats": [f.value for f in EditorialExportFormat],
+            "purposes": [p.value for p in EditorialArtifactPurpose],
             "csrf_token": session.csrf_token,
+        },
+    )
+
+
+@router.get("/dossiers/{dossier_id}/preview", response_class=HTMLResponse)
+async def preview_dossier_artifact(
+    request: Request,
+    dossier_id: str,
+    profile: str = Query(default=EditorialPresentationProfile.DEEP_DIVE_DOSSIER.value),
+    format: str = Query(default="markdown"),
+) -> Response:
+    """In-browser preview of rendered dossier artifact across presentation profiles."""
+    session = _get_authenticated_session(request)
+    if not session:
+        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    try:
+        profile_enum = EditorialPresentationProfile(profile.strip().upper())
+    except ValueError:
+        profile_enum = EditorialPresentationProfile.DEEP_DIVE_DOSSIER
+
+    format_clean = format.strip().lower()
+    if format_clean not in ("markdown", "json"):
+        format_clean = "markdown"
+
+    engine = request.app.state.db_engine
+    templates = request.app.state.templates
+
+    with Session(engine) as db_session:
+        repo = EditorialRepository(db_session)
+        dossier = repo.get_dossier(dossier_id)
+        if not dossier:
+            raise HTTPException(status_code=404, detail=f"Dossier '{dossier_id}' not found.")
+
+        validator = EditorialValidator()
+        v_report = validator.validate_dossier(dossier)
+
+        # Allow pre-approval preview using INTERNAL_REVIEW_COPY
+        is_approved = (dossier.status == EditorialDossierStatus.APPROVED_INFORMATIONAL)
+        purpose = (
+            EditorialArtifactPurpose.APPROVED_EDITORIAL_COPY
+            if is_approved and v_report.blocking_count == 0
+            else EditorialArtifactPurpose.INTERNAL_REVIEW_COPY
+        )
+
+        audit_records = []
+        if format_clean == "json":
+            stmt = (
+                select(GovernanceAuditLogModel)
+                .where(
+                    GovernanceAuditLogModel.entity_type == "EDITORIAL_DOSSIER",
+                    GovernanceAuditLogModel.entity_id == dossier_id,
+                )
+                .order_by(GovernanceAuditLogModel.created_at.asc())
+            )
+            logs = list(db_session.execute(stmt).scalars().all())
+            audit_records = [
+                {
+                    "id": l.id,
+                    "transition_type": l.transition_type,
+                    "timestamp_utc": l.timestamp_utc,
+                    "event_hash": l.event_hash,
+                    "actor_role": l.actor_role,
+                    "is_human": l.is_human,
+                }
+                for l in logs
+            ]
+            renderer = EditorialJSONRenderer()
+            rendered_content, payload_hash = renderer.render(
+                dossier=dossier,
+                profile=profile_enum,
+                purpose=purpose,
+                validation_report=v_report,
+                audit_records=audit_records,
+            )
+        else:
+            md_renderer = EditorialMarkdownRenderer()
+            rendered_content, payload_hash = md_renderer.render(
+                dossier=dossier,
+                profile=profile_enum,
+                purpose=purpose,
+                validation_report=v_report,
+            )
+
+    return templates.TemplateResponse(
+        request=request,
+        name="dossiers/preview.html",
+        context={
+            "session": session,
+            "dossier": dossier,
+            "profile": profile_enum.value,
+            "profiles": [p.value for p in EditorialPresentationProfile],
+            "format": format_clean,
+            "rendered_content": rendered_content,
+            "payload_hash": payload_hash,
+            "canonical_content_hash": dossier.content_hash or dossier.compute_content_hash(),
+            "is_approved": is_approved,
+            "purpose": purpose.value,
         },
     )
 
