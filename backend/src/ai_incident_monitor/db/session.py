@@ -11,6 +11,11 @@ from typing import Any
 from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 
+from ai_incident_monitor.config import load_env_file
+
+# Automatically load local .env if present
+load_env_file()
+
 
 def get_repo_root() -> Path:
     """Resolve repository root path without hardcoding user directories."""
