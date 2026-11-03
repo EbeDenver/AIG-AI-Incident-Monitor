@@ -96,8 +96,11 @@ validate-launchd-plist:
 run:
 	$(PYTHON) -m ai_incident_monitor.ui.cli
 
+LIMIT ?= 10
+PROVIDER ?= mock
+
 enrich-backfill:
-	$(PYTHON) -m ai_incident_monitor.intelligence.backfill --limit 10
+	$(PYTHON) -m ai_incident_monitor.intelligence.backfill --limit $(LIMIT) --provider $(PROVIDER)
 
 enrich-backfill-dry-run:
-	$(PYTHON) -m ai_incident_monitor.intelligence.backfill --limit 10 --dry-run
+	$(PYTHON) -m ai_incident_monitor.intelligence.backfill --limit $(LIMIT) --provider $(PROVIDER) --dry-run

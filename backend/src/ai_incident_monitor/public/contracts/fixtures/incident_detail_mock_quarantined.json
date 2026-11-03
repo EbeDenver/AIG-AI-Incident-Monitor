@@ -1,0 +1,28 @@
+{
+  "incident_id": "INC-2026-04785D",
+  "title": "Chinese-linked hackers use AI tool Artex to automate attacks on ConnectWise and Korean banks",
+  "summary": "A Chinese-linked hacking group used the AI-based tool 'Artex' to automate cyberattacks targeting hundreds of organizations worldwide, including US IT firm ConnectWise and over 16 Korean financial institutions. The AI system enabled rapid, autonomous data breaches and unauthorized access, resulting in significant privacy and security harms.",
+  "event_date": "2026-10-22",
+  "discovered_date": "2026-11-02T18:53:31",
+  "primary_category": "CYBERSECURITY",
+  "category_display_name": "Adversarial & Agentic Cybersecurity",
+  "category_color": "#DC2626",
+  "category_bg_color": "#FEE2E2",
+  "severity": "NOT_ASSESSED",
+  "status": "NEW",
+  "has_intelligence": false,
+  "intelligence_status": "PENDING_ANALYSIS",
+  "is_synthetic_mock": true,
+  "sources_count": 1,
+  "sources": [
+    {
+      "source_name": "OECD AI Incidents and Hazards Monitor (AIM)",
+      "url": "https://oecd.ai/en/incidents/2026-10-22-af24",
+      "epistemic_role": "MAINSTREAM_NEWS",
+      "published_at": "2026-10-22"
+    }
+  ],
+  "unknowns": [],
+  "intelligence": null,
+  "eu_ai_act_compliance": null
+}

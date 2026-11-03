@@ -14,6 +14,7 @@ from ai_incident_monitor.db.models.common import TimestampMixin
 if TYPE_CHECKING:
     from ai_incident_monitor.db.models.causality import AIInvolvementAssessmentModel
     from ai_incident_monitor.db.models.claim import ClaimRecordModel
+    from ai_incident_monitor.db.models.compliance import EUAIActComplianceAssessmentModel
     from ai_incident_monitor.db.models.editorial import EditorialDossierEntryModel
     from ai_incident_monitor.db.models.enrichment import IncidentEnrichmentModel
     from ai_incident_monitor.db.models.governance import (
@@ -91,6 +92,12 @@ class IncidentModel(Base, TimestampMixin):
     )
     enrichment: Mapped[Optional[IncidentEnrichmentModel]] = relationship(
         "IncidentEnrichmentModel",
+        back_populates="incident",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    eu_compliance_assessment: Mapped[Optional[EUAIActComplianceAssessmentModel]] = relationship(
+        "EUAIActComplianceAssessmentModel",
         back_populates="incident",
         uselist=False,
         cascade="all, delete-orphan",

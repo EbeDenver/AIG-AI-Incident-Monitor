@@ -1,0 +1,2549 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AI Incident Monitor \u2014 Local Operator Explorer & Public API",
+    "description": "Local inspection interface and public API for AI incidents and intelligence.",
+    "version": "0.2.0"
+  },
+  "paths": {
+    "/login": {
+      "get": {
+        "tags": [
+          "authentication"
+        ],
+        "summary": "Login Page",
+        "description": "Render the local operator login page with CSRF protection.",
+        "operationId": "login_page_login_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "authentication"
+        ],
+        "summary": "Login Submit",
+        "description": "Validate submitted bootstrap credential, enforce rate-limiting, and initialize session.",
+        "operationId": "login_submit_login_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_login_submit_login_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/logout": {
+      "post": {
+        "tags": [
+          "authentication"
+        ],
+        "summary": "Logout",
+        "description": "Invalidate session in server-side registry and clear session cookie.",
+        "operationId": "logout_logout_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_logout_logout_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/incidents": {
+      "get": {
+        "tags": [
+          "incidents"
+        ],
+        "summary": "List Incidents",
+        "description": "Render paginated incident list with status filtering, category taxonomy, and epistemic badges.",
+        "operationId": "list_incidents_incidents_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/incidents/{incident_id}": {
+      "get": {
+        "tags": [
+          "incidents"
+        ],
+        "summary": "Incident Detail",
+        "description": "Render incident detail with full epistemic tri-state decomposition, intelligence, and preparedness.",
+        "operationId": "incident_detail_incidents__incident_id__get",
+        "parameters": [
+          {
+            "name": "incident_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Incident Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/diagnostics": {
+      "get": {
+        "tags": [
+          "diagnostics"
+        ],
+        "summary": "Diagnostics Page",
+        "description": "Execute safe read-only operational diagnostics and render health status cards.",
+        "operationId": "diagnostics_page_diagnostics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/diagnostics/refresh": {
+      "post": {
+        "tags": [
+          "diagnostics"
+        ],
+        "summary": "Trigger Refresh",
+        "description": "Trigger an immediate background collection cycle via authenticated admin action.",
+        "operationId": "trigger_refresh_diagnostics_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_trigger_refresh_diagnostics_refresh_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ingestion/status": {
+      "get": {
+        "tags": [
+          "diagnostics"
+        ],
+        "summary": "Api Ingestion Status",
+        "description": "JSON status API for operational ingestion monitoring.",
+        "operationId": "api_ingestion_status_api_ingestion_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ingestion/refresh": {
+      "post": {
+        "tags": [
+          "diagnostics"
+        ],
+        "summary": "Api Ingestion Refresh",
+        "description": "JSON endpoint for initiating ingestion cycle with CSRF protection.",
+        "operationId": "api_ingestion_refresh_api_ingestion_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_api_ingestion_refresh_api_ingestion_refresh_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dossiers": {
+      "get": {
+        "tags": [
+          "editorial-dossiers"
+        ],
+        "summary": "List Dossiers",
+        "description": "List editorial dossiers with status filtering and pagination.",
+        "operationId": "list_dossiers_dossiers_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "editorial-dossiers"
+        ],
+        "summary": "Create Dossier",
+        "description": "Assemble and persist a new draft editorial dossier.",
+        "operationId": "create_dossier_dossiers_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_dossier_dossiers_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dossiers/new": {
+      "get": {
+        "tags": [
+          "editorial-dossiers"
+        ],
+        "summary": "New Dossier Form",
+        "description": "Candidate incident selector and dossier creation workbench.",
+        "operationId": "new_dossier_form_dossiers_new_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dossiers/{dossier_id}": {
+      "get": {
+        "tags": [
+          "editorial-dossiers"
+        ],
+        "summary": "Dossier Detail",
+        "description": "Inspect dossier details, entries, claims, validation report, and history.",
+        "operationId": "dossier_detail_dossiers__dossier_id__get",
+        "parameters": [
+          {
+            "name": "dossier_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dossier Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dossiers/{dossier_id}/preview": {
+      "get": {
+        "tags": [
+          "editorial-dossiers"
+        ],
+        "summary": "Preview Dossier Artifact",
+        "description": "In-browser preview of rendered dossier artifact across presentation profiles.",
+        "operationId": "preview_dossier_artifact_dossiers__dossier_id__preview_get",
+        "parameters": [
+          {
+            "name": "dossier_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dossier Id"
+            }
+          },
+          {
+            "name": "profile",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "DEEP_DIVE_DOSSIER",
+              "title": "Profile"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "markdown",
+              "title": "Format"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dossiers/{dossier_id}/validate": {
+      "post": {
+        "tags": [
+          "editorial-dossiers"
+        ],
+        "summary": "Validate Dossier Route",
+        "description": "Trigger on-demand validation and redirect back to detail view.",
+        "operationId": "validate_dossier_route_dossiers__dossier_id__validate_post",
+        "parameters": [
+          {
+            "name": "dossier_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dossier Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_validate_dossier_route_dossiers__dossier_id__validate_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dossiers/{dossier_id}/submit": {
+      "post": {
+        "tags": [
+          "editorial-dossiers"
+        ],
+        "summary": "Submit Dossier For Review",
+        "description": "Retired editorial workflow endpoint (returns 410 Gone).",
+        "operationId": "submit_dossier_for_review_dossiers__dossier_id__submit_post",
+        "parameters": [
+          {
+            "name": "dossier_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dossier Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dossiers/{dossier_id}/review": {
+      "get": {
+        "tags": [
+          "editorial-dossiers"
+        ],
+        "summary": "Review Attestation Page",
+        "description": "Retired editorial workflow endpoint (returns 410 Gone).",
+        "operationId": "review_attestation_page_dossiers__dossier_id__review_get",
+        "parameters": [
+          {
+            "name": "dossier_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dossier Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dossiers/{dossier_id}/approve": {
+      "post": {
+        "tags": [
+          "editorial-dossiers"
+        ],
+        "summary": "Approve Dossier Route",
+        "description": "Retired editorial workflow endpoint (returns 410 Gone).",
+        "operationId": "approve_dossier_route_dossiers__dossier_id__approve_post",
+        "parameters": [
+          {
+            "name": "dossier_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dossier Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dossiers/{dossier_id}/reject": {
+      "post": {
+        "tags": [
+          "editorial-dossiers"
+        ],
+        "summary": "Reject Dossier Route",
+        "description": "Retired editorial workflow endpoint (returns 410 Gone).",
+        "operationId": "reject_dossier_route_dossiers__dossier_id__reject_post",
+        "parameters": [
+          {
+            "name": "dossier_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dossier Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dossiers/{dossier_id}/supersede": {
+      "post": {
+        "tags": [
+          "editorial-dossiers"
+        ],
+        "summary": "Supersede Dossier Route",
+        "description": "Create a new draft version superseding an approved or rejected dossier.",
+        "operationId": "supersede_dossier_route_dossiers__dossier_id__supersede_post",
+        "parameters": [
+          {
+            "name": "dossier_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dossier Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_supersede_dossier_route_dossiers__dossier_id__supersede_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/packages": {
+      "get": {
+        "tags": [
+          "editorial-packages"
+        ],
+        "summary": "List Packages",
+        "description": "List all generated export packages with filtering and metadata.",
+        "operationId": "list_packages_packages_get",
+        "parameters": [
+          {
+            "name": "dossier_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Dossier Id"
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Purpose"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/packages/{export_id}": {
+      "get": {
+        "tags": [
+          "editorial-packages"
+        ],
+        "summary": "Package Detail",
+        "description": "Inspect metadata, provenance, and files for a specific package.",
+        "operationId": "package_detail_packages__export_id__get",
+        "parameters": [
+          {
+            "name": "export_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Export Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/packages/{export_id}/download/{filename}": {
+      "get": {
+        "tags": [
+          "editorial-packages"
+        ],
+        "summary": "Download Package File",
+        "description": "Securely download an artifact file belonging to an export package.",
+        "operationId": "download_package_file_packages__export_id__download__filename__get",
+        "parameters": [
+          {
+            "name": "export_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Export Id"
+            }
+          },
+          {
+            "name": "filename",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Filename"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dossiers/{dossier_id}/export": {
+      "post": {
+        "tags": [
+          "editorial-packages"
+        ],
+        "summary": "Export Dossier Route",
+        "description": "Create an export package for an editorial dossier under domain safety rules.",
+        "operationId": "export_dossier_route_dossiers__dossier_id__export_post",
+        "parameters": [
+          {
+            "name": "dossier_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dossier Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_export_dossier_route_dossiers__dossier_id__export_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/{rest_of_path}": {
+      "options": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Preflight Handler",
+        "description": "Handle CORS pre-flight requests for all public endpoints.",
+        "operationId": "preflight_handler_api_v1_public__rest_of_path__options",
+        "parameters": [
+          {
+            "name": "rest_of_path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rest Of Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/categories": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "summary": "List Categories",
+        "description": "Retrieve full incident category taxonomy with accessible WCAG AAA/AA color tokens.",
+        "operationId": "list_categories_api_v1_public_categories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PublicCategoryDTO"
+                  },
+                  "type": "array",
+                  "title": "Response List Categories Api V1 Public Categories Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/incidents": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "summary": "List Public Incidents",
+        "description": "Retrieve paginated incident summaries with accessible category styling and mock-isolated intelligence status.",
+        "operationId": "list_public_incidents_api_v1_public_incidents_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Severity"
+            }
+          },
+          {
+            "name": "has_enrichment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Has Enrichment"
+            }
+          },
+          {
+            "name": "include_mock",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether to include synthetic mock intelligence. Default False guarantees mock segregation.",
+              "default": false,
+              "title": "Include Mock"
+            },
+            "description": "Whether to include synthetic mock intelligence. Default False guarantees mock segregation."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicIncidentListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/incidents/{incident_id}": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Get Public Incident Detail",
+        "description": "Retrieve comprehensive incident detail including evidence, intelligence dossier, and regulatory status.",
+        "operationId": "get_public_incident_detail_api_v1_public_incidents__incident_id__get",
+        "parameters": [
+          {
+            "name": "incident_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Incident Id"
+            }
+          },
+          {
+            "name": "include_mock",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether to include synthetic mock intelligence. Default False guarantees mock segregation.",
+              "default": false,
+              "title": "Include Mock"
+            },
+            "description": "Whether to include synthetic mock intelligence. Default False guarantees mock segregation."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicIncidentDetailDTO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Index Redirect",
+        "operationId": "index_redirect__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_api_ingestion_refresh_api_ingestion_refresh_post": {
+        "properties": {
+          "csrf_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Csrf Token"
+          }
+        },
+        "type": "object",
+        "title": "Body_api_ingestion_refresh_api_ingestion_refresh_post"
+      },
+      "Body_create_dossier_dossiers_post": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "scope_type": {
+            "type": "string",
+            "title": "Scope Type",
+            "default": "CUSTOM"
+          },
+          "incident_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Incident Ids"
+          },
+          "methodology_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Methodology Notes"
+          },
+          "csrf_token": {
+            "type": "string",
+            "title": "Csrf Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "incident_ids",
+          "csrf_token"
+        ],
+        "title": "Body_create_dossier_dossiers_post"
+      },
+      "Body_export_dossier_route_dossiers__dossier_id__export_post": {
+        "properties": {
+          "profile": {
+            "type": "string",
+            "title": "Profile",
+            "default": "DEEP_DIVE_DOSSIER"
+          },
+          "format": {
+            "type": "string",
+            "title": "Format",
+            "default": "MARKDOWN"
+          },
+          "purpose": {
+            "type": "string",
+            "title": "Purpose",
+            "default": "EXPORTED_SNAPSHOT"
+          },
+          "overwrite": {
+            "type": "boolean",
+            "title": "Overwrite",
+            "default": false
+          },
+          "csrf_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Csrf Token"
+          }
+        },
+        "type": "object",
+        "title": "Body_export_dossier_route_dossiers__dossier_id__export_post"
+      },
+      "Body_login_submit_login_post": {
+        "properties": {
+          "credential": {
+            "type": "string",
+            "title": "Credential"
+          },
+          "csrf_token": {
+            "type": "string",
+            "title": "Csrf Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "credential",
+          "csrf_token"
+        ],
+        "title": "Body_login_submit_login_post"
+      },
+      "Body_logout_logout_post": {
+        "properties": {
+          "csrf_token": {
+            "type": "string",
+            "title": "Csrf Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "csrf_token"
+        ],
+        "title": "Body_logout_logout_post"
+      },
+      "Body_supersede_dossier_route_dossiers__dossier_id__supersede_post": {
+        "properties": {
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale"
+          },
+          "csrf_token": {
+            "type": "string",
+            "title": "Csrf Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "csrf_token"
+        ],
+        "title": "Body_supersede_dossier_route_dossiers__dossier_id__supersede_post"
+      },
+      "Body_trigger_refresh_diagnostics_refresh_post": {
+        "properties": {
+          "csrf_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Csrf Token"
+          }
+        },
+        "type": "object",
+        "title": "Body_trigger_refresh_diagnostics_refresh_post"
+      },
+      "Body_validate_dossier_route_dossiers__dossier_id__validate_post": {
+        "properties": {
+          "csrf_token": {
+            "type": "string",
+            "title": "Csrf Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "csrf_token"
+        ],
+        "title": "Body_validate_dossier_route_dossiers__dossier_id__validate_post"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "PublicAIInvolvementDTO": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "description": "AI role: PRIMARY, CONTRIBUTING, ENABLING, INCIDENTAL, ALLEGED, or NOT_ESTABLISHED."
+          },
+          "autonomy": {
+            "type": "string",
+            "title": "Autonomy",
+            "description": "Autonomy: AUTONOMOUS_EXECUTION, HUMAN_DIRECTED, ASSISTIVE, or UNKNOWN."
+          },
+          "human_oversight": {
+            "type": "string",
+            "title": "Human Oversight",
+            "description": "Oversight status: EFFECTIVE, DEFICIENT, ABSENT, or UNKNOWN."
+          },
+          "assessment": {
+            "type": "string",
+            "title": "Assessment",
+            "description": "Narrative evaluation distinguishing documented AI behavior from conjecture."
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "autonomy",
+          "human_oversight",
+          "assessment"
+        ],
+        "title": "PublicAIInvolvementDTO",
+        "description": "Evaluated role and autonomy of the AI system."
+      },
+      "PublicAtomicClaimDTO": {
+        "properties": {
+          "claim_id": {
+            "type": "string",
+            "title": "Claim Id",
+            "description": "Unique claim identifier."
+          },
+          "assertion": {
+            "type": "string",
+            "title": "Assertion",
+            "description": "Factual claim assertion."
+          },
+          "classification": {
+            "type": "string",
+            "title": "Classification",
+            "description": "Claim classification (CONFIRMED_FACT, ATTRIBUTED_ALLEGATION, etc.)."
+          },
+          "verification_status": {
+            "type": "string",
+            "title": "Verification Status",
+            "description": "Verification status (VERIFIED, UNVERIFIED, CONTESTED, etc.)."
+          },
+          "confidence": {
+            "type": "string",
+            "title": "Confidence",
+            "description": "Confidence tier (HIGH, MEDIUM, LOW)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "claim_id",
+          "assertion",
+          "classification",
+          "verification_status",
+          "confidence"
+        ],
+        "title": "PublicAtomicClaimDTO",
+        "description": "Granular verified claim substantiated by evidence."
+      },
+      "PublicCategoryDTO": {
+        "properties": {
+          "category_key": {
+            "type": "string",
+            "title": "Category Key",
+            "description": "Unique key for category (e.g. CYBERSECURITY)."
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name",
+            "description": "Human-readable category title."
+          },
+          "short_label": {
+            "type": "string",
+            "title": "Short Label",
+            "description": "Compact category label."
+          },
+          "icon": {
+            "type": "string",
+            "title": "Icon",
+            "description": "Unicode icon symbol."
+          },
+          "text_symbol": {
+            "type": "string",
+            "title": "Text Symbol",
+            "description": "Accessible non-emoji text badge representation."
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Detailed description of category scope."
+          },
+          "border_hex": {
+            "type": "string",
+            "title": "Border Hex",
+            "description": "WCAG-compliant border hex color."
+          },
+          "bg_hex": {
+            "type": "string",
+            "title": "Bg Hex",
+            "description": "WCAG-compliant background hex color."
+          },
+          "text_hex": {
+            "type": "string",
+            "title": "Text Hex",
+            "description": "WCAG-compliant high-contrast text hex color."
+          }
+        },
+        "type": "object",
+        "required": [
+          "category_key",
+          "display_name",
+          "short_label",
+          "icon",
+          "text_symbol",
+          "description",
+          "border_hex",
+          "bg_hex",
+          "text_hex"
+        ],
+        "title": "PublicCategoryDTO",
+        "description": "Accessible categorical classification metadata."
+      },
+      "PublicCausalAssessmentDTO": {
+        "properties": {
+          "causal_status": {
+            "type": "string",
+            "title": "Causal Status",
+            "description": "Causal status (CONFIRMED_CAUSE, PROBABLE_CONTRIBUTOR, etc.)."
+          },
+          "confidence": {
+            "type": "string",
+            "title": "Confidence",
+            "description": "Confidence in causal finding (HIGH, MEDIUM, LOW)."
+          },
+          "observed_outcomes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Observed Outcomes",
+            "description": "Documented physical, economic, or legal harms."
+          },
+          "reported_mechanisms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reported Mechanisms",
+            "description": "Mechanisms through which AI reportedly produced harm."
+          },
+          "supported_causal_links": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Supported Causal Links",
+            "description": "Substantiated causal links."
+          },
+          "alternative_explanations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Alternative Explanations",
+            "description": "Non-AI confounding factors."
+          }
+        },
+        "type": "object",
+        "required": [
+          "causal_status",
+          "confidence"
+        ],
+        "title": "PublicCausalAssessmentDTO",
+        "description": "Evidence-grounded causal evaluation."
+      },
+      "PublicDecisionMakerGuidanceDTO": {
+        "properties": {
+          "executive_summary": {
+            "type": "string",
+            "title": "Executive Summary",
+            "description": "Concise non-technical briefing for leadership.",
+            "default": ""
+          },
+          "board_briefing": {
+            "type": "string",
+            "title": "Board Briefing",
+            "description": "Strategic governance briefing.",
+            "default": ""
+          },
+          "strategic_priorities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Strategic Priorities",
+            "description": "High-priority organizational remediation items."
+          },
+          "budget_allocation_recommendations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Budget Allocation Recommendations",
+            "description": "Recommended resource investments."
+          },
+          "key_implications": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Key Implications",
+            "description": "Strategic, operational, or legal implications leadership must understand."
+          },
+          "decisions_to_consider": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Decisions To Consider",
+            "description": "Immediate or near-term governance and risk decisions warranted by the incident."
+          },
+          "evidence_required": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidence Required",
+            "description": "Data, audit telemetry, or vendor disclosures required before making informed decisions."
+          },
+          "effectiveness_measures": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Effectiveness Measures",
+            "description": "Metrics and KPIs to measure ongoing control effectiveness."
+          }
+        },
+        "type": "object",
+        "title": "PublicDecisionMakerGuidanceDTO",
+        "description": "Executive and board guidance conforming to Guide \u00a73."
+      },
+      "PublicEUAIActDTO": {
+        "properties": {
+          "is_available": {
+            "type": "boolean",
+            "title": "Is Available",
+            "description": "Whether EU AI Act assessment is available."
+          },
+          "jurisdiction_status": {
+            "type": "string",
+            "title": "Jurisdiction Status",
+            "description": "APPLICABLE, NOT_APPLICABLE, or UNDETERMINED under Article 2."
+          },
+          "classification": {
+            "type": "string",
+            "title": "Classification",
+            "description": "PROHIBITED_PRACTICE, HIGH_RISK_ANNEX_I, HIGH_RISK_ANNEX_III, TRANSPARENCY_ONLY, GPAI_MODEL, etc."
+          },
+          "annex_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annex Reference",
+            "description": "Annex I or III reference if classified as high-risk."
+          },
+          "article_73_serious_incident": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Article 73 Serious Incident",
+            "description": "Article 73 serious incident evaluation."
+          },
+          "enforcement_status": {
+            "type": "string",
+            "title": "Enforcement Status",
+            "description": "ACTIVE_LAW, NOT_YET_APPLICABLE, or PENDING under November 2026 baseline."
+          },
+          "enforcement_notes": {
+            "type": "string",
+            "title": "Enforcement Notes",
+            "description": "Timeline guidance explaining enforceability."
+          },
+          "identified_gaps": {
+            "items": {
+              "$ref": "#/components/schemas/PublicEUAIActGapDTO"
+            },
+            "type": "array",
+            "title": "Identified Gaps",
+            "description": "Identified compliance gaps."
+          },
+          "disclaimer": {
+            "type": "string",
+            "title": "Disclaimer",
+            "description": "Mandatory legal disclaimer.",
+            "default": "This automated regulatory impact assessment is generated for technical research and compliance preparedness only. It does not constitute formal legal advice, regulatory determination, or EU conformity certification."
+          }
+        },
+        "type": "object",
+        "required": [
+          "is_available",
+          "jurisdiction_status",
+          "classification",
+          "enforcement_status",
+          "enforcement_notes"
+        ],
+        "title": "PublicEUAIActDTO",
+        "description": "EU AI Act regulatory compliance assessment."
+      },
+      "PublicEUAIActGapDTO": {
+        "properties": {
+          "article": {
+            "type": "string",
+            "title": "Article",
+            "description": "EU AI Act Article reference (e.g. Article 14 Human Oversight)."
+          },
+          "gap_status": {
+            "type": "string",
+            "title": "Gap Status",
+            "description": "DOCUMENTED_GAP, POTENTIAL_GAP, NO_GAP_DEMONSTRATED, INSUFFICIENT_EVIDENCE, or NOT_YET_APPLICABLE."
+          },
+          "finding": {
+            "type": "string",
+            "title": "Finding",
+            "description": "Analytical finding explaining the compliance gap or status."
+          }
+        },
+        "type": "object",
+        "required": [
+          "article",
+          "gap_status",
+          "finding"
+        ],
+        "title": "PublicEUAIActGapDTO",
+        "description": "Specific compliance gap finding under EU AI Act."
+      },
+      "PublicIncidentDetailDTO": {
+        "properties": {
+          "incident_id": {
+            "type": "string",
+            "title": "Incident Id",
+            "description": "Canonical incident identifier (e.g. INC-2026-3DC33C)."
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Incident title."
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "description": "Factual incident summary."
+          },
+          "event_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Date",
+            "description": "Event date string (YYYY-MM-DD) if known."
+          },
+          "discovered_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discovered Date",
+            "description": "Date or timestamp incident was recorded."
+          },
+          "primary_category": {
+            "type": "string",
+            "title": "Primary Category",
+            "description": "Primary category key."
+          },
+          "category_display_name": {
+            "type": "string",
+            "title": "Category Display Name",
+            "description": "Human-readable category title."
+          },
+          "category_color": {
+            "type": "string",
+            "title": "Category Color",
+            "description": "Category border and accent hex color."
+          },
+          "category_bg_color": {
+            "type": "string",
+            "title": "Category Bg Color",
+            "description": "Category background hex color."
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "description": "Assessed severity (CRITICAL, HIGH, MEDIUM, LOW, NOT_ASSESSED)."
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Investigation status."
+          },
+          "has_intelligence": {
+            "type": "boolean",
+            "title": "Has Intelligence",
+            "description": "Whether intelligence is available (excluding mock if filtered)."
+          },
+          "intelligence_status": {
+            "type": "string",
+            "title": "Intelligence Status",
+            "description": "Status badge: LIVE_ENRICHED, SYNTHETIC_MOCK, PENDING_ANALYSIS, NOT_ENRICHED."
+          },
+          "is_synthetic_mock": {
+            "type": "boolean",
+            "title": "Is Synthetic Mock",
+            "description": "True if enrichment is from mock heuristics.",
+            "default": false
+          },
+          "sources_count": {
+            "type": "integer",
+            "title": "Sources Count",
+            "description": "Number of independent source references.",
+            "default": 0
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/PublicSourceReferenceDTO"
+            },
+            "type": "array",
+            "title": "Sources",
+            "description": "Independent source references."
+          },
+          "unknowns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unknowns",
+            "description": "Factual uncertainties identified during investigation."
+          },
+          "intelligence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicIntelligenceDTO"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Detailed LLM intelligence dossier if available."
+          },
+          "eu_ai_act_compliance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicEUAIActDTO"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "EU AI Act regulatory compliance assessment."
+          }
+        },
+        "type": "object",
+        "required": [
+          "incident_id",
+          "title",
+          "summary",
+          "primary_category",
+          "category_display_name",
+          "category_color",
+          "category_bg_color",
+          "severity",
+          "status",
+          "has_intelligence",
+          "intelligence_status"
+        ],
+        "title": "PublicIncidentDetailDTO",
+        "description": "Comprehensive incident detail view with intelligence and regulatory assessments."
+      },
+      "PublicIncidentListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PublicIncidentSummaryDTO"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "List of incidents on current page."
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total incidents matching filter criteria."
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page",
+            "description": "Current page number."
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size",
+            "description": "Page size limit."
+          },
+          "total_pages": {
+            "type": "integer",
+            "title": "Total Pages",
+            "description": "Total number of pages."
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size",
+          "total_pages"
+        ],
+        "title": "PublicIncidentListResponse",
+        "description": "Paginated collection of incident summaries."
+      },
+      "PublicIncidentSummaryDTO": {
+        "properties": {
+          "incident_id": {
+            "type": "string",
+            "title": "Incident Id",
+            "description": "Canonical incident identifier (e.g. INC-2026-3DC33C)."
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Incident title."
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "description": "Factual incident summary."
+          },
+          "event_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Date",
+            "description": "Event date string (YYYY-MM-DD) if known."
+          },
+          "discovered_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discovered Date",
+            "description": "Date or timestamp incident was recorded."
+          },
+          "primary_category": {
+            "type": "string",
+            "title": "Primary Category",
+            "description": "Primary category key."
+          },
+          "category_display_name": {
+            "type": "string",
+            "title": "Category Display Name",
+            "description": "Human-readable category title."
+          },
+          "category_color": {
+            "type": "string",
+            "title": "Category Color",
+            "description": "Category border and accent hex color."
+          },
+          "category_bg_color": {
+            "type": "string",
+            "title": "Category Bg Color",
+            "description": "Category background hex color."
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "description": "Assessed severity (CRITICAL, HIGH, MEDIUM, LOW, NOT_ASSESSED)."
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Investigation status."
+          },
+          "has_intelligence": {
+            "type": "boolean",
+            "title": "Has Intelligence",
+            "description": "Whether intelligence is available (excluding mock if filtered)."
+          },
+          "intelligence_status": {
+            "type": "string",
+            "title": "Intelligence Status",
+            "description": "Status badge: LIVE_ENRICHED, SYNTHETIC_MOCK, PENDING_ANALYSIS, NOT_ENRICHED."
+          },
+          "is_synthetic_mock": {
+            "type": "boolean",
+            "title": "Is Synthetic Mock",
+            "description": "True if enrichment is from mock heuristics.",
+            "default": false
+          },
+          "sources_count": {
+            "type": "integer",
+            "title": "Sources Count",
+            "description": "Number of independent source references.",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "incident_id",
+          "title",
+          "summary",
+          "primary_category",
+          "category_display_name",
+          "category_color",
+          "category_bg_color",
+          "severity",
+          "status",
+          "has_intelligence",
+          "intelligence_status"
+        ],
+        "title": "PublicIncidentSummaryDTO",
+        "description": "Lightweight summary of an incident for listing and catalog explorer views."
+      },
+      "PublicIntelligenceDTO": {
+        "properties": {
+          "is_available": {
+            "type": "boolean",
+            "title": "Is Available",
+            "description": "Whether intelligence is available."
+          },
+          "model_provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Provider",
+            "description": "Provider: claude, gemini, or mock."
+          },
+          "model_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Name",
+            "description": "Exact model ID invoked."
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At",
+            "description": "Generation timestamp in ISO format."
+          },
+          "is_synthetic_mock": {
+            "type": "boolean",
+            "title": "Is Synthetic Mock",
+            "description": "True if output was synthetically generated by mock heuristics.",
+            "default": false
+          },
+          "assessment_status": {
+            "type": "string",
+            "title": "Assessment Status",
+            "description": "COMPLETE, PARTIAL, or ADVISORY_REVIEW.",
+            "default": "COMPLETE"
+          },
+          "advisory_review_flag": {
+            "type": "boolean",
+            "title": "Advisory Review Flag",
+            "description": "Advisory quality flag indicating unresolved uncertainties.",
+            "default": false
+          },
+          "review_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Review Reasons",
+            "description": "Reasons for advisory quality flag."
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary",
+            "description": "Intelligence executive summary."
+          },
+          "ai_involvement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicAIInvolvementDTO"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "AI involvement breakdown."
+          },
+          "causal_assessment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicCausalAssessmentDTO"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Causal assessment breakdown."
+          },
+          "atomic_claims": {
+            "items": {
+              "$ref": "#/components/schemas/PublicAtomicClaimDTO"
+            },
+            "type": "array",
+            "title": "Atomic Claims",
+            "description": "Atomic claims list."
+          },
+          "organizational_controls": {
+            "items": {
+              "$ref": "#/components/schemas/PublicOrganizationalControlDTO"
+            },
+            "type": "array",
+            "title": "Organizational Controls",
+            "description": "Organizational safeguards."
+          },
+          "decision_maker_guidance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicDecisionMakerGuidanceDTO"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Executive guidance."
+          },
+          "practitioner_guidance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicPractitionerGuidanceDTO"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Technical guidance."
+          }
+        },
+        "type": "object",
+        "required": [
+          "is_available"
+        ],
+        "title": "PublicIntelligenceDTO",
+        "description": "Structured incident intelligence dossier."
+      },
+      "PublicOrganizationalControlDTO": {
+        "properties": {
+          "risk": {
+            "type": "string",
+            "title": "Risk",
+            "description": "Specific organizational, technical, or governance risk."
+          },
+          "control": {
+            "type": "string",
+            "title": "Control",
+            "description": "Concrete, actionable safeguard or architectural requirement."
+          },
+          "control_type": {
+            "type": "string",
+            "title": "Control Type",
+            "description": "Type: PREVENTIVE, DETECTIVE, or CORRECTIVE."
+          },
+          "incident_specific": {
+            "type": "boolean",
+            "title": "Incident Specific",
+            "description": "Whether control directly addresses specific incident mechanisms.",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "risk",
+          "control",
+          "control_type"
+        ],
+        "title": "PublicOrganizationalControlDTO",
+        "description": "Concrete organizational safeguard or control."
+      },
+      "PublicPractitionerGuidanceDTO": {
+        "properties": {
+          "immediate_actions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Immediate Actions",
+            "description": "First-24-hour containment actions."
+          },
+          "short_term_hardening": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Short Term Hardening",
+            "description": "30-day architectural hardening steps."
+          },
+          "architectural_guidance": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Architectural Guidance",
+            "description": "Systemic design patterns."
+          },
+          "testing_requirements": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Testing Requirements",
+            "description": "Specific evaluations, red-teaming, or stress tests."
+          },
+          "discovery_questions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Discovery Questions",
+            "description": "Targeted diagnostic questions to uncover client vulnerabilities."
+          },
+          "assessment_activities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Assessment Activities",
+            "description": "Audit, architecture review, and penetration testing activities."
+          },
+          "architecture_considerations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Architecture Considerations",
+            "description": "System integration, permission boundary, and workflow security patterns."
+          },
+          "implementation_controls": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Implementation Controls",
+            "description": "Detailed technical requirements for safe AI system deployment."
+          },
+          "acceptance_criteria": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Acceptance Criteria",
+            "description": "Testable criteria clients should enforce before signing off on AI deployments."
+          }
+        },
+        "type": "object",
+        "title": "PublicPractitionerGuidanceDTO",
+        "description": "Technical and operational engineering guidance conforming to Guide \u00a73."
+      },
+      "PublicSourceReferenceDTO": {
+        "properties": {
+          "source_name": {
+            "type": "string",
+            "title": "Source Name",
+            "description": "Name of the reporting entity or publisher."
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url",
+            "description": "Sanitized canonical source URL."
+          },
+          "epistemic_role": {
+            "type": "string",
+            "title": "Epistemic Role",
+            "description": "Epistemic role (Primary Incident Stream, Research Context, Offline Export)."
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At",
+            "description": "Publication timestamp string if available."
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_name",
+          "epistemic_role"
+        ],
+        "title": "PublicSourceReferenceDTO",
+        "description": "Attributed source reference."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

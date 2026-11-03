@@ -258,10 +258,10 @@ async def incident_detail(
 
             if "DISPUTED" in status_upper or "CONTESTED" in status_upper or "DISPUTED" in type_upper:
                 disputes.append(c_info)
-            elif "CONFIRMED" in status_upper or "FACT" in type_upper:
-                facts.append(c_info)
-            elif "UNCERTAINTY" in type_upper or "UNKNOWN" in status_upper:
+            elif "UNCERTAINTY" in status_upper or "UNKNOWN" in status_upper or "UNCERTAINTY" in type_upper:
                 uncertainties.append(c_info)
+            elif status_upper in ("CONFIRMED_FACT", "VERIFIED") or (status_upper.startswith("CONFIRMED") and "UNVERIFIED" not in status_upper):
+                facts.append(c_info)
             else:
                 allegations.append(c_info)
 
@@ -286,9 +286,17 @@ async def incident_detail(
 
         enrichment_data: Optional[dict[str, Any]] = None
         if raw_enrichment:
+            dossier_dict: Optional[dict[str, Any]] = None
+            if getattr(raw_enrichment, "payload_json", None):
+                try:
+                    dossier_dict = json.loads(raw_enrichment.payload_json)
+                except Exception:
+                    dossier_dict = None
+
             enrichment_data = {
                 "id": raw_enrichment.id,
                 "status": raw_enrichment.status,
+                "assessment_status": getattr(raw_enrichment, "assessment_status", "COMPLETE"),
                 "prompt_version": raw_enrichment.prompt_version,
                 "model_name": raw_enrichment.model_name,
                 "prompt_digest": raw_enrichment.prompt_digest,
@@ -313,6 +321,7 @@ async def incident_detail(
                 "estimated_cost_usd": raw_enrichment.estimated_cost_usd,
                 "error_message": raw_enrichment.error_message,
                 "created_at": raw_enrichment.created_at,
+                "dossier": dossier_dict,
             }
 
     return templates.TemplateResponse(

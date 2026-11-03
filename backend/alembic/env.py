@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from logging.config import fileConfig
+import os
 from typing import Any
 
 from alembic import context
@@ -23,12 +24,23 @@ logger = logging.getLogger("alembic.env")
 target_metadata = Base.metadata
 
 
+def _resolve_migration_url() -> str:
+    """Resolve database URL, prioritizing runtime test config, environment variables, or repo root fallback."""
+    db_env = os.getenv("DATABASE_URL")
+    if db_env:
+        return get_database_url()
+    cfg_url = config.get_main_option("sqlalchemy.url")
+    if cfg_url and not cfg_url.strip().endswith("/.data/dev.db") and not cfg_url.strip().endswith("///.data/dev.db"):
+        return cfg_url
+    return get_database_url()
+
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
     Configures the context with just a URL and not an Engine.
     """
-    url = config.get_main_option("sqlalchemy.url") or get_database_url()
+    url = _resolve_migration_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -52,7 +64,7 @@ def run_migrations_online() -> None:
     connectable = config.attributes.get("connection", None)
 
     if connectable is None:
-        url = config.get_main_option("sqlalchemy.url") or get_database_url()
+        url = _resolve_migration_url()
         connectable = get_engine(url)
 
     if isinstance(connectable, Engine):

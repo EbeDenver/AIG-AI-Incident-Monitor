@@ -49,9 +49,29 @@ class LocalSecurityMiddleware(BaseHTTPMiddleware):
         self.allowed_hosts = allowed_hosts or DEFAULT_ALLOWED_HOSTS
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        # 1. Validate Host header
+        is_public = request.url.path.startswith("/api/v1/public")
+
+        # 0. Fast-path CORS preflight for public API
+        if is_public and request.method == "OPTIONS":
+            return Response(
+                status_code=status.HTTP_204_NO_CONTENT,
+                headers={
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "GET, OPTIONS",
+                    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+                    "Access-Control-Max-Age": "86400",
+                },
+            )
+
+        # 1. Validate Host header (Public API permits any host with valid syntax; operator UI enforces allowlist)
         host_header = request.headers.get("host", "").lower().strip()
-        if not host_header or host_header not in self.allowed_hosts:
+        if not host_header:
+            return PlainTextResponse(
+                "Forbidden: Missing Host header.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not is_public and "*" not in self.allowed_hosts and host_header not in self.allowed_hosts:
             return PlainTextResponse(
                 f"Forbidden: Host header '{host_header}' is not in the local allowlist.",
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -91,13 +111,18 @@ class LocalSecurityMiddleware(BaseHTTPMiddleware):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; "
-            "style-src 'self' 'unsafe-inline'; "
-            "script-src 'self'; "
-            "img-src 'self' data:; "
-            "frame-ancestors 'none';"
-        )
+
+        if is_public:
+            response.headers["Access-Control-Allow-Origin"] = "*"
+            response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+        else:
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; "
+                "style-src 'self' 'unsafe-inline'; "
+                "script-src 'self'; "
+                "img-src 'self' data:; "
+                "frame-ancestors 'none';"
+            )
         return response
 
 
@@ -131,12 +156,12 @@ def create_app(
     rev_limiter = reviewer_rate_limiter or ReviewerRateLimiter()
 
     app = FastAPI(
-        title="AI Incident Monitor — Local Operator Explorer",
-        description="Local inspection interface for AI incidents, epistemic claims, and diagnostics.",
+        title="AI Incident Monitor — Local Operator Explorer & Public API",
+        description="Local inspection interface and public API for AI incidents and intelligence.",
         version="0.2.0",
-        docs_url=None,       # Disable Swagger UI in local operator tool
-        redoc_url=None,      # Disable ReDoc
-        openapi_url=None,    # Disable OpenAPI schema discovery
+        docs_url="/api/docs",
+        redoc_url=None,
+        openapi_url="/api/v1/public/openapi.json",
     )
 
     # Attach shared dependencies to app state
@@ -169,12 +194,14 @@ def create_app(
     from ai_incident_monitor.ui.routes.diagnostics import router as diagnostics_router
     from ai_incident_monitor.ui.routes.dossiers import router as dossiers_router
     from ai_incident_monitor.ui.routes.packages import router as packages_router
+    from ai_incident_monitor.public.routes import router as public_router
 
     app.include_router(auth_router)
     app.include_router(incidents_router)
     app.include_router(diagnostics_router)
     app.include_router(dossiers_router)
     app.include_router(packages_router)
+    app.include_router(public_router)
 
     # Root landing redirect
     @app.get("/", response_class=HTMLResponse)

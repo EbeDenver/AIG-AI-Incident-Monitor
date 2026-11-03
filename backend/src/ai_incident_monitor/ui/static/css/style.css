@@ -1292,3 +1292,224 @@ body {
     max-width: 600px;
     margin: 0 auto;
 }
+
+/* Advisory Quality Notice Banner (No-Approval Amendment) */
+.advisory-warning-banner {
+    background-color: #FFFBEB;
+    border: 1px solid #F59E0B;
+    border-left: 5px solid #D97706;
+    border-radius: 6px;
+    padding: 0.85rem 1.15rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.88rem;
+    color: #92400E;
+}
+
+.advisory-warning-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #B45309;
+    margin-bottom: 0.35rem;
+}
+
+.advisory-warning-list {
+    margin: 0.35rem 0 0.35rem 1.25rem;
+    padding: 0;
+    font-size: 0.85rem;
+    color: #78350F;
+}
+
+.advisory-warning-list li {
+    margin-bottom: 0.2rem;
+}
+
+.advisory-policy-note {
+    font-size: 0.78rem;
+    color: #A16207;
+    margin-top: 0.4rem;
+    font-style: italic;
+}
+
+/* Evidence Chips */
+.evidence-chip {
+    display: inline-flex;
+    align-items: center;
+    background-color: #F1F5F9;
+    border: 1px solid #CBD5E1;
+    color: #334155;
+    font-family: monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    text-decoration: none;
+    margin-right: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.evidence-chip:hover {
+    background-color: #E2E8F0;
+    border-color: #94A3B8;
+}
+
+/* Epistemic Badges */
+.badge-fact {
+    background-color: #EFF6FF;
+    border: 1px solid #3B82F6;
+    color: #1D4ED8;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+}
+
+.badge-allegation {
+    background-color: #FFFBEB;
+    border: 1px solid #F59E0B;
+    color: #B45309;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+}
+
+.badge-uncertainty {
+    background-color: #F8FAFC;
+    border: 1px solid #64748B;
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+}
+
+.badge-dispute {
+    background-color: #FEF2F2;
+    border: 1px solid #EF4444;
+    color: #B91C1C;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+}
+
+.badge-verified {
+    background-color: #ECFDF5;
+    border: 1px solid #10B981;
+    color: #047857;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+}
+
+.badge-unverified {
+    background-color: #FFF7ED;
+    border: 1px solid #F97316;
+    color: #C2410C;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+}
+
+.badge-preventive {
+    background-color: #EFF6FF;
+    border: 1px solid #3B82F6;
+    color: #1D4ED8;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+}
+
+.badge-detective {
+    background-color: #FDF4FF;
+    border: 1px solid #D946EF;
+    color: #86198F;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+}
+
+.badge-corrective {
+    background-color: #FFF1F2;
+    border: 1px solid #F43F5E;
+    color: #BE123C;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+}
+
+/* Rich Dossier Components */
+.intelligence-claims-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.5rem;
+    font-size: 0.88rem;
+}
+
+.intelligence-claims-table th {
+    background-color: #F8FAFC;
+    border-bottom: 2px solid #E2E8F0;
+    padding: 0.6rem 0.75rem;
+    text-align: left;
+    font-weight: 700;
+    color: #475569;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.intelligence-claims-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #F1F5F9;
+    vertical-align: top;
+}
+
+.intelligence-control-box {
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.control-risk-header {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 0.25rem;
+}
+
+.control-statement {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #0F172A;
+    line-height: 1.5;
+    margin-bottom: 0.45rem;
+}
+
+.control-validation-box {
+    background-color: #F8FAFC;
+    border-left: 3px solid #3B82F6;
+    padding: 0.45rem 0.75rem;
+    border-radius: 3px;
+    font-size: 0.82rem;
+    color: #334155;
+    margin-top: 0.45rem;
+}
+
+.evidence-provenance-card {
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.75rem;
+}

@@ -103,13 +103,223 @@
         </div>
         {% if enrichment and enrichment.status == 'COMPLETED' %}
         <span class="badge badge-subtle" style="font-size: 0.75rem;">
-            Sufficiency: <strong>{{ enrichment.evidence_sufficiency }}</strong>
+            Assessment: <strong>{{ enrichment.assessment_status }}</strong>
         </span>
         {% endif %}
     </div>
 
     {% if enrichment and enrichment.status == 'COMPLETED' %}
     <div class="intelligence-content">
+
+        <!-- Advisory Quality Notice (Amended No-Approval Policy) -->
+        {% if enrichment.dossier and enrichment.dossier.quality_review and enrichment.dossier.quality_review.advisory_human_review_flag %}
+        <div class="advisory-warning-banner">
+            <div class="advisory-warning-header">
+                <span>⚠️ Advisory Evidence Quality Warning</span>
+                <span class="badge badge-warning" style="font-size: 0.72rem;">Status: {{ enrichment.assessment_status }}</span>
+            </div>
+            <ul class="advisory-warning-list">
+                {% for reason in enrichment.dossier.quality_review.review_reasons %}
+                <li>{{ reason }}</li>
+                {% endfor %}
+            </ul>
+            <div class="advisory-policy-note">
+                <strong>Non-Blocking Notice:</strong> Under the system's authoritative No-Approval Policy, this notice highlights unverified allegations, high-materiality unknowns, or sparse primary evidence. It does not gate, halt, or require manual editorial approval for this dossier.
+            </div>
+        </div>
+        {% endif %}
+
+        {% if enrichment.dossier %}
+        <!-- RICH GUIDE §3 DOSSIER RENDERING -->
+
+        <!-- Summary & Verified Outcomes -->
+        <div style="margin-bottom: 1.25rem;">
+            <div class="intelligence-section-subtitle">Reported Event & Corroborated Outcomes</div>
+            <p style="font-size: 0.92rem; line-height: 1.6; color: var(--text-primary); margin: 0.25rem 0 0.5rem 0;">
+                {{ enrichment.dossier.incident_summary.reported_event }}
+            </p>
+            {% if enrichment.dossier.incident_summary.verified_outcome %}
+            <div style="padding: 0.5rem 0.75rem; background-color: #F0FDF4; border-left: 3px solid #16A34A; border-radius: 4px; font-size: 0.88rem; color: #166534; margin-top: 0.5rem;">
+                <strong>Verified Outcome:</strong> {{ enrichment.dossier.incident_summary.verified_outcome }}
+            </div>
+            {% endif %}
+            {% if enrichment.dossier.incident_summary.affected_entities %}
+            <div style="margin-top: 0.5rem;">
+                <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-right: 0.5rem;">Affected Entities:</span>
+                {% for ent in enrichment.dossier.incident_summary.affected_entities %}
+                <span class="badge badge-subtle" style="font-size: 0.75rem; margin-right: 0.25rem;">{{ ent }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Atomic Claims Table -->
+        {% if enrichment.dossier.claims %}
+        <div style="margin-bottom: 1.25rem;">
+            <div class="intelligence-section-subtitle">Atomic Claims Evaluation</div>
+            <table class="intelligence-claims-table">
+                <thead>
+                    <tr>
+                        <th style="width: 70px;">ID</th>
+                        <th>Claim Statement</th>
+                        <th style="width: 140px;">Classification</th>
+                        <th style="width: 110px;">Verification</th>
+                        <th style="width: 90px;">Confidence</th>
+                        <th style="width: 90px;">Evidence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in enrichment.dossier.claims %}
+                    <tr>
+                        <td style="font-family: monospace; font-weight: 700; font-size: 0.8rem;">{{ c.claim_id }}</td>
+                        <td>
+                            <div style="font-weight: 500; color: #0F172A;">{{ c.statement }}</div>
+                            <div style="font-size: 0.78rem; color: #64748B; margin-top: 0.2rem;">{{ c.reasoning_summary }}</div>
+                            {% if c.advisory_review_flag %}
+                            <div style="font-size: 0.72rem; color: #D97706; font-weight: 600; margin-top: 0.2rem;">⚠️ Advisory Warning: Unverified allegation / high ambiguity</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if c.classification == 'CONFIRMED_FACT' %}
+                            <span class="badge-fact">FACT</span>
+                            {% elif c.classification == 'ATTRIBUTED_ALLEGATION' %}
+                            <span class="badge-allegation">ALLEGATION</span>
+                            {% elif c.classification == 'TECHNICAL_UNCERTAINTY' %}
+                            <span class="badge-uncertainty">UNCERTAINTY</span>
+                            {% else %}
+                            <span class="badge-dispute">DISPUTED</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if c.verification_status == 'VERIFIED' %}
+                            <span class="badge-verified">VERIFIED</span>
+                            {% elif c.verification_status == 'UNVERIFIED' %}
+                            <span class="badge-unverified">UNVERIFIED</span>
+                            {% else %}
+                            <span class="badge badge-subtle" style="font-size: 0.7rem;">{{ c.verification_status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge badge-subtle" style="font-size: 0.7rem;">{{ c.confidence }}</span>
+                        </td>
+                        <td>
+                            {% for eid in c.supporting_evidence_ids %}
+                            <a href="#ev-{{ eid }}" class="evidence-chip">{{ eid }}</a>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- AI Involvement & Autonomy -->
+        <div style="margin-bottom: 1.25rem;">
+            <div class="intelligence-section-subtitle">AI System Involvement & Operational Oversight</div>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
+                <span class="badge badge-primary" style="font-size: 0.78rem;">Role: {{ enrichment.dossier.ai_involvement.role }}</span>
+                <span class="badge badge-subtle" style="font-size: 0.78rem;">Autonomy: {{ enrichment.dossier.ai_involvement.autonomy_level }}</span>
+                <span class="badge badge-subtle" style="font-size: 0.78rem;">Oversight: {{ enrichment.dossier.ai_involvement.human_oversight }}</span>
+                {% if enrichment.dossier.ai_involvement.system_name %}
+                <span class="badge badge-subtle" style="font-size: 0.78rem;">System: {{ enrichment.dossier.ai_involvement.system_name }}</span>
+                {% endif %}
+            </div>
+            <p style="font-size: 0.9rem; line-height: 1.6; color: var(--text-primary); margin: 0.25rem 0;">
+                {{ enrichment.dossier.ai_involvement.assessment }}
+            </p>
+            {% if enrichment.dossier.ai_involvement.documented_capabilities %}
+            <div style="margin-top: 0.35rem;">
+                <span style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">Demonstrated Capabilities:</span>
+                {% for cap in enrichment.dossier.ai_involvement.documented_capabilities %}
+                <span class="badge badge-subtle" style="font-size: 0.72rem; margin-right: 0.25rem;">{{ cap }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Causal Assessment & Alternative Explanations -->
+        <div style="margin-bottom: 1.25rem;">
+            <div class="intelligence-section-subtitle">
+                Causal Assessment
+                <span class="badge badge-subtle" style="font-size: 0.75rem; margin-left: 0.5rem;">
+                    Status: {{ enrichment.dossier.causal_assessment.causal_status }} ({{ enrichment.dossier.causal_assessment.confidence }} Confidence)
+                </span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 0.5rem;">
+                <div>
+                    <div style="font-size: 0.82rem; font-weight: 700; color: #475569; margin-bottom: 0.25rem;">Reported Failure Mechanisms</div>
+                    <ul class="intelligence-bullet-list">
+                        {% for mech in enrichment.dossier.causal_assessment.reported_mechanisms %}
+                        <li>{{ mech }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div>
+                    <div style="font-size: 0.82rem; font-weight: 700; color: #475569; margin-bottom: 0.25rem;">Alternative Explanations & Confounders</div>
+                    <ul class="intelligence-bullet-list">
+                        {% for alt in enrichment.dossier.causal_assessment.alternative_explanations %}
+                        <li>{{ alt }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Uncertainties & Disputed Facts -->
+        {% if enrichment.dossier.uncertainties or enrichment.dossier.disputed_facts %}
+        <div style="margin-bottom: 1.25rem;">
+            <div class="intelligence-section-subtitle">Technical Uncertainties & Disputed Inquiries</div>
+            {% for u in enrichment.dossier.uncertainties %}
+            <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 4px; padding: 0.5rem 0.75rem; margin-bottom: 0.4rem; font-size: 0.85rem;">
+                <div style="display: flex; justify-content: space-between;">
+                    <strong>{{ u.question }}</strong>
+                    <span class="badge badge-subtle" style="font-size: 0.7rem;">Materiality: {{ u.materiality }}</span>
+                </div>
+                <div style="font-size: 0.8rem; color: #64748B; margin-top: 0.2rem;">Evidence needed: {{ u.evidence_needed }}</div>
+            </div>
+            {% endfor %}
+            {% for d in enrichment.dossier.disputed_facts %}
+            <div style="background-color: #FEF2F2; border: 1px solid #FECACA; border-radius: 4px; padding: 0.5rem 0.75rem; margin-bottom: 0.4rem; font-size: 0.85rem;">
+                <div style="font-weight: 700; color: #991B1B;">Disputed Claim: {{ d.assertion }}</div>
+                <div style="font-size: 0.8rem; color: #7F1D1D; margin-top: 0.2rem;">{{ d.analysis }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Grounding Evidence Provenance Package -->
+        {% if enrichment.dossier.provenance %}
+        <div style="margin-bottom: 1rem;">
+            <div class="intelligence-section-subtitle">Evidence Package & Citations</div>
+            {% for p in enrichment.dossier.provenance %}
+            <div class="evidence-provenance-card" id="ev-{{ p.evidence_id }}">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="evidence-chip" style="margin: 0; background-color: #2563EB; color: #FFFFFF; border-color: #1D4ED8;">{{ p.evidence_id }}</span>
+                        <strong style="font-size: 0.88rem; color: #0F172A;">{{ p.source_title }}</strong>
+                    </div>
+                    <span class="badge badge-subtle" style="font-size: 0.7rem;">{{ p.source_type }}</span>
+                </div>
+                <div style="font-size: 0.82rem; color: #475569; font-style: italic; margin-bottom: 0.35rem;">
+                    "{{ p.excerpt }}"
+                </div>
+                <div style="font-size: 0.75rem; color: #64748B; display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <span>Publisher: <strong>{{ p.publisher }}</strong></span>
+                    {% if p.url %}
+                    <span>URL: <a href="{{ p.url }}" target="_blank" rel="noopener" class="external-link">{{ p.url }}</a></span>
+                    {% endif %}
+                    {% if p.limitations %}
+                    <span>Limitations: {{ p.limitations }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- LEGACY PROTOTYPE FALLBACK -->
         <div style="margin-bottom: 1rem;">
             <div class="intelligence-section-subtitle">Executive Summary</div>
             <p style="font-size: 0.92rem; line-height: 1.6; color: var(--text-primary); margin: 0.25rem 0;">
@@ -131,39 +341,6 @@
             <p style="font-size: 0.92rem; line-height: 1.6; color: var(--text-primary); margin: 0.25rem 0;">
                 {{ enrichment.ai_system_role }}
             </p>
-        </div>
-
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
-            <div>
-                <div class="intelligence-section-subtitle">Affected Stakeholders</div>
-                <ul class="intelligence-bullet-list">
-                    {% for s in enrichment.affected_stakeholders %}
-                    <li>{{ s }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div>
-                <div class="intelligence-section-subtitle">Documented Consequences</div>
-                <ul class="intelligence-bullet-list">
-                    {% for c in enrichment.documented_consequences %}
-                    <li>{{ c }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-
-        <div>
-            <div class="intelligence-section-subtitle">Identified Technical Unknowns & Disputes</div>
-            <ul class="intelligence-bullet-list">
-                {% for u in enrichment.unknowns_and_disputes %}
-                <li>{{ u }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        {% if enrichment.evidence_limitations %}
-        <div style="margin-top: 0.75rem; padding: 0.65rem 0.85rem; background-color: #FEF2F2; border-left: 3px solid #EF4444; border-radius: 4px; font-size: 0.85rem; color: #991B1B;">
-            <strong>Evidence Limitations:</strong> {{ enrichment.evidence_limitations }}
         </div>
         {% endif %}
 
@@ -200,20 +377,106 @@
 
     {% if enrichment and enrichment.status == 'COMPLETED' %}
     <div class="preparedness-content">
+
+        {% if enrichment.dossier %}
+        <!-- RICH GUIDE §3 CONTROLS & DUAL-AUDIENCE GUIDANCE -->
+
+        <!-- Organizational Controls with Concrete Validation Tests -->
+        <div style="margin-bottom: 1.25rem;">
+            <div class="intelligence-section-subtitle">Organizational Controls with Verifiable Tests</div>
+            {% for ctrl in enrichment.dossier.organizational_controls %}
+            <div class="intelligence-control-box">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <div class="control-risk-header">Risk Addressed: {{ ctrl.risk }}</div>
+                    <div>
+                        {% if ctrl.control_type == 'PREVENTIVE' %}
+                        <span class="badge-preventive">PREVENTIVE</span>
+                        {% elif ctrl.control_type == 'DETECTIVE' %}
+                        <span class="badge-detective">DETECTIVE</span>
+                        {% else %}
+                        <span class="badge-corrective">CORRECTIVE</span>
+                        {% endif %}
+                        {% if ctrl.incident_specific %}
+                        <span class="badge badge-subtle" style="font-size: 0.7rem; margin-left: 0.25rem;">Incident-Specific</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="control-statement">{{ ctrl.control }}</div>
+                <div class="control-validation-box">
+                    <strong>Validation Test:</strong> {{ ctrl.validation_test }}
+                </div>
+                {% if ctrl.evidence_ids %}
+                <div style="margin-top: 0.35rem; font-size: 0.75rem; color: #64748B;">
+                    <span>Evidence Links:</span>
+                    {% for eid in ctrl.evidence_ids %}
+                    <a href="#ev-{{ eid }}" class="evidence-chip">{{ eid }}</a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Dual Guidance Grid: Decision-Makers vs Consultants -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; margin-bottom: 1rem;">
+            <!-- Decision-Maker Guidance -->
+            <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 6px; padding: 1rem;">
+                <div style="font-size: 0.95rem; font-weight: 700; color: #1E293B; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+                    <span>👔 Executive & Decision-Maker Guidance</span>
+                </div>
+                <div style="font-size: 0.82rem; font-weight: 700; color: #475569; margin-top: 0.5rem;">Key Implications</div>
+                <ul class="intelligence-bullet-list">
+                    {% for imp in enrichment.dossier.decision_maker_guidance.key_implications %}
+                    <li>{{ imp }}</li>
+                    {% endfor %}
+                </ul>
+                <div style="font-size: 0.82rem; font-weight: 700; color: #475569; margin-top: 0.5rem;">Decisions to Consider</div>
+                <ul class="intelligence-bullet-list">
+                    {% for dec in enrichment.dossier.decision_maker_guidance.decisions_to_consider %}
+                    <li>{{ dec }}</li>
+                    {% endfor %}
+                </ul>
+                <div style="font-size: 0.82rem; font-weight: 700; color: #475569; margin-top: 0.5rem;">Required Evidence & Audit Data</div>
+                <ul class="intelligence-bullet-list">
+                    {% for ev in enrichment.dossier.decision_maker_guidance.evidence_required %}
+                    <li>{{ ev }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Consultant Guidance -->
+            <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 6px; padding: 1rem;">
+                <div style="font-size: 0.95rem; font-weight: 700; color: #1E293B; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+                    <span>🔍 Consultant & Advisory Playbook</span>
+                </div>
+                <div style="font-size: 0.82rem; font-weight: 700; color: #475569; margin-top: 0.5rem;">Diagnostic Discovery Questions</div>
+                <ul class="intelligence-bullet-list">
+                    {% for q in enrichment.dossier.consultant_guidance.discovery_questions %}
+                    <li>{{ q }}</li>
+                    {% endfor %}
+                </ul>
+                <div style="font-size: 0.82rem; font-weight: 700; color: #475569; margin-top: 0.5rem;">Architecture Considerations</div>
+                <ul class="intelligence-bullet-list">
+                    {% for arch in enrichment.dossier.consultant_guidance.architecture_considerations %}
+                    <li>{{ arch }}</li>
+                    {% endfor %}
+                </ul>
+                <div style="font-size: 0.82rem; font-weight: 700; color: #475569; margin-top: 0.5rem;">Assessment Activities</div>
+                <ul class="intelligence-bullet-list">
+                    {% for act in enrichment.dossier.consultant_guidance.assessment_activities %}
+                    <li>{{ act }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- LEGACY PROTOTYPE FALLBACK -->
         <div style="margin-bottom: 1rem;">
             <div class="intelligence-section-subtitle">Target Company & System Profiles At Risk</div>
             <ul class="intelligence-bullet-list">
                 {% for p in enrichment.applicable_profiles %}
                 <li>{{ p }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <div style="margin-bottom: 1rem;">
-            <div class="intelligence-section-subtitle">Early Warning Indicators & Exposure Conditions</div>
-            <ul class="intelligence-bullet-list">
-                {% for w in enrichment.early_warning_indicators %}
-                <li>{{ w }}</li>
                 {% endfor %}
             </ul>
         </div>
@@ -227,44 +490,8 @@
             </div>
             {% endfor %}
         </div>
+        {% endif %}
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
-            <div>
-                <div class="intelligence-section-subtitle">Detection & Continuous Monitoring</div>
-                <ul class="intelligence-bullet-list">
-                    {% for d in enrichment.detection_mechanisms %}
-                    <li>{{ d }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div>
-                <div class="intelligence-section-subtitle">Incident Response & Recovery Actions</div>
-                <ul class="intelligence-bullet-list">
-                    {% for r in enrichment.incident_response_actions %}
-                    <li>{{ r }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
-            <div>
-                <div class="intelligence-section-subtitle">Suggested Accountable Functions</div>
-                <ul class="intelligence-bullet-list">
-                    {% for f in enrichment.responsible_functions %}
-                    <li>{{ f }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div>
-                <div class="intelligence-section-subtitle">Practical Control-Validation Steps</div>
-                <ul class="intelligence-bullet-list">
-                    {% for v in enrichment.validation_methods %}
-                    <li>{{ v }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
     </div>
     {% else %}
     <div class="honest-unconfigured-state">
@@ -275,6 +502,7 @@
     </div>
     {% endif %}
 </div>
+
 
 <!-- SECTION 4: EPISTEMIC CLAIMS & EVIDENTIARY AUDIT TRAIL -->
 <section class="epistemic-section" aria-labelledby="epistemic-heading">

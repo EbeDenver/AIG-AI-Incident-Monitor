@@ -1,0 +1,79 @@
+[
+  {
+    "category_key": "SAFETY",
+    "display_name": "Operational & Physical Safety",
+    "short_label": "Safety",
+    "icon": "\u26a0\ufe0f",
+    "text_symbol": "[SAFETY]",
+    "description": "Autonomous physical failures, transportation collisions, medical robotics, and operational halts.",
+    "border_hex": "#D97706",
+    "bg_hex": "#FEF3C7",
+    "text_hex": "#78350F"
+  },
+  {
+    "category_key": "RIGHTS",
+    "display_name": "Civil Rights & Human Harm",
+    "short_label": "Rights",
+    "icon": "\u2696\ufe0f",
+    "text_symbol": "[RIGHTS]",
+    "description": "Algorithmic discrimination, unconstitutional surveillance, biometric bias, and privacy violations.",
+    "border_hex": "#7C3AED",
+    "bg_hex": "#EDE9FE",
+    "text_hex": "#4C1D95"
+  },
+  {
+    "category_key": "CYBERSECURITY",
+    "display_name": "Adversarial & Agentic Cybersecurity",
+    "short_label": "Cybersecurity",
+    "icon": "\ud83d\udee1\ufe0f",
+    "text_symbol": "[CYBER]",
+    "description": "AI-generated malware, autonomous agent exploits, prompt injection worms, and API exfiltration.",
+    "border_hex": "#DC2626",
+    "bg_hex": "#FEE2E2",
+    "text_hex": "#7F1D1D"
+  },
+  {
+    "category_key": "FINANCIAL",
+    "display_name": "Economic & Market Integrity",
+    "short_label": "Financial",
+    "icon": "\ud83d\udcb0",
+    "text_symbol": "[FINANCIAL]",
+    "description": "Algorithmic flash crashes, autonomous trading manipulation, deepfake executive fraud, and labor disruption.",
+    "border_hex": "#059669",
+    "bg_hex": "#D1FAE5",
+    "text_hex": "#064E3B"
+  },
+  {
+    "category_key": "REPUTATIONAL",
+    "display_name": "Information Integrity & Reputational",
+    "short_label": "Reputation",
+    "icon": "\ud83d\udce2",
+    "text_symbol": "[REPUTATION]",
+    "description": "AI hallucinations, deepfakes, mass disinformation campaigns, exam cheating, and academic integrity.",
+    "border_hex": "#0284C7",
+    "bg_hex": "#E0F2FE",
+    "text_hex": "#0C4A6E"
+  },
+  {
+    "category_key": "SYSTEMIC_HAZARD",
+    "display_name": "Frontier & Systemic Hazard",
+    "short_label": "Hazard",
+    "icon": "\ud83c\udf10",
+    "text_symbol": "[HAZARD]",
+    "description": "Near-misses, unconstrained agent feedback loops, catastrophic frontier risks, and supply-chain monoculture.",
+    "border_hex": "#475569",
+    "bg_hex": "#F1F5F9",
+    "text_hex": "#0F172A"
+  },
+  {
+    "category_key": "UNCATEGORIZED",
+    "display_name": "Unclassified Incident",
+    "short_label": "Uncategorized",
+    "icon": "\u2753",
+    "text_symbol": "[UNCATEGORIZED]",
+    "description": "Newly ingested records pending classification review.",
+    "border_hex": "#9CA3AF",
+    "bg_hex": "#F3F4F6",
+    "text_hex": "#1F2937"
+  }
+]

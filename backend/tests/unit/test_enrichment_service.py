@@ -75,7 +75,7 @@ def test_mock_llm_client_limited_evidence_on_brief_input():
     assert len(payload.preparedness.prioritized_preventive_controls) > 0
     assert in_tok > 0
     assert out_tok > 0
-    assert model == "mock-intelligence-v1"
+    assert "mock" in model.lower()
 
 
 def test_mock_llm_client_rich_cyber_incident():

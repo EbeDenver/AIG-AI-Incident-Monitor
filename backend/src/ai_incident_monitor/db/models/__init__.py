@@ -7,6 +7,7 @@ from ai_incident_monitor.db.models.causality import (
 )
 from ai_incident_monitor.db.models.claim import ClaimRecordModel
 from ai_incident_monitor.db.models.common import TimestampMixin
+from ai_incident_monitor.db.models.compliance import EUAIActComplianceAssessmentModel
 from ai_incident_monitor.db.models.editorial import (
     EditorialDossierEntryModel,
     EditorialDossierModel,
@@ -51,6 +52,7 @@ __all__ = [
     "EditorialDossierEntryModel",
     "EditorialDossierModel",
     "EditorialDossierReviewModel",
+    "EUAIActComplianceAssessmentModel",
     "EULegalRelevanceScreenModel",
     "EUScreenRuleTraceModel",
     "EvidenceRecordModel",

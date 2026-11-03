@@ -42,9 +42,16 @@ class IncidentEnrichmentModel(Base, TimestampMixin):
     content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     cache_key: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
 
+    assessment_status: Mapped[str] = mapped_column(
+        String(30), nullable=False, default="COMPLETE"
+    )  # COMPLETE, PARTIAL, ADVISORY_REVIEW
+
     evidence_sufficiency: Mapped[str] = mapped_column(
         String(30), nullable=False, default="LIMITED_EVIDENCE"
     )  # COMPLETE, PARTIAL, LIMITED_EVIDENCE
+
+    # Full serialized IncidentEnrichmentDossier payload
+    payload_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Factual Explanation components
     executive_summary: Mapped[str] = mapped_column(Text, nullable=False, default="")
