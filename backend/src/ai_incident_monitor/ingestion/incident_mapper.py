@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import date, datetime, timezone
 import email.utils
 import hashlib
+import json
 import re
 from typing import Optional, Tuple
 import uuid
@@ -21,6 +22,7 @@ from ai_incident_monitor.db.models.incident import IncidentModel
 from ai_incident_monitor.db.models.source import SourceReferenceModel
 from ai_incident_monitor.deduplication.engine import DeduplicationEngine
 from ai_incident_monitor.domain.identifiers import new_claim_id, new_evidence_id, new_source_id
+from ai_incident_monitor.domain.taxonomy import classify_incident_category
 from ai_incident_monitor.domain.vocabularies import (
     AccessStatus,
     ClaimMateriality,
@@ -159,11 +161,23 @@ class IngestionIncidentMapper:
         inc_suffix = uuid.uuid4().hex[:6].upper()
         incident_id = f"INC-{year_str}-{inc_suffix}"
 
+        # Classify category using source tags, level, and text heuristics
+        raw_tags = item.raw_item_dict.get("tags", []) if isinstance(item.raw_item_dict, dict) else []
+        raw_level = item.raw_item_dict.get("level") if isinstance(item.raw_item_dict, dict) else None
+        cat_enum, matched_tags = classify_incident_category(
+            item.title,
+            item.summary_snippet,
+            source_tags=raw_tags,
+            level=raw_level,
+        )
+
         incident = IncidentModel(
             id=incident_id,
             title=item.title[:255],
             summary=item.summary_snippet,
             status="NEW",
+            primary_category=cat_enum.value,
+            category_tags=json.dumps(matched_tags),
             incident_date_precision=date_precision,
             incident_exact_date=exact_date,
             incident_date_year=year,

@@ -987,3 +987,308 @@ body {
     border-radius: 4px;
     font-size: 0.85rem;
 }
+
+/* ==========================================================================
+   Accessible Category Taxonomy Badges (WCAG 2.1 AA Compliant - Min 4.5:1)
+   Invariant: Never color alone. Always paired with explicit text and symbol.
+   ========================================================================== */
+.badge-category {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    line-height: 1.2;
+    white-space: nowrap;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.badge-cat-safety {
+    background-color: #FEF3C7;
+    border-color: #D97706;
+    color: #78350F;
+}
+
+.badge-cat-rights {
+    background-color: #EDE9FE;
+    border-color: #7C3AED;
+    color: #4C1D95;
+}
+
+.badge-cat-cybersecurity {
+    background-color: #FEE2E2;
+    border-color: #DC2626;
+    color: #7F1D1D;
+}
+
+.badge-cat-financial {
+    background-color: #D1FAE5;
+    border-color: #059669;
+    color: #064E3B;
+}
+
+.badge-cat-reputational {
+    background-color: #E0F2FE;
+    border-color: #0284C7;
+    color: #0C4A6E;
+}
+
+.badge-cat-systemic_hazard {
+    background-color: #F1F5F9;
+    border-color: #475569;
+    color: #0F172A;
+}
+
+.badge-cat-uncategorized {
+    background-color: #F3F4F6;
+    border-color: #9CA3AF;
+    color: #1F2937;
+}
+
+/* Severity Badges (Orthogonal to Category) */
+.badge-severity {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 3px;
+    letter-spacing: 0.02em;
+}
+
+.badge-sev-critical {
+    background-color: #991B1B;
+    color: #FFFFFF;
+}
+
+.badge-sev-high {
+    background-color: #C2410C;
+    color: #FFFFFF;
+}
+
+.badge-sev-medium {
+    background-color: #D97706;
+    color: #111827;
+}
+
+.badge-sev-low {
+    background-color: #2563EB;
+    color: #FFFFFF;
+}
+
+.badge-sev-negligible {
+    background-color: #4B5563;
+    color: #FFFFFF;
+}
+
+.badge-sev-unassessed {
+    background-color: #F3F4F6;
+    border: 1px solid #D1D5DB;
+    color: #4B5563;
+}
+
+/* Enrichment Status Badges */
+.badge-enrichment {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    border: 1px solid transparent;
+}
+
+.badge-enr-completed {
+    background-color: #DCFCE7;
+    border-color: #22C55E;
+    color: #166534;
+}
+
+.badge-enr-pending {
+    background-color: #FEF9C3;
+    border-color: #EAB308;
+    color: #854D0E;
+}
+
+.badge-enr-running {
+    background-color: #DBEAFE;
+    border-color: #3B82F6;
+    color: #1E40AF;
+}
+
+.badge-enr-failed {
+    background-color: #FEE2E2;
+    border-color: #EF4444;
+    color: #991B1B;
+}
+
+/* Category Legend in Explorer */
+.category-legend-box {
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    background-color: #F8FAFC;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+}
+
+.category-legend-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.category-legend-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem 1.25rem;
+    align-items: center;
+}
+
+.category-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+}
+
+.category-legend-desc {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+}
+
+/* Incident Cards / Enhanced Table Rows */
+.cell-summary-snippet {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin-top: 0.35rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.cell-attribution-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+/* AI Intelligence & Defense Guidance Cards */
+.ai-intelligence-card {
+    border-left: 4px solid #4F46E5;
+    background: linear-gradient(to bottom, #FAFAFE, #FFFFFF);
+    margin-bottom: 1.5rem;
+}
+
+.ai-card-badge {
+    background-color: #EEF2FF;
+    border: 1px solid #6366F1;
+    color: #3730A3;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.preparedness-card {
+    border-left: 4px solid #059669;
+    background: linear-gradient(to bottom, #F6FDF9, #FFFFFF);
+    margin-bottom: 1.5rem;
+}
+
+.prep-card-badge {
+    background-color: #ECFDF5;
+    border: 1px solid #10B981;
+    color: #065F46;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.intelligence-section-subtitle {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 1rem;
+    margin-bottom: 0.35rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.intelligence-bullet-list {
+    margin: 0.25rem 0 0.85rem 1.25rem;
+    padding: 0;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--text-primary);
+}
+
+.intelligence-bullet-list li {
+    margin-bottom: 0.35rem;
+}
+
+.guidance-priority-item {
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 6px;
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+.guidance-priority-badge {
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: #047857;
+    margin-right: 0.4rem;
+}
+
+.model-audit-footer {
+    margin-top: 1.25rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--border-subtle);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.honest-unconfigured-state {
+    padding: 1.5rem;
+    background-color: #F8FAFC;
+    border: 1px dashed #CBD5E1;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.honest-unconfigured-title {
+    font-weight: 700;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.honest-unconfigured-desc {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto;
+}

@@ -95,3 +95,9 @@ validate-launchd-plist:
 
 run:
 	$(PYTHON) -m ai_incident_monitor.ui.cli
+
+enrich-backfill:
+	$(PYTHON) -m ai_incident_monitor.intelligence.backfill --limit 10
+
+enrich-backfill-dry-run:
+	$(PYTHON) -m ai_incident_monitor.intelligence.backfill --limit 10 --dry-run

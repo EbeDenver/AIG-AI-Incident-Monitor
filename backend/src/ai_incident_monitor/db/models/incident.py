@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from ai_incident_monitor.db.models.causality import AIInvolvementAssessmentModel
     from ai_incident_monitor.db.models.claim import ClaimRecordModel
     from ai_incident_monitor.db.models.editorial import EditorialDossierEntryModel
+    from ai_incident_monitor.db.models.enrichment import IncidentEnrichmentModel
     from ai_incident_monitor.db.models.governance import (
         EULegalRelevanceScreenModel,
         IncidentFrameworkMappingModel,
@@ -32,6 +33,12 @@ class IncidentModel(Base, TimestampMixin):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     summary: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="UNDER_INVESTIGATION")
+
+    # Category taxonomy and tags (ADR-002: Orthogonal to severity)
+    primary_category: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="UNCATEGORIZED", index=True
+    )
+    category_tags: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Date with precision modeling (Unknown is not coerced to zero / arbitrary dates)
     incident_date_precision: Mapped[str] = mapped_column(
@@ -81,4 +88,10 @@ class IncidentModel(Base, TimestampMixin):
     editorial_entries: Mapped[list[EditorialDossierEntryModel]] = relationship(
         "EditorialDossierEntryModel",
         back_populates="incident",
+    )
+    enrichment: Mapped[Optional[IncidentEnrichmentModel]] = relationship(
+        "IncidentEnrichmentModel",
+        back_populates="incident",
+        uselist=False,
+        cascade="all, delete-orphan",
     )

@@ -3,39 +3,76 @@
 {% block title %}Incident {{ incident.id }} — AI Incident Monitor{% endblock %}
 
 {% block content %}
-<div class="breadcrumb">
-    <a href="/incidents">&larr; Back to Incidents List</a>
+<div class="breadcrumb" style="margin-bottom: 1rem;">
+    <a href="/incidents">&larr; Back to Incidents Explorer</a>
 </div>
 
-<div class="card incident-overview-card">
-    <div class="incident-header">
-        <div class="incident-titles">
-            <span class="incident-id-badge"><code>{{ incident.id }}</code></span>
-            <h1 class="incident-title">{{ incident.title }}</h1>
+<!-- SECTION 1: INCIDENT OVERVIEW & CLASSIFICATION -->
+<div class="card incident-overview-card" style="margin-bottom: 1.5rem;">
+    <div class="incident-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+        <div class="incident-titles" style="flex: 1; min-width: 300px;">
+            <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;">
+                <span class="incident-id-badge"><code>{{ incident.id }}</code></span>
+                <span class="badge badge-category {{ category_meta.css_class }}">
+                    <span>{{ category_meta.icon }}</span>
+                    <span>{{ category_meta.display_name }}</span>
+                </span>
+                <span class="badge badge-status badge-{{ incident.status.lower() }}">
+                    [{{ incident.status }}]
+                </span>
+            </div>
+            <h1 class="incident-title" style="font-size: 1.6rem; font-weight: 700; line-height: 1.3; margin: 0.25rem 0;">
+                {{ incident.title }}
+            </h1>
         </div>
-        <div class="incident-status-area">
-            <span class="badge badge-status badge-{{ incident.status.lower() }}">
-                [{{ incident.status }}]
+        <div class="incident-status-area" style="text-align: right;">
+            {% if severity %}
+            <div style="margin-bottom: 0.25rem;">
+                <span class="badge badge-severity badge-sev-{{ severity.actual_tier.lower() }}">
+                    SEVERITY: {{ severity.actual_tier }} (Score: {{ severity.actual_normalized_score or 0 }}/100)
+                </span>
+            </div>
+            {% else %}
+            <div style="margin-bottom: 0.25rem;">
+                <span class="badge badge-severity badge-sev-unassessed">
+                    SEVERITY: [Not assessed]
+                </span>
+            </div>
+            {% endif %}
+
+            {% if enrichment and enrichment.status == 'COMPLETED' %}
+            <span class="badge badge-enrichment badge-enr-completed">
+                ✓ AI Analysis Generated
+            </span>
+            {% else %}
+            <span class="badge badge-enrichment badge-enr-pending">
+                ○ AI Analysis Pending
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="meta-grid" style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-subtle);">
+        <div class="meta-item">
+            <span class="meta-label">Event Date:</span>
+            <span class="meta-value">
+                <strong>{{ incident.incident_exact_date or incident.incident_date_year or 'Unknown' }}</strong>
+                ({{ incident.incident_date_precision }})
             </span>
         </div>
-    </div>
-
-    <div class="incident-summary-box">
-        <h2 class="section-title">Incident Summary</h2>
-        <p class="summary-text">{{ incident.summary }}</p>
-    </div>
-
-    <div class="meta-grid">
         <div class="meta-item">
-            <span class="meta-label">Date Precision:</span>
-            <span class="meta-value">{{ incident.incident_date_precision }}</span>
+            <span class="meta-label">Primary Source:</span>
+            <span class="meta-value">
+                {% if primary_source %}
+                <em>{{ primary_source.publisher }}</em>
+                {% if primary_source.source_url %}
+                &bull; <a href="{{ primary_source.source_url }}" target="_blank" rel="noopener noreferrer" class="external-link">Original Source &nearr;</a>
+                {% endif %}
+                {% else %}
+                Syndicated AI Safety Feed
+                {% endif %}
+            </span>
         </div>
-        {% if severity %}
-        <div class="meta-item">
-            <span class="meta-label">AIG-ISI Severity:</span>
-            <span class="meta-value"><strong>{{ severity.severity_tier }}</strong> (Score: {{ severity.composite_score }}/100)</span>
-        </div>
-        {% endif %}
         {% if eu_screen %}
         <div class="meta-item">
             <span class="meta-label">EU AI Act Screen:</span>
@@ -43,13 +80,210 @@
         </div>
         {% endif %}
     </div>
+
+    <!-- What Happened & Raw Ingested Description -->
+    <div class="incident-summary-box" style="margin-top: 1.25rem; background-color: var(--bg-primary); padding: 1rem; border-radius: 6px; border: 1px solid var(--border-subtle);">
+        <h2 class="section-title" style="font-size: 0.95rem; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.5rem;">
+            Primary Ingested Report & Source Description
+        </h2>
+        <p class="summary-text" style="font-size: 0.95rem; line-height: 1.6; color: var(--text-primary); margin: 0;">
+            {{ incident.summary }}
+        </p>
+    </div>
 </div>
 
+<!-- SECTION 2: EXPLICITLY LABELED AI-GENERATED INCIDENT ANALYSIS -->
+<div class="card ai-intelligence-card" style="padding: 1.25rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="ai-card-badge">AI-Generated Analysis</span>
+            <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0; color: #1E1B4B;">
+                Incident Breakdown & Causal Synthesis
+            </h2>
+        </div>
+        {% if enrichment and enrichment.status == 'COMPLETED' %}
+        <span class="badge badge-subtle" style="font-size: 0.75rem;">
+            Sufficiency: <strong>{{ enrichment.evidence_sufficiency }}</strong>
+        </span>
+        {% endif %}
+    </div>
+
+    {% if enrichment and enrichment.status == 'COMPLETED' %}
+    <div class="intelligence-content">
+        <div style="margin-bottom: 1rem;">
+            <div class="intelligence-section-subtitle">Executive Summary</div>
+            <p style="font-size: 0.92rem; line-height: 1.6; color: var(--text-primary); margin: 0.25rem 0;">
+                {{ enrichment.executive_summary }}
+            </p>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <div class="intelligence-section-subtitle">Chronological Narrative of Events</div>
+            <ul class="intelligence-bullet-list">
+                {% for item in enrichment.event_chronology %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <div class="intelligence-section-subtitle">Specific Role of AI System</div>
+            <p style="font-size: 0.92rem; line-height: 1.6; color: var(--text-primary); margin: 0.25rem 0;">
+                {{ enrichment.ai_system_role }}
+            </p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+            <div>
+                <div class="intelligence-section-subtitle">Affected Stakeholders</div>
+                <ul class="intelligence-bullet-list">
+                    {% for s in enrichment.affected_stakeholders %}
+                    <li>{{ s }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div>
+                <div class="intelligence-section-subtitle">Documented Consequences</div>
+                <ul class="intelligence-bullet-list">
+                    {% for c in enrichment.documented_consequences %}
+                    <li>{{ c }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div>
+            <div class="intelligence-section-subtitle">Identified Technical Unknowns & Disputes</div>
+            <ul class="intelligence-bullet-list">
+                {% for u in enrichment.unknowns_and_disputes %}
+                <li>{{ u }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        {% if enrichment.evidence_limitations %}
+        <div style="margin-top: 0.75rem; padding: 0.65rem 0.85rem; background-color: #FEF2F2; border-left: 3px solid #EF4444; border-radius: 4px; font-size: 0.85rem; color: #991B1B;">
+            <strong>Evidence Limitations:</strong> {{ enrichment.evidence_limitations }}
+        </div>
+        {% endif %}
+
+        <!-- Model Audit Metadata Footer (AUD-005, OPS-004) -->
+        <div class="model-audit-footer">
+            <span>Model: <strong>{{ enrichment.model_name }}</strong></span>
+            <span>Prompt: <code>v{{ enrichment.prompt_version }}</code></span>
+            <span>Digest: <code>{{ enrichment.prompt_digest[:12] }}...</code></span>
+            <span>Tokens: {{ enrichment.token_count_input }} in / {{ enrichment.token_count_output }} out</span>
+            <span>Latency: {{ enrichment.latency_seconds }}s</span>
+            <span>Est. Cost: ${{ "%.6f"|format(enrichment.estimated_cost_usd) }} USD</span>
+        </div>
+    </div>
+    {% else %}
+    <div class="honest-unconfigured-state">
+        <div class="honest-unconfigured-title">AI Analysis Not Generated — LLM Configuration Required</div>
+        <p class="honest-unconfigured-desc">
+            This incident record has been deterministically ingested and classified, but structured LLM synthesis has not been executed yet. Run <code>make enrich-backfill</code> or refresh via the ingestion service to generate evidence-grounded analysis.
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- SECTION 3: EXPLICITLY LABELED PRACTICAL COMPANY PREPAREDNESS GUIDANCE -->
+<div class="card preparedness-card" style="padding: 1.25rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="prep-card-badge">Defense Guidance</span>
+            <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0; color: #064E3B;">
+                Practical Organizational Preparedness & Risk Controls
+            </h2>
+        </div>
+    </div>
+
+    {% if enrichment and enrichment.status == 'COMPLETED' %}
+    <div class="preparedness-content">
+        <div style="margin-bottom: 1rem;">
+            <div class="intelligence-section-subtitle">Target Company & System Profiles At Risk</div>
+            <ul class="intelligence-bullet-list">
+                {% for p in enrichment.applicable_profiles %}
+                <li>{{ p }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <div class="intelligence-section-subtitle">Early Warning Indicators & Exposure Conditions</div>
+            <ul class="intelligence-bullet-list">
+                {% for w in enrichment.early_warning_indicators %}
+                <li>{{ w }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <div class="intelligence-section-subtitle">Prioritized Preventive Controls</div>
+            {% for ctrl in enrichment.preventive_controls %}
+            <div class="guidance-priority-item">
+                <span class="guidance-priority-badge">[CONTROL #{{ loop.index }}]</span>
+                {{ ctrl }}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+            <div>
+                <div class="intelligence-section-subtitle">Detection & Continuous Monitoring</div>
+                <ul class="intelligence-bullet-list">
+                    {% for d in enrichment.detection_mechanisms %}
+                    <li>{{ d }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div>
+                <div class="intelligence-section-subtitle">Incident Response & Recovery Actions</div>
+                <ul class="intelligence-bullet-list">
+                    {% for r in enrichment.incident_response_actions %}
+                    <li>{{ r }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+            <div>
+                <div class="intelligence-section-subtitle">Suggested Accountable Functions</div>
+                <ul class="intelligence-bullet-list">
+                    {% for f in enrichment.responsible_functions %}
+                    <li>{{ f }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div>
+                <div class="intelligence-section-subtitle">Practical Control-Validation Steps</div>
+                <ul class="intelligence-bullet-list">
+                    {% for v in enrichment.validation_methods %}
+                    <li>{{ v }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="honest-unconfigured-state">
+        <div class="honest-unconfigured-title">Company Preparedness Guidance Pending Model Execution</div>
+        <p class="honest-unconfigured-desc">
+            Practical defense controls, warning indicators, and testing recommendations will appear here once the intelligence enrichment cycle runs for this incident dossier.
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- SECTION 4: EPISTEMIC CLAIMS & EVIDENTIARY AUDIT TRAIL -->
 <section class="epistemic-section" aria-labelledby="epistemic-heading">
-    <h2 id="epistemic-heading" class="section-heading">Epistemic Claims Breakdown (Constitutional Rules 1–4)</h2>
+    <h2 id="epistemic-heading" class="section-heading" style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem;">
+        Epistemic Claims Breakdown (Constitutional Rules 1–4)
+    </h2>
 
     <!-- 1. Confirmed Facts -->
-    <div class="card claim-category-card fact-card">
+    <div class="card claim-category-card fact-card" style="margin-bottom: 1rem;">
         <div class="claim-category-header">
             <h3 class="category-title">🔵 Confirmed Facts ({{ facts|length }})</h3>
             <span class="category-desc">Independently corroborated statements with direct evidence linkage.</span>
@@ -94,7 +328,7 @@
     </div>
 
     <!-- 2. Attributed Allegations -->
-    <div class="card claim-category-card allegation-card">
+    <div class="card claim-category-card allegation-card" style="margin-bottom: 1rem;">
         <div class="claim-category-header">
             <h3 class="category-title">🟡 Attributed Allegations ({{ allegations|length }})</h3>
             <span class="category-desc">Reported assertions attributed to specific sources, not independently verified.</span>
@@ -135,7 +369,7 @@
     </div>
 
     <!-- 3. Technical Uncertainties -->
-    <div class="card claim-category-card uncertainty-card">
+    <div class="card claim-category-card uncertainty-card" style="margin-bottom: 1rem;">
         <div class="claim-category-header">
             <h3 class="category-title">⚪ Technical Uncertainties & Unknowns ({{ uncertainties|length }})</h3>
             <span class="category-desc">Explicit epistemic gaps where facts are unverified or unknown.</span>

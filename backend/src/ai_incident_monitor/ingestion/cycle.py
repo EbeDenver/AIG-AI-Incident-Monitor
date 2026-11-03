@@ -342,6 +342,16 @@ def run_ingestion_cycle(
 
             summary.sources.append(src_summary)
 
+        # 3.5 Bounded Automatic Intelligence Enrichment for newly ingested incidents
+        if not dry_run and summary.sources:
+            try:
+                from ai_incident_monitor.intelligence.service import EnrichmentService
+                enrich_service = EnrichmentService()
+                with Session(engine) as enrich_session:
+                    enrich_service.enrich_batch(enrich_session, limit=10)
+            except Exception as enr_exc:
+                logger.warning(f"Automatic intelligence enrichment encountered non-fatal error: {enr_exc}")
+
         # 4. Synthesize overall outcome
         summary.finished_at_utc = datetime.now(timezone.utc).isoformat()
         summary.duration_seconds = round(time.time() - start_time, 3)

@@ -6,7 +6,7 @@
 <div class="page-header">
     <div class="header-titles">
         <h1 class="page-title">Incidents Explorer</h1>
-        <p class="page-description">Browse and inspect ingested AI safety incidents, factual assertions, and primary sources.</p>
+        <p class="page-description">Browse, filter, and inspect ingested AI safety incidents, risk taxonomies, and evidence-grounded intelligence.</p>
     </div>
     <div class="header-actions">
         <form method="POST" action="/diagnostics/refresh" class="inline-form">
@@ -18,8 +18,36 @@
     </div>
 </div>
 
+<!-- Category Taxonomy Legend (WCAG 2.1 AA Compliant - Never Color Alone) -->
+<div class="card category-legend-box" aria-label="Incident Category Legend">
+    <div class="category-legend-title">Risk Taxonomy Legend (Accessible Category Standards)</div>
+    <div class="category-legend-grid">
+        {% for cat in categories %}
+        <div class="category-legend-item">
+            <span class="badge badge-category {{ cat.css_class }}">
+                <span>{{ cat.icon }}</span>
+                <span>{{ cat.short_label }}</span>
+            </span>
+            <span class="category-legend-desc">{{ cat.description }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Search & Filtering Card -->
 <div class="card filter-card">
-    <form method="GET" action="/incidents" class="filter-form">
+    <form method="GET" action="/incidents" class="filter-form" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;">
+        <div class="filter-group">
+            <label for="category-select" class="form-label">Category Filter:</label>
+            <select id="category-select" name="category" class="form-control form-select">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                <option value="{{ cat.category.value }}" {% if category_filter == cat.category.value %}selected{% endif %}>
+                    {{ cat.icon }} {{ cat.display_name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
         <div class="filter-group">
             <label for="status-select" class="form-label">Status Filter:</label>
             <select id="status-select" name="status" class="form-control form-select">
@@ -30,39 +58,96 @@
                 <option value="DISMISSED" {% if status_filter == 'DISMISSED' %}selected{% endif %}>DISMISSED</option>
             </select>
         </div>
-        <div class="filter-actions">
-            <button type="submit" class="btn btn-secondary">Apply Filter</button>
-            {% if status_filter %}
+        <div class="filter-actions" style="display: flex; gap: 0.5rem;">
+            <button type="submit" class="btn btn-secondary">Apply Filters</button>
+            {% if status_filter or category_filter %}
             <a href="/incidents" class="btn btn-link">Reset</a>
             {% endif %}
         </div>
     </form>
 </div>
 
+<!-- Incidents Table Card -->
 <div class="card table-card">
     {% if incidents %}
     <div class="table-responsive">
         <table class="data-table" aria-label="Incident Records">
             <thead>
                 <tr>
-                    <th scope="col">Incident ID</th>
-                    <th scope="col">Title</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Claims</th>
-                    <th scope="col">Actions</th>
+                    <th scope="col" style="width: 140px;">Incident ID</th>
+                    <th scope="col">Title & Available Description</th>
+                    <th scope="col" style="width: 140px;">Category</th>
+                    <th scope="col" style="width: 130px;">AIG-ISI Severity</th>
+                    <th scope="col" style="width: 150px;">Attribution & Date</th>
+                    <th scope="col" style="width: 130px;">AI Analysis</th>
+                    <th scope="col" style="width: 90px;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for inc in incidents %}
                 <tr>
-                    <td class="cell-mono"><code>{{ inc.id }}</code></td>
-                    <td class="cell-title">{{ inc.title }}</td>
+                    <td class="cell-mono">
+                        <code>{{ inc.id }}</code>
+                        <div style="margin-top: 0.25rem;">
+                            <span class="badge badge-status badge-{{ inc.status.lower() }}">
+                                [{{ inc.status }}]
+                            </span>
+                        </div>
+                    </td>
+                    <td class="cell-title">
+                        <a href="/incidents/{{ inc.id }}" style="font-weight: 600; color: var(--text-primary); text-decoration: none;">
+                            {{ inc.title }}
+                        </a>
+                        {% if inc.summary %}
+                        <div class="cell-summary-snippet" title="{{ inc.summary }}">
+                            {{ inc.summary }}
+                        </div>
+                        {% endif %}
+                    </td>
                     <td>
-                        <span class="badge badge-status badge-{{ inc.status.lower() }}">
-                            [{{ inc.status }}]
+                        <span class="badge badge-category {{ inc.category_meta.css_class }}" title="{{ inc.category_meta.description }}">
+                            <span>{{ inc.category_meta.icon }}</span>
+                            <span>{{ inc.category_meta.short_label }}</span>
                         </span>
                     </td>
-                    <td>{{ claim_counts.get(inc.id, 0) }} claims</td>
+                    <td>
+                        {% if inc.severity_tier and inc.severity_tier != 'NOT_ASSESSED' %}
+                        <span class="badge badge-severity badge-sev-{{ inc.severity_tier.lower() }}">
+                            [{{ inc.severity_tier }}]
+                        </span>
+                        {% else %}
+                        <span class="badge badge-severity badge-sev-unassessed">
+                            [Not assessed]
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="font-size: 0.8rem; font-weight: 500;">
+                            {{ inc.event_date }}
+                        </div>
+                        <div class="cell-attribution-meta" title="{{ inc.publisher }}">
+                            {{ inc.publisher }}
+                        </div>
+                    </td>
+                    <td>
+                        {% if inc.enrichment_status == 'COMPLETED' %}
+                        <span class="badge badge-enrichment badge-enr-completed">
+                            ✓ Enriched
+                        </span>
+                        {% elif inc.enrichment_status == 'RUNNING' %}
+                        <span class="badge badge-enrichment badge-enr-running">
+                            ⟳ Running
+                        </span>
+                        {% elif inc.enrichment_status == 'FAILED' %}
+                        <span class="badge badge-enrichment badge-enr-failed">
+                            ✗ Failed
+                        </span>
+                        {% else %}
+                        <span class="badge badge-enrichment badge-enr-pending">
+                            ○ Pending
+                        </span>
+                        {% endif %}
+                    </td>
                     <td>
                         <a href="/incidents/{{ inc.id }}" class="btn btn-sm btn-primary">Inspect</a>
                     </td>
@@ -77,8 +162,12 @@
             Showing Page {{ page }} of {{ total_pages }} ({{ total_items }} total records)
         </div>
         <div class="pagination-controls">
+            {% set filter_params = "" %}
+            {% if status_filter %}{% set filter_params = filter_params + "&status=" + status_filter %}{% endif %}
+            {% if category_filter %}{% set filter_params = filter_params + "&category=" + category_filter %}{% endif %}
+
             {% if page > 1 %}
-            <a href="/incidents?page={{ page - 1 }}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn btn-sm btn-secondary">&laquo; Previous</a>
+            <a href="/incidents?page={{ page - 1 }}{{ filter_params }}" class="btn btn-sm btn-secondary">&laquo; Previous</a>
             {% else %}
             <span class="btn btn-sm btn-disabled" aria-disabled="true">&laquo; Previous</span>
             {% endif %}
@@ -86,7 +175,7 @@
             <span class="pagination-current" aria-current="page">{{ page }}</span>
 
             {% if page < total_pages %}
-            <a href="/incidents?page={{ page + 1 }}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn btn-sm btn-secondary">Next &raquo;</a>
+            <a href="/incidents?page={{ page + 1 }}{{ filter_params }}" class="btn btn-sm btn-secondary">Next &raquo;</a>
             {% else %}
             <span class="btn btn-sm btn-disabled" aria-disabled="true">Next &raquo;</span>
             {% endif %}

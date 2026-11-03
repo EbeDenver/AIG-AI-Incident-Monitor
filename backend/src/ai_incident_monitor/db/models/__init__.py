@@ -12,6 +12,7 @@ from ai_incident_monitor.db.models.editorial import (
     EditorialDossierModel,
     EditorialDossierReviewModel,
 )
+from ai_incident_monitor.db.models.enrichment import IncidentEnrichmentModel
 from ai_incident_monitor.db.models.evidence import (
     ClaimEvidenceLinkModel,
     EvidenceRecordModel,
@@ -57,6 +58,7 @@ __all__ = [
     "FrameworkReferenceSetModel",
     "GovernanceAuditLogModel",
     "HumanReviewRecordModel",
+    "IncidentEnrichmentModel",
     "IncidentFrameworkMappingModel",
     "IncidentModel",
     "MappingEvidenceLinkModel",
