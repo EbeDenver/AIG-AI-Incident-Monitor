@@ -76,9 +76,9 @@ def get_claude_model() -> str:
 
 
 def get_gemini_model() -> str:
-    """Resolve Google Gemini model ID (default: gemini-2.5-pro, stable)."""
+    """Resolve Google Gemini model ID (default: gemini-3.1-pro-preview, active Pro model)."""
     load_env_file()
-    return os.getenv("GEMINI_MODEL") or os.getenv("AI_MONITOR_GEMINI_MODEL") or "gemini-2.5-pro"
+    return os.getenv("GEMINI_MODEL") or os.getenv("AI_MONITOR_GEMINI_MODEL") or "gemini-3.1-pro-preview"
 
 
 def get_pilot_budget_cap_usd() -> float:

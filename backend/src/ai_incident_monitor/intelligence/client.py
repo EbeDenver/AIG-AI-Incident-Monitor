@@ -763,8 +763,8 @@ class GeminiLLMClient(BaseLLMClient):
 
     Strictly satisfies:
     - Zero secret leakage in logs, headers, or exception text.
-    - JSON schema enforcement via response_schema / response_mime_type.
-    - Stable Gemini Pro model: gemini-2.5-pro.
+    - JSON schema enforcement via response_schema / response_mime_type using google-genai SDK.
+    - Active Gemini Pro model: gemini-3.1-pro-preview.
     - Rates: $1.25/1M input tokens, $10.00/1M output tokens.
     - Stage 3 independent application validation.
     """
@@ -785,7 +785,7 @@ class GeminiLLMClient(BaseLLMClient):
         self.validator = EnrichmentValidator()
 
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
-        """Pricing basis for Gemini 2.5 Pro: $1.25 / 1M input, $10.00 / 1M output."""
+        """Pricing basis for Gemini Pro: $1.25 / 1M input, $10.00 / 1M output."""
         return round((input_tokens * 0.00000125) + (output_tokens * 0.00001000), 6)
 
     def generate_dossier(
@@ -799,69 +799,117 @@ class GeminiLLMClient(BaseLLMClient):
         evidence_package: Sequence[ProvenanceItem],
     ) -> tuple[IncidentEnrichmentDossier, int, int, float, str]:
         start_time = time.time()
-        endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_name}:generateContent"
-
-        schema = IncidentEnrichmentDossier.model_json_schema()
-        request_body = {
-            "contents": [
-                {
-                    "parts": [
-                        {"text": prompt}
-                    ]
-                }
-            ],
-            "generationConfig": {
-                "temperature": 0.1,
-                "response_mime_type": "application/json",
-                "response_schema": schema,
-            },
-        }
-
-        data_bytes = json.dumps(request_body).encode("utf-8")
-        req = urllib.request.Request(
-            endpoint,
-            data=data_bytes,
-            headers={
-                "Content-Type": "application/json",
-                "x-goog-api-key": self.api_key,
-            },
-            method="POST",
-        )
+        raw_dossier: Optional[IncidentEnrichmentDossier] = None
+        in_tok = 0
+        out_tok = 0
 
         try:
-            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-                resp_json = json.loads(resp.read().decode("utf-8"))
+            from google import genai
+            from google.genai import types
 
-            candidates = resp_json.get("candidates", [])
-            if not candidates:
-                raise LLMClientError("Gemini returned empty candidates list.")
-
-            content_parts = candidates[0].get("content", {}).get("parts", [])
-            if not content_parts or "text" not in content_parts[0]:
-                raise LLMClientError("Gemini response missing text part.")
-
-            raw_text = content_parts[0]["text"]
-            raw_dossier = IncidentEnrichmentDossier.model_validate_json(raw_text)
-
-            # Stage 3 Independent Validation
-            certified_dossier = self.validator.validate_and_certify(
-                raw_dossier, evidence_package=evidence_package
+            client = genai.Client(api_key=self.api_key)
+            resp = client.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_PROMPT,
+                    response_mime_type="application/json",
+                    response_schema=IncidentEnrichmentDossier,
+                    temperature=0.1,
+                ),
             )
 
-            usage = resp_json.get("usageMetadata", {})
-            in_tok = usage.get("promptTokenCount", len(prompt.split()) * 2)
-            out_tok = usage.get("candidatesTokenCount", len(raw_text.split()) * 2)
-            elapsed = round(time.time() - start_time, 4)
+            raw_text = resp.text or ""
+            if raw_text.startswith("```"):
+                raw_text = re.sub(r"^```(?:json)?\n?", "", raw_text)
+                raw_text = re.sub(r"\n?```$", "", raw_text).strip()
 
-            return certified_dossier, in_tok, out_tok, elapsed, self.model_name
+            raw_dossier = IncidentEnrichmentDossier.model_validate_json(raw_text)
 
-        except urllib.error.HTTPError as exc:
-            err_msg = f"Gemini HTTP {exc.code}: {exc.reason}"
-            logger.error(f"Gemini API failure: {err_msg}")
-            raise LLMClientError(err_msg) from None
+            if resp.usage_metadata:
+                in_tok = resp.usage_metadata.prompt_token_count or 0
+                out_tok = resp.usage_metadata.candidates_token_count or 0
+                if getattr(resp.usage_metadata, "thoughts_token_count", None):
+                    out_tok += resp.usage_metadata.thoughts_token_count
+
+        except ImportError:
+            # Fallback to standard library urllib if google-genai SDK is absent
+            endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_name}:generateContent"
+            schema = IncidentEnrichmentDossier.model_json_schema()
+            request_body = {
+                "contents": [
+                    {
+                        "parts": [
+                            {"text": prompt}
+                        ]
+                    }
+                ],
+                "systemInstruction": {
+                    "parts": [
+                        {"text": SYSTEM_PROMPT}
+                    ]
+                },
+                "generationConfig": {
+                    "temperature": 0.1,
+                    "response_mime_type": "application/json",
+                    "response_schema": schema,
+                },
+            }
+
+            data_bytes = json.dumps(request_body).encode("utf-8")
+            req = urllib.request.Request(
+                endpoint,
+                data=data_bytes,
+                headers={
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": self.api_key,
+                },
+                method="POST",
+            )
+
+            try:
+                with urllib.request.urlopen(req, timeout=self.timeout) as resp_http:
+                    resp_json = json.loads(resp_http.read().decode("utf-8"))
+
+                candidates = resp_json.get("candidates", [])
+                if not candidates:
+                    raise LLMClientError("Gemini returned empty candidates list.")
+
+                content_parts = candidates[0].get("content", {}).get("parts", [])
+                if not content_parts or "text" not in content_parts[0]:
+                    raise LLMClientError("Gemini response missing text part.")
+
+                raw_text = content_parts[0]["text"]
+                if raw_text.startswith("```"):
+                    raw_text = re.sub(r"^```(?:json)?\n?", "", raw_text)
+                    raw_text = re.sub(r"\n?```$", "", raw_text).strip()
+                raw_dossier = IncidentEnrichmentDossier.model_validate_json(raw_text)
+
+                usage = resp_json.get("usageMetadata", {})
+                in_tok = usage.get("promptTokenCount", len(prompt.split()) * 2)
+                out_tok = usage.get("candidatesTokenCount", len(raw_text.split()) * 2)
+
+            except urllib.error.HTTPError as exc:
+                err_msg = f"Gemini HTTP {exc.code}: {exc.reason}"
+                logger.error(f"Gemini API failure: {err_msg}")
+                raise LLMClientError(err_msg) from None
+            except Exception as exc:
+                logger.error(f"Gemini client invocation failure: {exc}")
+                raise LLMClientError(f"Gemini invocation failed: {exc}") from None
         except Exception as exc:
-            logger.error(f"Gemini client invocation failure: {exc}")
+            logger.error(f"Gemini invocation error: {exc}")
             raise LLMClientError(f"Gemini invocation failed: {exc}") from None
+
+        if not raw_dossier:
+            raise LLMClientError("Gemini response did not produce a valid IncidentEnrichmentDossier.")
+
+        # Stage 3 Independent Validation
+        certified_dossier = self.validator.validate_and_certify(
+            raw_dossier, evidence_package=evidence_package
+        )
+
+        elapsed = round(time.time() - start_time, 4)
+        return certified_dossier, in_tok, out_tok, elapsed, self.model_name
 
 
 # Backward-compatible alias for existing tests if needed

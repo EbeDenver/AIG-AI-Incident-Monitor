@@ -34,6 +34,7 @@ def run_enrichment_backfill(
     *,
     limit: int = 10,
     force: bool = False,
+    replace_mock: bool = False,
     dry_run: bool = False,
     provider: str = "mock",
     incident_id: Optional[str] = None,
@@ -54,10 +55,11 @@ def run_enrichment_backfill(
         else:
             query = select(IncidentModel.id).order_by(IncidentModel.created_at.desc())
             if not force:
-                # Select only incidents that have not yet been successfully enriched
-                completed_subq = select(IncidentEnrichmentModel.incident_id).where(
-                    IncidentEnrichmentModel.status == "COMPLETED"
-                )
+                # Select only incidents that have not yet been successfully enriched with live intelligence
+                completed_conditions = [IncidentEnrichmentModel.status == "COMPLETED"]
+                if replace_mock:
+                    completed_conditions.append(IncidentEnrichmentModel.model_provider != "mock")
+                completed_subq = select(IncidentEnrichmentModel.incident_id).where(*completed_conditions)
                 query = query.where(IncidentModel.id.not_in(completed_subq))
             if limit > 0:
                 query = query.limit(limit)
@@ -68,7 +70,7 @@ def run_enrichment_backfill(
         print(f"================================================================================")
         print(f" Provider:       {provider.upper()}")
         print(f" Model ID:       {model_name}")
-        print(f" Target Records: {len(incident_ids)} (limit={limit}, force={force})")
+        print(f" Target Records: {len(incident_ids)} (limit={limit}, force={force}, replace_mock={replace_mock})")
         print(f" Spending Limit: ${budget_cap:.2f} USD")
         print(f" Dry Run Mode:   {dry_run}")
         print(f"================================================================================\n")
@@ -117,6 +119,7 @@ def run_enrichment_backfill(
                 failed_count += 1
                 break
             except Exception as exc:
+                session.rollback()
                 failed_count += 1
                 print(f"  ✗ {iid} -> EXCEPTION: {exc}")
 
@@ -136,6 +139,12 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Enrich AI incidents with intelligence and defense guidance.")
     parser.add_argument("--limit", type=int, default=10, help="Maximum number of incidents to process.")
     parser.add_argument("--force", action="store_true", help="Force reprocessing even if cached.")
+    parser.add_argument(
+        "--replace-mock",
+        action="store_true",
+        default=False,
+        help="Target records currently containing synthetic mock data to upgrade with live enrichment.",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Simulate without writing to database or calling APIs.")
     parser.add_argument(
         "--provider",
@@ -151,6 +160,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     return run_enrichment_backfill(
         limit=args.limit,
         force=args.force,
+        replace_mock=args.replace_mock,
         dry_run=args.dry_run,
         provider=args.provider,
         incident_id=args.incident_id,

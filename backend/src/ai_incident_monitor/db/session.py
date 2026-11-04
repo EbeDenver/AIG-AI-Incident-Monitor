@@ -66,6 +66,8 @@ def get_engine(
         connect_args = engine_kwargs.pop("connect_args", {})
         if "check_same_thread" not in connect_args:
             connect_args["check_same_thread"] = False
+        if "timeout" not in connect_args:
+            connect_args["timeout"] = 30.0
 
         engine = create_engine(
             resolved_url,
@@ -78,6 +80,7 @@ def get_engine(
         def _set_sqlite_pragma(dbapi_connection: Any, _connection_record: Any) -> None:
             cursor = dbapi_connection.cursor()
             cursor.execute("PRAGMA foreign_keys = ON;")
+            cursor.execute("PRAGMA busy_timeout = 30000;")
             cursor.close()
 
         return engine
