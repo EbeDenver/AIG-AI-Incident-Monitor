@@ -350,3 +350,49 @@ class TestPublicAPI:
         assert ".db" not in body_text
         assert "password" not in body_text
         assert "secret" not in body_text.lower() or "circuit breaker" in body_text.lower()
+
+    def test_search_query_filter(self, client: TestClient) -> None:
+        """Catalog-wide search matches title, summary, or ID."""
+        res_q = client.get("/api/v1/public/incidents?q=Drone")
+        assert res_q.status_code == 200
+        items = res_q.json()["items"]
+        assert len(items) == 1
+        assert items[0]["incident_id"] == "INC-2026-TEST03"
+
+        res_id = client.get("/api/v1/public/incidents?q=TEST02")
+        assert res_id.status_code == 200
+        items_id = res_id.json()["items"]
+        assert len(items_id) == 1
+        assert items_id[0]["incident_id"] == "INC-2026-TEST02"
+
+    def test_sorting_options(self, client: TestClient) -> None:
+        """Sorting by title and discovered_date works with asc/desc order."""
+        res_desc = client.get("/api/v1/public/incidents?sort_by=title&sort_order=desc")
+        assert res_desc.status_code == 200
+        titles_desc = [it["title"] for it in res_desc.json()["items"]]
+        assert titles_desc == sorted(titles_desc, reverse=True)
+
+        res_asc = client.get("/api/v1/public/incidents?sort_by=title&sort_order=asc")
+        assert res_asc.status_code == 200
+        titles_asc = [it["title"] for it in res_asc.json()["items"]]
+        assert titles_asc == sorted(titles_asc)
+
+    def test_catalog_freshness_metadata(self, client: TestClient) -> None:
+        """Catalog freshness metadata is populated with contract version and environment."""
+        res = client.get("/api/v1/public/incidents")
+        assert res.status_code == 200
+        freshness = res.json()["freshness"]
+        assert freshness is not None
+        assert freshness["catalog_version"] == "2.0.0"
+        assert freshness["database_environment"] in ("development", "production")
+
+    def test_production_mock_opt_in_strictly_forbidden(self, client: TestClient, monkeypatch) -> None:
+        """In production environment, setting include_mock=true returns 403 Forbidden."""
+        monkeypatch.setenv("ENVIRONMENT", "production")
+        res_list = client.get("/api/v1/public/incidents?include_mock=true")
+        assert res_list.status_code == 403
+        assert "forbidden in production" in res_list.json()["detail"].lower()
+
+        res_det = client.get("/api/v1/public/incidents/INC-2026-TEST01?include_mock=true")
+        assert res_det.status_code == 403
+        assert "forbidden in production" in res_det.json()["detail"].lower()

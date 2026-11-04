@@ -21,6 +21,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from ai_incident_monitor.config import allow_mock_opt_in, is_production_environment
 from ai_incident_monitor.db.models.claim import ClaimRecordModel
 from ai_incident_monitor.db.models.compliance import EUAIActComplianceAssessmentModel
 from ai_incident_monitor.db.models.enrichment import IncidentEnrichmentModel
@@ -36,6 +37,7 @@ from ai_incident_monitor.domain.taxonomy import (
     get_category_metadata,
 )
 from ai_incident_monitor.public.schemas import (
+    CatalogFreshnessDTO,
     PublicAIInvolvementDTO,
     PublicAtomicClaimDTO,
     PublicCategoryDTO,
@@ -111,8 +113,11 @@ async def list_public_incidents(
     response: Response,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=50),
-    category: Optional[str] = Query(default=None),
-    severity: Optional[str] = Query(default=None),
+    q: Optional[str] = Query(default=None, description="Catalog-wide search matching title, summary, or ID."),
+    category: Optional[str] = Query(default=None, description="Filter by primary category key (e.g. CYBERSECURITY)."),
+    severity: Optional[str] = Query(default=None, description="Filter by severity tier (CRITICAL, HIGH, MEDIUM, LOW)."),
+    sort_by: str = Query(default="discovered_date", description="Sort field: 'discovered_date', 'event_date', or 'title'."),
+    sort_order: str = Query(default="desc", description="Sort order: 'desc' or 'asc'."),
     has_enrichment: Optional[bool] = Query(default=None),
     include_mock: bool = Query(
         default=False,
@@ -124,6 +129,12 @@ async def list_public_incidents(
         response.headers[k] = v
     response.headers["Cache-Control"] = "public, max-age=300"
 
+    if include_mock and not allow_mock_opt_in():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Synthetic mock intelligence opt-in ('include_mock=true') is strictly forbidden in production.",
+        )
+
     engine = request.app.state.db_engine
 
     with Session(engine) as db_session:
@@ -133,20 +144,51 @@ async def list_public_incidents(
         if category:
             query = query.where(IncidentModel.primary_category == category.strip().upper())
 
+        if q and q.strip():
+            term = f"%{q.strip()}%"
+            query = query.where(
+                IncidentModel.title.ilike(term) | IncidentModel.summary.ilike(term) | IncidentModel.id.ilike(term)
+            )
+
         # Count total matching records before pagination
         count_stmt = select(func.count(IncidentModel.id))
         if category:
             count_stmt = count_stmt.where(IncidentModel.primary_category == category.strip().upper())
+        if q and q.strip():
+            term = f"%{q.strip()}%"
+            count_stmt = count_stmt.where(
+                IncidentModel.title.ilike(term) | IncidentModel.summary.ilike(term) | IncidentModel.id.ilike(term)
+            )
         total_items = db_session.execute(count_stmt).scalar() or 0
 
         total_pages = max(1, math.ceil(total_items / page_size))
         current_page = min(page, total_pages)
 
+        # Apply sorting
+        norm_sort_by = (sort_by or "discovered_date").strip().lower()
+        norm_sort_order = (sort_order or "desc").strip().lower()
+
+        if norm_sort_by == "event_date":
+            date_col = IncidentModel.incident_exact_date
+            if norm_sort_order == "asc":
+                query = query.order_by(date_col.asc(), IncidentModel.id.asc())
+            else:
+                query = query.order_by(date_col.desc(), IncidentModel.id.asc())
+        elif norm_sort_by == "title":
+            title_col = IncidentModel.title
+            if norm_sort_order == "asc":
+                query = query.order_by(title_col.asc(), IncidentModel.id.asc())
+            else:
+                query = query.order_by(title_col.desc(), IncidentModel.id.asc())
+        else:  # discovered_date
+            created_col = IncidentModel.created_at
+            if norm_sort_order == "asc":
+                query = query.order_by(created_col.asc(), IncidentModel.id.asc())
+            else:
+                query = query.order_by(created_col.desc(), IncidentModel.id.asc())
+
         # Execute paginated query
-        query = query.order_by(
-            IncidentModel.created_at.desc(),
-            IncidentModel.id.asc(),
-        ).offset((current_page - 1) * page_size).limit(page_size)
+        query = query.offset((current_page - 1) * page_size).limit(page_size)
 
         raw_incidents = db_session.execute(query).scalars().all()
         incident_ids = [inc.id for inc in raw_incidents]
@@ -240,12 +282,23 @@ async def list_public_incidents(
                 )
             )
 
+        # Gather freshness metadata
+        latest_created = db_session.execute(select(func.max(IncidentModel.created_at))).scalar()
+        total_sources = db_session.execute(select(func.count(SourceReferenceModel.id))).scalar() or 0
+        freshness = CatalogFreshnessDTO(
+            latest_ingestion_time=latest_created.isoformat() if latest_created else None,
+            total_sources_count=total_sources,
+            catalog_version="2.0.0",
+            database_environment="production" if is_production_environment() else "development",
+        )
+
         return PublicIncidentListResponse(
             items=items,
             total=total_items,
             page=current_page,
             page_size=page_size,
             total_pages=total_pages,
+            freshness=freshness,
         )
 
 
@@ -263,6 +316,12 @@ async def get_public_incident_detail(
     for k, v in CORS_HEADERS.items():
         response.headers[k] = v
     response.headers["Cache-Control"] = "public, max-age=300"
+
+    if include_mock and not allow_mock_opt_in():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Synthetic mock intelligence opt-in ('include_mock=true') is strictly forbidden in production.",
+        )
 
     if not ID_REGEX.match(incident_id) or len(incident_id) > 64:
         raise HTTPException(
@@ -314,12 +373,17 @@ async def get_public_incident_detail(
             for _link, _ev, src in links:
                 if src.id not in seen_sources:
                     seen_sources.add(src.id)
+                    retrieval_str = src.retrieval_date.isoformat() if hasattr(src, "retrieval_date") and src.retrieval_date else None
                     sources.append(
                         PublicSourceReferenceDTO(
+                            source_id=src.id,
                             source_name=src.publisher,
                             url=sanitize_public_url(src.url),
                             epistemic_role=src.source_type,
                             published_at=str(src.publication_exact_date) if src.publication_exact_date else None,
+                            retrieval_date=retrieval_str,
+                            content_hash=getattr(src, "content_hash", None),
+                            locator=None,
                         )
                     )
 
@@ -387,7 +451,12 @@ async def get_public_incident_detail(
 
                         # Atomic claims (supports both 'claims' and legacy 'atomic_claims')
                         raw_claims = pdata.get("claims") or pdata.get("atomic_claims") or []
+                        prov_items = pdata.get("provenance", [])
+                        prov_map = {p.get("evidence_id"): p.get("excerpt") for p in prov_items if isinstance(p, dict)}
+
                         for cl in raw_claims:
+                            sup_ids = cl.get("supporting_evidence_ids", [])
+                            excerpts = [prov_map[eid] for eid in sup_ids if eid in prov_map and prov_map[eid]]
                             atomic_claims.append(
                                 PublicAtomicClaimDTO(
                                     claim_id=cl.get("claim_id", "CLM-UNKNOWN"),
@@ -395,6 +464,9 @@ async def get_public_incident_detail(
                                     classification=cl.get("classification", "ATTRIBUTED_ALLEGATION"),
                                     verification_status=cl.get("verification_status", "UNVERIFIED"),
                                     confidence=cl.get("confidence", "LOW"),
+                                    supporting_evidence_ids=sup_ids,
+                                    evidence_excerpts=excerpts,
+                                    reasoning_summary=cl.get("reasoning_summary"),
                                 )
                             )
 
@@ -501,6 +573,21 @@ async def get_public_incident_detail(
                     article_73_serious_incident=eu_data.get("serious_incident"),
                     enforcement_status=eu_data.get("overall_enforcement_status", eu_assessment_model.enforcement_status),
                     enforcement_notes=eu_data.get("timeline_notes", ""),
+                    assessment_date=eu_assessment_model.created_at.isoformat() if eu_assessment_model.created_at else None,
+                    legal_framework_version="EU Regulation 2024/1689 (AI Act) - November 2026 Baseline",
+                    governance_sources=eu_data.get("regulatory_references", [
+                        "Regulation (EU) 2024/1689",
+                        "Article 2 (Scope & Exclusions)",
+                        "Article 5 (Prohibitions)",
+                        "Article 6 (High-Risk Systems)",
+                        "Article 50 (Transparency Duties)",
+                        "Article 73 (Serious Incident Reporting)",
+                    ]),
+                    qualifications_and_limitations=eu_data.get("epistemic_limitations", [
+                        "Automated statutory screening based on open incident filings.",
+                        "Deployer technical documentation and conformity declarations not independently verified.",
+                    ]),
+                    review_status="AUTOMATED_STATUTORY_TRIAGE",
                     identified_gaps=gaps,
                     disclaimer=eu_data.get("disclaimer", (
                         "This automated regulatory impact assessment is generated for technical research "

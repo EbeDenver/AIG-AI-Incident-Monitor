@@ -37,7 +37,7 @@ from ai_incident_monitor.compliance.timeline import (
 
 # Textual indicators for jurisdiction and exclusions
 EU_GEO_KEYWORDS = re.compile(
-    r"\b(european union|eu\b|europe|germany|france|italy|spain|netherlands|belgium|poland|sweden|austria|ireland|denmark|finland|portugal|greece|czech|brussels)\b",
+    r"\b(european union|eu\b|europe|germany|france|italy|spain|netherlands|belgium|poland|sweden|austria|ireland|denmark|finland|portugal|greece|czech|brussels|bulgaria|sofia)\b",
     re.IGNORECASE,
 )
 MILITARY_KEYWORDS = re.compile(
@@ -46,6 +46,28 @@ MILITARY_KEYWORDS = re.compile(
 )
 RESEARCH_KEYWORDS = re.compile(
     r"\b(purely scientific|academic research|laboratory experiment|arxiv preprint|benchmarking study)\b",
+    re.IGNORECASE,
+)
+
+# High-Risk domain indicators (Regulation (EU) 2024/1689 Annex I & Annex III)
+HEALTHCARE_KEYWORDS = re.compile(
+    r"\b(medical|clinical|diagnostic|radiology|hospital|patient|surgery|surgical|pathology|therapeutic|gene therapy)\b",
+    re.IGNORECASE,
+)
+ROBOTICS_MACHINERY_KEYWORDS = re.compile(
+    r"\b(robot|robotic|machinery|autonomous vehicle|drone|freight|locomotive|industrial equipment)\b",
+    re.IGNORECASE,
+)
+CREDIT_INSURANCE_KEYWORDS = re.compile(
+    r"\b(credit score|creditworthiness|loan underwriting|mortgage approval|health insurance risk|life insurance pricing)\b",
+    re.IGNORECASE,
+)
+CRITICAL_INFRA_KEYWORDS = re.compile(
+    r"\b(power grid|electricity|water supply|gas supply|telecom network|critical infrastructure|traffic management|load-shedding)\b",
+    re.IGNORECASE,
+)
+BIOMETRIC_KEYWORDS = re.compile(
+    r"\b(biometric|facial recognition|remote identification|emotion recognition|iris scan)\b",
     re.IGNORECASE,
 )
 
@@ -146,32 +168,54 @@ class EUAIActAssessor:
         )
 
         # B. Article 6 / Annex I / Annex III High-Risk Systems
+        # Audit strictly against Regulation (EU) 2024/1689:
+        # - Critical Infrastructure falls under Annex III Point 2 (management of digital & physical infrastructure)
+        # - Financial essential services fall under Annex III Point 5 (credit scoring & financial risk evaluation)
+        # - Medical devices & clinical diagnostic AI fall under Annex I (Item 11, MDR (EU) 2017/745)
+        # - Robotics & industrial machinery fall under Annex I (Item 1, Machinery Reg (EU) 2023/1230)
+        # - Biometrics & remote ID falls under Annex III Point 1
         is_high_risk = False
         annex_type = None
         annex_point = None
         high_risk_analysis = "System use-case does not fall under mandatory high-risk annexes based on available reporting."
 
         cat_upper = category.upper()
-        if "CYBERSECURITY" in cat_upper or "INFRASTRUCTURE" in cat_upper:
+        if "CYBERSECURITY" in cat_upper or "INFRASTRUCTURE" in cat_upper or CRITICAL_INFRA_KEYWORDS.search(text_corpus):
             is_high_risk = True
             annex_type = "ANNEX_III"
             annex_point = "Annex III, point 2 — Critical Infrastructure (Management & Safety of Digital Infrastructure)"
             high_risk_analysis = "AI system is utilized as a safety or security component in the management of critical digital infrastructure."
-        elif "FINANCIAL" in cat_upper or "ECONOMIC" in cat_upper:
+        elif "FINANCIAL" in cat_upper or "ECONOMIC" in cat_upper or CREDIT_INSURANCE_KEYWORDS.search(text_corpus):
             is_high_risk = True
             annex_type = "ANNEX_III"
             annex_point = "Annex III, point 5 — Essential Services (Creditworthiness & Financial Risk Evaluation)"
-            high_risk_analysis = "AI system evaluates creditworthiness or allocates essential financial resources."
-        elif "RIGHTS" in cat_upper:
+            high_risk_analysis = "AI system evaluates creditworthiness, allocates essential financial resources, or models financial risk."
+        elif HEALTHCARE_KEYWORDS.search(text_corpus) and ("HEALTH" in cat_upper or "SAFETY" in cat_upper or "MEDICAL" in cat_upper):
+            is_high_risk = True
+            annex_type = "ANNEX_I"
+            annex_point = "Annex I, Section A (Item 11) — Medical Devices Regulation (EU) 2017/745"
+            high_risk_analysis = (
+                "AI system operates as clinical decision-support software or medical device safety component "
+                "governed by Union harmonization legislation (Regulation (EU) 2017/745)."
+            )
+        elif ROBOTICS_MACHINERY_KEYWORDS.search(text_corpus) and ("ROBOT" in cat_upper or "SAFETY" in cat_upper or "AUTONOMY" in cat_upper):
+            is_high_risk = True
+            annex_type = "ANNEX_I"
+            annex_point = "Annex I, Section A (Item 1) — Machinery Regulation (EU) 2023/1230"
+            high_risk_analysis = (
+                "AI system operates as an autonomous safety component in industrial machinery, vehicles, or robotics "
+                "under Union harmonization legislation (Regulation (EU) 2023/1230)."
+            )
+        elif BIOMETRIC_KEYWORDS.search(text_corpus) or "RIGHTS" in cat_upper:
             is_high_risk = True
             annex_type = "ANNEX_III"
-            annex_point = "Annex III, point 1 — Biometrics and Remote Identification"
-            high_risk_analysis = "AI system operates in biometric identification, categorization, or law enforcement evidentiary evaluation."
+            annex_point = "Annex III, point 1 — Biometrics and Remote Biometric Identification"
+            high_risk_analysis = "AI system operates in biometric identification, categorization, or remote verification."
         elif "SAFETY" in cat_upper:
             is_high_risk = True
             annex_type = "ANNEX_I"
             annex_point = "Annex I, Section A — Safety Component of Union Harmonization Product"
-            high_risk_analysis = "AI system operates as an autonomous safety component in industrial machinery, vehicles, or medical devices."
+            high_risk_analysis = "AI system operates as an autonomous safety component under Union harmonization product safety legislation."
 
         high_risk_finding = HighRiskClassificationFinding(
             is_high_risk=is_high_risk,

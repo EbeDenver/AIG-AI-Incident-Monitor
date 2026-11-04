@@ -1182,6 +1182,24 @@
             }
           },
           {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Catalog-wide search matching title, summary, or ID.",
+              "title": "Q"
+            },
+            "description": "Catalog-wide search matching title, summary, or ID."
+          },
+          {
             "name": "category",
             "in": "query",
             "required": false,
@@ -1194,8 +1212,10 @@
                   "type": "null"
                 }
               ],
+              "description": "Filter by primary category key (e.g. CYBERSECURITY).",
               "title": "Category"
-            }
+            },
+            "description": "Filter by primary category key (e.g. CYBERSECURITY)."
           },
           {
             "name": "severity",
@@ -1210,8 +1230,34 @@
                   "type": "null"
                 }
               ],
+              "description": "Filter by severity tier (CRITICAL, HIGH, MEDIUM, LOW).",
               "title": "Severity"
-            }
+            },
+            "description": "Filter by severity tier (CRITICAL, HIGH, MEDIUM, LOW)."
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Sort field: 'discovered_date', 'event_date', or 'title'.",
+              "default": "discovered_date",
+              "title": "Sort By"
+            },
+            "description": "Sort field: 'discovered_date', 'event_date', or 'title'."
+          },
+          {
+            "name": "sort_order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Sort order: 'desc' or 'asc'.",
+              "default": "desc",
+              "title": "Sort Order"
+            },
+            "description": "Sort order: 'desc' or 'asc'."
           },
           {
             "name": "has_enrichment",
@@ -1523,6 +1569,43 @@
         ],
         "title": "Body_validate_dossier_route_dossiers__dossier_id__validate_post"
       },
+      "CatalogFreshnessDTO": {
+        "properties": {
+          "latest_ingestion_time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Ingestion Time",
+            "description": "ISO timestamp of most recently ingested incident."
+          },
+          "total_sources_count": {
+            "type": "integer",
+            "title": "Total Sources Count",
+            "description": "Total number of attributed primary sources in catalog.",
+            "default": 0
+          },
+          "catalog_version": {
+            "type": "string",
+            "title": "Catalog Version",
+            "description": "Contract and catalog specification version.",
+            "default": "2.0.0"
+          },
+          "database_environment": {
+            "type": "string",
+            "title": "Database Environment",
+            "description": "Underlying database environment ('production' or 'development').",
+            "default": "development"
+          }
+        },
+        "type": "object",
+        "title": "CatalogFreshnessDTO",
+        "description": "Catalog synchronization and data freshness metadata."
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1595,6 +1678,34 @@
             "type": "string",
             "title": "Confidence",
             "description": "Confidence tier (HIGH, MEDIUM, LOW)."
+          },
+          "supporting_evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Supporting Evidence Ids",
+            "description": "IDs of evidence items substantiating this claim."
+          },
+          "evidence_excerpts": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidence Excerpts",
+            "description": "Direct excerpts from source documents grounding this claim."
+          },
+          "reasoning_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reasoning Summary",
+            "description": "Epistemic rationale justifying classification."
           }
         },
         "type": "object",
@@ -1843,6 +1954,46 @@
             "title": "Enforcement Notes",
             "description": "Timeline guidance explaining enforceability."
           },
+          "assessment_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assessment Date",
+            "description": "Timestamp of EU regulatory assessment in ISO format."
+          },
+          "legal_framework_version": {
+            "type": "string",
+            "title": "Legal Framework Version",
+            "description": "Statutory reference baseline version.",
+            "default": "EU Regulation 2024/1689 (AI Act) - November 2026 Baseline"
+          },
+          "governance_sources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Governance Sources",
+            "description": "Statutory articles, recitals, and official guidance references considered."
+          },
+          "qualifications_and_limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Qualifications And Limitations",
+            "description": "Epistemic limitations, caveats, or missing factual disclosures affecting assessment."
+          },
+          "review_status": {
+            "type": "string",
+            "title": "Review Status",
+            "description": "Descriptive regulatory assessment status (e.g. AUTOMATED_STATUTORY_TRIAGE).",
+            "default": "AUTOMATED_STATUTORY_TRIAGE"
+          },
           "identified_gaps": {
             "items": {
               "$ref": "#/components/schemas/PublicEUAIActGapDTO"
@@ -2074,6 +2225,17 @@
             "type": "integer",
             "title": "Total Pages",
             "description": "Total number of pages."
+          },
+          "freshness": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CatalogFreshnessDTO"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Catalog synchronization and freshness metadata."
           }
         },
         "type": "object",
@@ -2461,6 +2623,18 @@
       },
       "PublicSourceReferenceDTO": {
         "properties": {
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id",
+            "description": "Stable source reference ID (e.g. SRC-001)."
+          },
           "source_name": {
             "type": "string",
             "title": "Source Name",
@@ -2494,6 +2668,42 @@
             ],
             "title": "Published At",
             "description": "Publication timestamp string if available."
+          },
+          "retrieval_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retrieval Date",
+            "description": "Timestamp when source was retrieved/ingested."
+          },
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Hash",
+            "description": "SHA-256 cryptographic digest of source payload where known."
+          },
+          "locator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locator",
+            "description": "Section, locator, or document anchor where available."
           }
         },
         "type": "object",
@@ -2502,7 +2712,7 @@
           "epistemic_role"
         ],
         "title": "PublicSourceReferenceDTO",
-        "description": "Attributed source reference."
+        "description": "Attributed source reference with cryptographic provenance and retrieval metadata."
       },
       "ValidationError": {
         "properties": {

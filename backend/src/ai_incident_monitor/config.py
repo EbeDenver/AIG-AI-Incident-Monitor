@@ -92,5 +92,24 @@ def get_pilot_budget_cap_usd() -> float:
         return 1.00
 
 
+def is_production_environment() -> bool:
+    """Return True if executing in a production deployment environment."""
+    load_env_file()
+    env = os.getenv("ENVIRONMENT") or os.getenv("APP_ENV") or os.getenv("AI_MONITOR_ENV") or ""
+    return env.lower().strip() in ("production", "prod")
+
+
+def allow_mock_opt_in() -> bool:
+    """Check whether synthetic mock data opt-in is permitted.
+
+    Strictly disabled in production to guarantee zero mock data leakage to public consumers.
+    """
+    if is_production_environment():
+        return False
+    load_env_file()
+    val = os.getenv("AI_MONITOR_ALLOW_MOCK_OPT_IN", "true").lower().strip()
+    return val in ("true", "1", "yes")
+
+
 # Auto-load on import
 load_env_file()

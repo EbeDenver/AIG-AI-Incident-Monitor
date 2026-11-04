@@ -28,12 +28,16 @@ class PublicCategoryDTO(BaseModel):
 
 
 class PublicSourceReferenceDTO(BaseModel):
-    """Attributed source reference."""
+    """Attributed source reference with cryptographic provenance and retrieval metadata."""
 
+    source_id: Optional[str] = Field(default=None, description="Stable source reference ID (e.g. SRC-001).")
     source_name: str = Field(..., description="Name of the reporting entity or publisher.")
     url: Optional[str] = Field(default=None, description="Sanitized canonical source URL.")
     epistemic_role: str = Field(..., description="Epistemic role (Primary Incident Stream, Research Context, Offline Export).")
     published_at: Optional[str] = Field(default=None, description="Publication timestamp string if available.")
+    retrieval_date: Optional[str] = Field(default=None, description="Timestamp when source was retrieved/ingested.")
+    content_hash: Optional[str] = Field(default=None, description="SHA-256 cryptographic digest of source payload where known.")
+    locator: Optional[str] = Field(default=None, description="Section, locator, or document anchor where available.")
 
 
 class PublicAtomicClaimDTO(BaseModel):
@@ -44,6 +48,9 @@ class PublicAtomicClaimDTO(BaseModel):
     classification: str = Field(..., description="Claim classification (CONFIRMED_FACT, ATTRIBUTED_ALLEGATION, etc.).")
     verification_status: str = Field(..., description="Verification status (VERIFIED, UNVERIFIED, CONTESTED, etc.).")
     confidence: str = Field(..., description="Confidence tier (HIGH, MEDIUM, LOW).")
+    supporting_evidence_ids: list[str] = Field(default_factory=list, description="IDs of evidence items substantiating this claim.")
+    evidence_excerpts: list[str] = Field(default_factory=list, description="Direct excerpts from source documents grounding this claim.")
+    reasoning_summary: Optional[str] = Field(default=None, description="Epistemic rationale justifying classification.")
 
 
 class PublicAIInvolvementDTO(BaseModel):
@@ -140,11 +147,37 @@ class PublicEUAIActDTO(BaseModel):
     article_73_serious_incident: Optional[dict[str, Any]] = Field(default=None, description="Article 73 serious incident evaluation.")
     enforcement_status: str = Field(..., description="ACTIVE_LAW, NOT_YET_APPLICABLE, or PENDING under November 2026 baseline.")
     enforcement_notes: str = Field(..., description="Timeline guidance explaining enforceability.")
+    assessment_date: Optional[str] = Field(default=None, description="Timestamp of EU regulatory assessment in ISO format.")
+    legal_framework_version: str = Field(
+        default="EU Regulation 2024/1689 (AI Act) - November 2026 Baseline",
+        description="Statutory reference baseline version.",
+    )
+    governance_sources: list[str] = Field(
+        default_factory=list,
+        description="Statutory articles, recitals, and official guidance references considered.",
+    )
+    qualifications_and_limitations: list[str] = Field(
+        default_factory=list,
+        description="Epistemic limitations, caveats, or missing factual disclosures affecting assessment.",
+    )
+    review_status: str = Field(
+        default="AUTOMATED_STATUTORY_TRIAGE",
+        description="Descriptive regulatory assessment status (e.g. AUTOMATED_STATUTORY_TRIAGE).",
+    )
     identified_gaps: list[PublicEUAIActGapDTO] = Field(default_factory=list, description="Identified compliance gaps.")
     disclaimer: str = Field(
         default="This automated regulatory impact assessment is generated for technical research and compliance preparedness only. It does not constitute formal legal advice, regulatory determination, or EU conformity certification.",
         description="Mandatory legal disclaimer."
     )
+
+
+class CatalogFreshnessDTO(BaseModel):
+    """Catalog synchronization and data freshness metadata."""
+
+    latest_ingestion_time: Optional[str] = Field(default=None, description="ISO timestamp of most recently ingested incident.")
+    total_sources_count: int = Field(default=0, description="Total number of attributed primary sources in catalog.")
+    catalog_version: str = Field(default="2.0.0", description="Contract and catalog specification version.")
+    database_environment: str = Field(default="development", description="Underlying database environment ('production' or 'development').")
 
 
 class PublicIncidentSummaryDTO(BaseModel):
@@ -175,6 +208,7 @@ class PublicIncidentListResponse(BaseModel):
     page: int = Field(..., description="Current page number.")
     page_size: int = Field(..., description="Page size limit.")
     total_pages: int = Field(..., description="Total number of pages.")
+    freshness: Optional[CatalogFreshnessDTO] = Field(default=None, description="Catalog synchronization and freshness metadata.")
 
 
 class PublicIncidentDetailDTO(PublicIncidentSummaryDTO):
