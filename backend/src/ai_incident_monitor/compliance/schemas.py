@@ -243,6 +243,10 @@ class EUAIActComplianceAssessment(BaseModel):
         default_factory=list,
         description="List of statutory gap findings.",
     )
+    missing_facts: list[str] = Field(
+        default_factory=list,
+        description="Specific missing facts, unverified assertions, or factual gaps preventing definitive legal classification.",
+    )
     overall_enforcement_status: EnforcementTimelineStatus = Field(
         ...,
         description="ACTIVE_LAW, PENDING, or NOT_YET_APPLICABLE.",

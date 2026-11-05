@@ -37,7 +37,10 @@ class PublicSourceReferenceDTO(BaseModel):
     published_at: Optional[str] = Field(default=None, description="Publication timestamp string if available.")
     retrieval_date: Optional[str] = Field(default=None, description="Timestamp when source was retrieved/ingested.")
     content_hash: Optional[str] = Field(default=None, description="SHA-256 cryptographic digest of source payload where known.")
-    locator: Optional[str] = Field(default=None, description="Section, locator, or document anchor where available.")
+    locator: Optional[str] = Field(
+        default=None,
+        description="Section, locator, or quote span anchor where available (e.g. 'char_offset:<start>-<end>' in 0-indexed Unicode character offsets into the canonical raw text retrieved at retrieval_date).",
+    )
 
 
 class PublicAtomicClaimDTO(BaseModel):
@@ -163,6 +166,10 @@ class PublicEUAIActDTO(BaseModel):
     review_status: str = Field(
         default="AUTOMATED_STATUTORY_TRIAGE",
         description="Descriptive regulatory assessment status (e.g. AUTOMATED_STATUTORY_TRIAGE).",
+    )
+    missing_facts: list[str] = Field(
+        default_factory=list,
+        description="Incident-specific missing factual disclosures, uncorroborated claims, or unknown operational parameters preventing definitive regulatory determination.",
     )
     identified_gaps: list[PublicEUAIActGapDTO] = Field(default_factory=list, description="Identified compliance gaps.")
     disclaimer: str = Field(

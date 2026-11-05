@@ -63,7 +63,7 @@ CREDIT_INSURANCE_KEYWORDS = re.compile(
     re.IGNORECASE,
 )
 CRITICAL_INFRA_KEYWORDS = re.compile(
-    r"\b(power grid|electricity|water supply|gas supply|telecom network|critical infrastructure|traffic management|load-shedding)\b",
+    r"\b(power grid|electrical grid|electrical power|electricity|power distribution|blackout|grid failure|water supply|gas supply|telecom network|critical infrastructure|traffic management|load-shedding)\b",
     re.IGNORECASE,
 )
 BIOMETRIC_KEYWORDS = re.compile(
@@ -180,11 +180,11 @@ class EUAIActAssessor:
         high_risk_analysis = "System use-case does not fall under mandatory high-risk annexes based on available reporting."
 
         cat_upper = category.upper()
-        if "CYBERSECURITY" in cat_upper or "INFRASTRUCTURE" in cat_upper or CRITICAL_INFRA_KEYWORDS.search(text_corpus):
+        if CRITICAL_INFRA_KEYWORDS.search(text_corpus) or ("INFRASTRUCTURE" in cat_upper and "CYBERSECURITY" not in cat_upper):
             is_high_risk = True
             annex_type = "ANNEX_III"
             annex_point = "Annex III, point 2 — Critical Infrastructure (Management & Safety of Digital Infrastructure)"
-            high_risk_analysis = "AI system is utilized as a safety or security component in the management of critical digital infrastructure."
+            high_risk_analysis = "AI system is utilized as an operational or safety component in the management of critical infrastructure."
         elif "FINANCIAL" in cat_upper or "ECONOMIC" in cat_upper or CREDIT_INSURANCE_KEYWORDS.search(text_corpus):
             is_high_risk = True
             annex_type = "ANNEX_III"
@@ -315,7 +315,10 @@ class EUAIActAssessor:
                     article="Article 14 (Human Oversight)",
                     requirement_summary="High-risk AI systems must be designed to enable effective human oversight, intervention, and emergency stop.",
                     gap_status=adjusted_gap,
-                    finding="Evidence indicates human oversight was unable to interrupt autonomous execution cascade in real time.",
+                    finding=(
+                        "Conditional preparedness requirement: Article 14 mandates technical design for human oversight "
+                        "and emergency override. Open reporting lacks technical disclosures to evaluate deployer oversight controls."
+                    ),
                     evidence_ids=ev_ids,
                     timeline_status=art14_tl,
                 )
@@ -328,7 +331,10 @@ class EUAIActAssessor:
                     article="Article 9 (Risk Management System)",
                     requirement_summary="Continuous, iterative risk management system identifying foreseeable post-deployment failure modes.",
                     gap_status=adjust_gap_status_for_timeline(ComplianceGapStatus.POTENTIAL_GAP, art9_tl),
-                    finding="Risk management procedures did not anticipate autonomous failure condition manifested during the incident.",
+                    finding=(
+                        "Conditional preparedness requirement: Article 9 requires a continuous, iterative risk management system. "
+                        "Enterprise pre-incident risk modeling and failure testing records are absent from public filings."
+                    ),
                     evidence_ids=ev_ids,
                     timeline_status=art9_tl,
                 )
@@ -341,7 +347,10 @@ class EUAIActAssessor:
                     article="Article 15 (Accuracy, Robustness, and Cybersecurity)",
                     requirement_summary="Resilience against errors, faults, and adversarial exploitation.",
                     gap_status=adjust_gap_status_for_timeline(ComplianceGapStatus.POTENTIAL_GAP, art15_tl),
-                    finding="System exhibited vulnerability to adversarial input or unhandled environment edge case.",
+                    finding=(
+                        "Conditional preparedness requirement: Article 15 requires high-risk systems to maintain appropriate levels "
+                        "of accuracy, robustness, and cybersecurity. Specific technical failure modes remain uncorroborated."
+                    ),
                     evidence_ids=ev_ids,
                     timeline_status=art15_tl,
                 )
@@ -360,7 +369,24 @@ class EUAIActAssessor:
                 )
             )
 
-        # G. Overall Timeline & Notes
+        # G. Missing Facts & Unknowns
+        missing_facts: list[str] = []
+        if jurisdiction == JurisdictionScope.UNDETERMINED:
+            missing_facts.append(
+                "Whether the system was placed on the EU market, deployed in the Union, or produced output affecting persons in the Union is unverified in available filings."
+            )
+        if not claims or len(claims) == 0:
+            missing_facts.append(
+                "Technical documentation confirming whether the tool utilizes machine-learning models versus conventional scripted automation has not been disclosed."
+            )
+        missing_facts.append(
+            "Operational autonomy levels and real-time human oversight telemetry are not documented in source reporting."
+        )
+        missing_facts.append(
+            "Deployer post-market monitoring logs, internal risk assessments, and technical conformity declarations are not publicly accessible."
+        )
+
+        # H. Overall Timeline & Notes
         if is_prohibited or applies_transparency:
             overall_timeline = EnforcementTimelineStatus.ACTIVE_LAW
             notes = (
@@ -388,6 +414,7 @@ class EUAIActAssessor:
             transparency=transparency_finding,
             serious_incident=serious_finding,
             compliance_gaps=gaps,
+            missing_facts=missing_facts,
             overall_enforcement_status=overall_timeline,
             timeline_notes=notes,
         )

@@ -1994,6 +1994,14 @@
             "description": "Descriptive regulatory assessment status (e.g. AUTOMATED_STATUTORY_TRIAGE).",
             "default": "AUTOMATED_STATUTORY_TRIAGE"
           },
+          "missing_facts": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missing Facts",
+            "description": "Incident-specific missing factual disclosures, uncorroborated claims, or unknown operational parameters preventing definitive regulatory determination."
+          },
           "identified_gaps": {
             "items": {
               "$ref": "#/components/schemas/PublicEUAIActGapDTO"
@@ -2703,7 +2711,7 @@
               }
             ],
             "title": "Locator",
-            "description": "Section, locator, or document anchor where available."
+            "description": "Section, locator, or quote span anchor where available (e.g. 'char_offset:<start>-<end>' in 0-indexed Unicode character offsets into the canonical raw text retrieved at retrieval_date)."
           }
         },
         "type": "object",

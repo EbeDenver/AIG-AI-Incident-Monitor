@@ -25,7 +25,11 @@ from ai_incident_monitor.config import allow_mock_opt_in, is_production_environm
 from ai_incident_monitor.db.models.claim import ClaimRecordModel
 from ai_incident_monitor.db.models.compliance import EUAIActComplianceAssessmentModel
 from ai_incident_monitor.db.models.enrichment import IncidentEnrichmentModel
-from ai_incident_monitor.db.models.evidence import ClaimEvidenceLinkModel, EvidenceRecordModel
+from ai_incident_monitor.db.models.evidence import (
+    ClaimEvidenceLinkModel,
+    EvidenceRecordModel,
+    QuoteSpanModel,
+)
 from ai_incident_monitor.db.models.governance import EULegalRelevanceScreenModel
 from ai_incident_monitor.db.models.incident import IncidentModel
 from ai_incident_monitor.db.models.severity import SeverityAssessmentModel
@@ -135,84 +139,114 @@ async def list_public_incidents(
             detail="Synthetic mock intelligence opt-in ('include_mock=true') is strictly forbidden in production.",
         )
 
+    mock_allowed = allow_mock_opt_in() and include_mock
+
     engine = request.app.state.db_engine
 
     with Session(engine) as db_session:
-        # Build base query
-        query = select(IncidentModel)
+        # Build canonical filter conditions applied before count, sort, and pagination
+        filter_conditions = []
 
-        if category:
-            query = query.where(IncidentModel.primary_category == category.strip().upper())
+        if category and category.strip():
+            filter_conditions.append(IncidentModel.primary_category == category.strip().upper())
 
         if q and q.strip():
             term = f"%{q.strip()}%"
-            query = query.where(
+            filter_conditions.append(
                 IncidentModel.title.ilike(term) | IncidentModel.summary.ilike(term) | IncidentModel.id.ilike(term)
             )
 
-        # Count total matching records before pagination
+        # Deterministic effective latest severity subquery
+        latest_sev_sub = (
+            select(SeverityAssessmentModel.actual_tier)
+            .where(SeverityAssessmentModel.incident_id == IncidentModel.id)
+            .order_by(SeverityAssessmentModel.created_at.desc(), SeverityAssessmentModel.id.desc())
+            .limit(1)
+            .scalar_subquery()
+        )
+        effective_severity = func.coalesce(latest_sev_sub, "NOT_ASSESSED")
+
+        if severity and severity.strip():
+            filter_conditions.append(func.upper(effective_severity) == severity.strip().upper())
+
+        # Effective has_enrichment condition reflecting environment mock suppression
+        enr_conditions = [
+            IncidentEnrichmentModel.incident_id == IncidentModel.id,
+            IncidentEnrichmentModel.status == "COMPLETED",
+        ]
+        if not mock_allowed:
+            enr_conditions.append(IncidentEnrichmentModel.model_provider != "mock")
+
+        has_enr_clause = select(1).where(*enr_conditions).exists()
+
+        if has_enrichment is not None:
+            if has_enrichment:
+                filter_conditions.append(has_enr_clause)
+            else:
+                filter_conditions.append(~has_enr_clause)
+
+        # 1. Total matching count across identical canonical filtered set
         count_stmt = select(func.count(IncidentModel.id))
-        if category:
-            count_stmt = count_stmt.where(IncidentModel.primary_category == category.strip().upper())
-        if q and q.strip():
-            term = f"%{q.strip()}%"
-            count_stmt = count_stmt.where(
-                IncidentModel.title.ilike(term) | IncidentModel.summary.ilike(term) | IncidentModel.id.ilike(term)
-            )
+        if filter_conditions:
+            count_stmt = count_stmt.where(*filter_conditions)
         total_items = db_session.execute(count_stmt).scalar() or 0
 
-        total_pages = max(1, math.ceil(total_items / page_size))
-        current_page = min(page, total_pages)
+        # Deterministic total pages calculation
+        total_pages = math.ceil(total_items / page_size) if total_items > 0 else 0
 
-        # Apply sorting
+        # 2. Sorting clause with stable incident ID tie-breaker
         norm_sort_by = (sort_by or "discovered_date").strip().lower()
         norm_sort_order = (sort_order or "desc").strip().lower()
 
         if norm_sort_by == "event_date":
             date_col = IncidentModel.incident_exact_date
-            if norm_sort_order == "asc":
-                query = query.order_by(date_col.asc(), IncidentModel.id.asc())
-            else:
-                query = query.order_by(date_col.desc(), IncidentModel.id.asc())
+            primary_order = date_col.asc() if norm_sort_order == "asc" else date_col.desc()
         elif norm_sort_by == "title":
             title_col = IncidentModel.title
-            if norm_sort_order == "asc":
-                query = query.order_by(title_col.asc(), IncidentModel.id.asc())
-            else:
-                query = query.order_by(title_col.desc(), IncidentModel.id.asc())
+            primary_order = title_col.asc() if norm_sort_order == "asc" else title_col.desc()
         else:  # discovered_date
             created_col = IncidentModel.created_at
-            if norm_sort_order == "asc":
-                query = query.order_by(created_col.asc(), IncidentModel.id.asc())
-            else:
-                query = query.order_by(created_col.desc(), IncidentModel.id.asc())
+            primary_order = created_col.asc() if norm_sort_order == "asc" else created_col.desc()
 
-        # Execute paginated query
-        query = query.offset((current_page - 1) * page_size).limit(page_size)
+        tie_breaker = IncidentModel.id.asc()
+
+        # 3. Paginated query on canonical filtered set
+        offset = (page - 1) * page_size
+        query = select(IncidentModel)
+        if filter_conditions:
+            query = query.where(*filter_conditions)
+        query = query.order_by(primary_order, tie_breaker).offset(offset).limit(page_size)
 
         raw_incidents = db_session.execute(query).scalars().all()
         incident_ids = [inc.id for inc in raw_incidents]
 
-        # Gather severity map
+        # Gather severity map for retrieved page
         severity_map: dict[str, str] = {}
         if incident_ids:
             sev_stmt = (
                 select(SeverityAssessmentModel.incident_id, SeverityAssessmentModel.actual_tier)
                 .where(SeverityAssessmentModel.incident_id.in_(incident_ids))
+                .order_by(SeverityAssessmentModel.created_at.desc(), SeverityAssessmentModel.id.desc())
             )
             for row in db_session.execute(sev_stmt):
-                severity_map[row[0]] = row[1]
+                if row[0] not in severity_map:
+                    severity_map[row[0]] = row[1]
 
-        # Gather enrichment map
+        # Gather enrichment map for retrieved page
         enrichment_map: dict[str, tuple[str, str]] = {}  # incident_id -> (status, model_provider)
         if incident_ids:
-            enr_stmt = select(
-                IncidentEnrichmentModel.incident_id,
-                IncidentEnrichmentModel.status,
-                IncidentEnrichmentModel.model_provider,
-            ).where(IncidentEnrichmentModel.incident_id.in_(incident_ids))
+            enr_stmt = (
+                select(
+                    IncidentEnrichmentModel.incident_id,
+                    IncidentEnrichmentModel.status,
+                    IncidentEnrichmentModel.model_provider,
+                )
+                .where(IncidentEnrichmentModel.incident_id.in_(incident_ids))
+                .order_by(IncidentEnrichmentModel.created_at.desc(), IncidentEnrichmentModel.id.desc())
+            )
             for row in db_session.execute(enr_stmt):
-                enrichment_map[row[0]] = (row[1], row[2])
+                if row[0] not in enrichment_map:
+                    enrichment_map[row[0]] = (row[1], row[2])
 
         # Gather source counts
         source_count_map: dict[str, int] = {}
@@ -230,10 +264,6 @@ async def list_public_incidents(
             cat_meta = get_category_metadata(inc.primary_category)
             sev = severity_map.get(inc.id, "NOT_ASSESSED")
 
-            # Check severity filter if provided
-            if severity and sev.upper() != severity.strip().upper():
-                continue
-
             enr_info = enrichment_map.get(inc.id)
             has_intel = False
             intel_status = "NOT_ENRICHED"
@@ -242,17 +272,13 @@ async def list_public_incidents(
             if enr_info:
                 enr_status, model_provider = enr_info
                 is_mock = model_provider == "mock"
-                if is_mock and not include_mock:
+                if is_mock and not mock_allowed:
                     has_intel = False
                     intel_status = "PENDING_ANALYSIS"
                     is_mock = False
                 else:
                     has_intel = enr_status == "COMPLETED"
                     intel_status = "SYNTHETIC_MOCK" if is_mock else "LIVE_ENRICHED"
-
-            # Check has_enrichment filter if provided
-            if has_enrichment is not None and has_intel != has_enrichment:
-                continue
 
             event_date_str = None
             if inc.incident_exact_date:
@@ -295,7 +321,7 @@ async def list_public_incidents(
         return PublicIncidentListResponse(
             items=items,
             total=total_items,
-            page=current_page,
+            page=page,
             page_size=page_size,
             total_pages=total_pages,
             freshness=freshness,
@@ -370,10 +396,19 @@ async def get_public_incident_detail(
             ).all()
 
             seen_sources: set[str] = set()
-            for _link, _ev, src in links:
+            for _link, ev, src in links:
                 if src.id not in seen_sources:
                     seen_sources.add(src.id)
                     retrieval_str = src.retrieval_date.isoformat() if hasattr(src, "retrieval_date") and src.retrieval_date else None
+
+                    # Check for quote spans associated with this evidence record
+                    qs = db_session.execute(
+                        select(QuoteSpanModel)
+                        .where(QuoteSpanModel.evidence_id == ev.id)
+                        .order_by(QuoteSpanModel.start_char_offset.asc())
+                    ).scalars().first()
+                    loc = f"char_offset:{qs.start_char_offset}-{qs.end_char_offset}" if qs else None
+
                     sources.append(
                         PublicSourceReferenceDTO(
                             source_id=src.id,
@@ -383,7 +418,7 @@ async def get_public_incident_detail(
                             published_at=str(src.publication_exact_date) if src.publication_exact_date else None,
                             retrieval_date=retrieval_str,
                             content_hash=getattr(src, "content_hash", None),
-                            locator=None,
+                            locator=loc,
                         )
                     )
 
@@ -588,6 +623,10 @@ async def get_public_incident_detail(
                         "Deployer technical documentation and conformity declarations not independently verified.",
                     ]),
                     review_status="AUTOMATED_STATUTORY_TRIAGE",
+                    missing_facts=eu_data.get("missing_facts", [
+                        "Whether system was placed on the EU market, deployed in the Union, or produced output affecting natural persons in the Union is unverified in available filings.",
+                        "Deployer technical documentation, operational autonomy levels, and real-time oversight telemetry are not publicly disclosed.",
+                    ]),
                     identified_gaps=gaps,
                     disclaimer=eu_data.get("disclaimer", (
                         "This automated regulatory impact assessment is generated for technical research "
@@ -630,6 +669,9 @@ async def get_public_incident_detail(
                     },
                     enforcement_status="ACTIVE_LAW" if eu_screen.qualification_status == "PROHIBITED_PRACTICE" else "NOT_YET_APPLICABLE",
                     enforcement_notes=eu_screen.applicability_date_assessment or "Evaluated against November 2026 phased enforcement timeline.",
+                    missing_facts=[
+                        "Informational screening only; deployer operational logs and technical files not verified.",
+                    ],
                     identified_gaps=gaps,
                     disclaimer=eu_screen.disclaimer_text or (
                         "This automated regulatory impact assessment is generated for technical research "

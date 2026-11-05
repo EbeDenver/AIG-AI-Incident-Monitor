@@ -189,15 +189,15 @@
   "eu_ai_act_compliance": {
     "is_available": true,
     "jurisdiction_status": "UNDETERMINED",
-    "classification": "HIGH_RISK_ANNEX_III",
-    "annex_reference": "Annex III, point 2 \u2014 Critical Infrastructure (Management & Safety of Digital Infrastructure)",
+    "classification": "GENERAL_AI_SYSTEM",
+    "annex_reference": null,
     "article_73_serious_incident": {
       "determination": "NON_SERIOUS",
       "criteria_met": [],
       "rationale": "Evaluated against Article 73 statutory thresholds. Identified criteria: None demonstrated by current evidence."
     },
-    "enforcement_status": "NOT_YET_APPLICABLE",
-    "enforcement_notes": "High-risk obligations under Annex III become legally enforceable on December 2, 2027. Current findings provide compliance gap analysis and organizational preparedness guidance.",
+    "enforcement_status": "ACTIVE_LAW",
+    "enforcement_notes": "Evaluated under standard governance baseline as of November 2026.",
     "assessment_date": "2026-11-04T18:58:10.067102",
     "legal_framework_version": "EU Regulation 2024/1689 (AI Act) - November 2026 Baseline",
     "governance_sources": [
@@ -213,23 +213,12 @@
       "Deployer technical documentation and conformity declarations not independently verified."
     ],
     "review_status": "AUTOMATED_STATUTORY_TRIAGE",
-    "identified_gaps": [
-      {
-        "article": "Article 14 (Human Oversight)",
-        "gap_status": "NOT_YET_APPLICABLE",
-        "finding": "Evidence indicates human oversight was unable to interrupt autonomous execution cascade in real time."
-      },
-      {
-        "article": "Article 9 (Risk Management System)",
-        "gap_status": "NOT_YET_APPLICABLE",
-        "finding": "Risk management procedures did not anticipate autonomous failure condition manifested during the incident."
-      },
-      {
-        "article": "Article 15 (Accuracy, Robustness, and Cybersecurity)",
-        "gap_status": "NOT_YET_APPLICABLE",
-        "finding": "System exhibited vulnerability to adversarial input or unhandled environment edge case."
-      }
+    "missing_facts": [
+      "Whether the system was placed on the EU market, deployed in the Union, or produced output affecting persons in the Union is unverified in available filings.",
+      "Operational autonomy levels and real-time human oversight telemetry are not documented in source reporting.",
+      "Deployer post-market monitoring logs, internal risk assessments, and technical conformity declarations are not publicly accessible."
     ],
+    "identified_gaps": [],
     "disclaimer": "This automated regulatory impact assessment is generated for technical research and compliance preparedness only. It does not constitute formal legal advice, regulatory determination, or EU conformity certification."
   }
 }
