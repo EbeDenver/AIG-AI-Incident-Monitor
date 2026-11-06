@@ -25,7 +25,7 @@ To maintain strict architectural transparency, engineering state is separated in
 - **Active Working Branch**: `feat/incident-intelligence-enrichment`
 - **Upstream Tracking**: `origin/feat/incident-intelligence-enrichment` (synchronized via git push)
 - **Reviewed Base Commit**: `85375c73c4d9b31d7a207bb2c4eeeea497eecc66`
-- **Final Backend Reference Commit**: `239eea5317bca14289a2b5564057e71889083298` (Branch HEAD)
+- **Final Backend Reference Commit**: `036b680fbcbb6eb1a78b792416f132dfe0e86ebc` (Branch HEAD)
 - **Additive Contract Diff Baseline**: `dcc2208d7ef6610bf3da06c604764ca8d23e7bd4`
 - **Merge Status**: `UNMERGED` to `main` (active feature branch pending release review)
 - **Deployment State**: Localhost development and test execution. Public production consumers must not be pointed to local addresses.
