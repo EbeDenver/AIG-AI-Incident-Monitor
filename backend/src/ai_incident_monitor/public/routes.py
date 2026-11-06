@@ -374,7 +374,7 @@ async def get_public_incident_detail(
         latest_sev = db_session.execute(
             select(SeverityAssessmentModel)
             .where(SeverityAssessmentModel.incident_id == incident_id)
-            .order_by(SeverityAssessmentModel.created_at.desc())
+            .order_by(SeverityAssessmentModel.created_at.desc(), SeverityAssessmentModel.id.desc())
         ).scalars().first()
         severity = latest_sev.actual_tier if latest_sev else "NOT_ASSESSED"
 

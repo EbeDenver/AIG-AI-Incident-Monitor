@@ -1,9 +1,10 @@
 # AI Incident Monitor — Codex Portal Integration Handoff
 
-> **Document Status**: Authoritative Engineering Handoff & Contract Baseline  
+> **Document Status**: Authoritative Engineering Handoff & Contract Baseline (Fully Reconciled)  
 > **Repository**: `https://github.com/EbeDenver/AIG-AI-Incident-Monitor`  
 > **Target Audience**: OpenAI Codex / AI Guardians Portal Engineering Team  
 > **Purpose**: Technical specification, public API contract, and integration manual for connecting the public-facing AI Guardians Portal to the AI Incident Monitor backend.  
+> **Target Portal Endpoint**: `https://portal.aiguardiansllc.us/incidents`  
 > **Governing Standards**: Regulation (EU) 2024/1689 (EU AI Act), AI Incident Manager Guide (§1–§3), WCAG 2.1 AA Accessibility Standards.  
 > **Inviolable Invariant**: Live production API consumers MUST NOT receive synthetic mock intelligence by default. All machine-generated analyses are advisory, evidence-grounded, and non-blocking (zero mandatory editorial approvals or attestations). Opt-in for synthetic mock data (`include_mock=true`) is strictly prohibited in production and returns `HTTP 403 Forbidden`.
 
@@ -16,23 +17,24 @@ To maintain strict architectural transparency, engineering state is separated in
 | Verification Tier | State / Target | Verification Status | Notes |
 | :--- | :--- | :---: | :--- |
 | **A. Verified Database State** | SQLite `.data/dev.db` (local) | `VERIFIED` | 43 total incidents; 100% live enriched (38 Gemini + 5 Claude); 0 active mocks; 0 pending. |
-| **B. Code & Automated Tests** | Python 3.13 / pytest / Alembic | `VERIFIED` | 941 tests passing (100% green); zero regressions; provenance chains intact. |
-| **C. Real Local API** | `http://127.0.0.1:8000` | `VERIFIED` | FastAPI application verified via live HTTP requests; search, sort, freshness, CORS active. |
-| **D. Production Cloud Run** | Remote Cloud Run / Cloud SQL | `UNPERFORMED` | Deployment remains deferred to formal release gate. No live remote instance currently runs. |
+| **B. Code & Automated Tests** | Python 3.13 / pytest / Alembic | `VERIFIED` | 951 tests passing (100% green); zero regressions; provenance chains intact. |
+| **C. Real Local API** | `http://127.0.0.1:8000` | `VERIFIED` | FastAPI application verified via live HTTP requests; search, sort, freshness, CORS, detail tie-breaking active. |
+| **D. Production Cloud Run** | Remote Cloud Run / Cloud SQL | `UNPERFORMED` | No remote instance currently exists. Complete deployment proposal documented in Section 11. |
 
 ### Source Control Details
 - **Active Working Branch**: `feat/incident-intelligence-enrichment`
 - **Upstream Tracking**: `origin/feat/incident-intelligence-enrichment` (synchronized via git push)
-- **Base Reference Commit**: `576546262c2f12b5d851cf051148342278f81465`
+- **Reviewed Base Commit**: `85375c73c4d9b31d7a207bb2c4eeeea497eecc66`
+- **Final Backend Reference Commit**: `239eea5317bca14289a2b5564057e71889083298` (Branch HEAD)
 - **Additive Contract Diff Baseline**: `dcc2208d7ef6610bf3da06c604764ca8d23e7bd4`
 - **Merge Status**: `UNMERGED` to `main` (active feature branch pending release review)
-- **Deployment State**: Localhost development only. Public production consumers must not be pointed to local addresses.
+- **Deployment State**: Localhost development and test execution. Public production consumers must not be pointed to local addresses.
 
 ---
 
 ## 2. Reconciled Incident Intelligence Inventory
 
-**Timestamp of Query**: `2026-11-04T12:00:00-07:00` (19:00:00 UTC)  
+**Timestamp of Query**: `2026-11-05T17:33:00-07:00`  
 **Database Queried**: `.data/dev.db` (SQLite relational store)  
 **Environment**: Local Development Workstation (`APP_ENV=development`)
 
@@ -84,7 +86,7 @@ Earlier draft handoff documentation contained apparent contradictions regarding 
   `"Chinese-linked hackers use AI tool Artex to automate attacks on ConnectWise and Korean banks"` (Primary Category: `CYBERSECURITY`).
 - **Fixture Verification**: In `backend/src/ai_incident_monitor/public/contracts/fixtures/incident_detail_live_enriched.json`, `INC-2026-04785D` contains the exact same Artex cyberattack incident.
 - **Root Cause**: The phrase "Simulated Algorithmic Flash Crash Event" appeared solely as a mislabeled markdown example in Section 6.4 of an earlier handoff draft. There was **zero database corruption, zero fixture corruption, and zero source rewriting**.
-- **Remediation**: The documentation example in Section 6 has been corrected to reflect the real Artex cyberattack. For testing mock handling in nonproduction environments, a separate synthetic identifier (`FIXTURE-SIMULATED-NONPRODUCTION`) is used.
+- **Remediation**: The documentation example in Section 6 reflects the real Artex cyberattack. For testing mock handling in nonproduction environments, a separate synthetic identifier (`FIXTURE-SIMULATED-NONPRODUCTION`) is used.
 
 ### 3.2 Removal of Obsolete Reviewer-Key Requirements
 - **Verification**: Reviewer-key requirements for editorial publishing have been completely purged from public documentation and runtime enforcement.
@@ -102,27 +104,34 @@ Earlier draft handoff documentation contained apparent contradictions regarding 
 
 ---
 
-## 4. Closed Codex Integration Blockers
+## 4. Codex Review Resolution & Backend Architecture
 
-All items identified in previous Codex review cycles have been implemented, tested, and verified:
+The backend patch addresses all findings identified in Codex review cycles:
 
 ```mermaid
-flowchart LR
+flowchart TD
     subgraph Client["Codex Portal Frontend"]
-        Search["1. Text Search (q=...)"]
-        Sort["2. Date/Title Sorting (sort_by/sort_order)"]
-        Fresh["3. Catalog Freshness Inspection"]
-        Excerpts["4. Claim-to-Evidence Excerpt View"]
-        EU["5. EU AI Act Statutory Compliance"]
+        Req["Public Request: q, category, severity, has_enrichment, page, page_size"]
     end
 
-    subgraph Backend["AI Incident Monitor Public API"]
-        Search --> QEngine["routes.py ilike filter (title, summary, id)"]
-        Sort --> SOrder["routes.py dynamic order_by (discovered_date, event_date, title)"]
-        Fresh --> FEngine["CatalogFreshnessDTO (latest ingestion, total sources)"]
-        Excerpts --> ProvMap["Dynamic provenance excerpt mapping"]
-        EU --> EUEngine["EUAIActAssessor (Annex I MDR/Machinery vs Annex III)"]
+    subgraph SQL["Backend Database Layer (Pre-Filtering)"]
+        F1["q (ilike title, summary, id)"]
+        F2["category (exact upper match)"]
+        F3["effective_severity (latest created_at.desc(), id.desc() subquery)"]
+        F4["has_enrichment (COMPLETED, env mock suppression)"]
+        
+        F1 & F2 & F3 & F4 --> FilteredSet["Canonical Filtered Incident Set"]
+        FilteredSet --> CountSQL["1. count(id) -> total, total_pages"]
+        FilteredSet --> SortSQL["2. order_by(sort_by, id.asc()) -> limit/offset"]
     end
+
+    subgraph Serialization["FastAPI DTO Hydration"]
+        SortSQL --> Items["items (Exactly matches total/total_pages)"]
+        Items --> DTO["PublicIncidentListResponse"]
+    end
+
+    Req --> SQL
+    DTO --> Client
 ```
 
 ### 4.1 Catalog-Wide Backend Text Search
@@ -130,13 +139,33 @@ flowchart LR
 - **Semantics**: Case-insensitive substring matching (`ilike`) across `IncidentModel.title`, `IncidentModel.summary`, and `IncidentModel.id`.
 - **Example**: `GET /api/v1/public/incidents?q=Artex` returns only matching incidents.
 
-### 4.2 Deterministic Sorting & Pagination
-- **Parameters**: 
-  - `sort_by: str = Query(default="discovered_date")`: Supports `"discovered_date"` (default, uses `created_at`), `"event_date"` (uses `incident_exact_date`), and `"title"` (alphabetical).
-  - `sort_order: str = Query(default="desc")`: Supports `"desc"` (default) and `"asc"`.
-- **Tie-Breaking Guarantee**: All queries append `IncidentModel.id.asc()` as a secondary sort key to prevent pagination jitter across pages.
+### 4.2 Canonical Filtered Pagination
+- **Defect Resolved**: Previously, database pagination executed before severity and enrichment checks, causing post-SQL python filtering (`continue`) to drop items from pages while leaving `total` un-filtered.
+- **SQL Pre-Filtering Architecture**:
+  1. `filter_conditions`: All filters (`q`, `category`, `effective_severity`, and `has_enrichment`) are applied in SQL **before** counting, sorting, and pagination.
+  2. **Effective Severity Resolution**: Determined via a deterministic scalar subquery selecting the most recent `actual_tier` ordered by `created_at.desc(), id.desc()`.
+  3. **Effective Enrichment Resolution**: Uses an `.exists()` subquery on `IncidentEnrichmentModel` with `status == "COMPLETED"`, dynamically suppressing `model_provider == "mock"` unless mock opt-in is allowed.
+  4. **Single Source of Truth**: The count query, total pages calculation (`math.ceil(total_items / page_size) if total_items > 0 else 0`), and item fetch run against the exact same filtered set. Zero items are dropped in Python.
+  5. **Stable Sort Guarantee**: Primary sort column is followed by `IncidentModel.id.asc()` as a deterministic tie-breaker, preventing pagination jitter across pages.
 
-### 4.3 Catalog & Source Freshness Metadata
+### 4.3 Detail-View Severity Deterministic Tie-Breaker
+- **Defect Resolved**: In `get_public_incident_detail`, severity was ordered solely by `created_at.desc()`. For equal assessment timestamps, ordering was non-deterministic.
+- **Deterministic Fix**: `get_public_incident_detail` now executes:
+  ```python
+  latest_sev = db_session.execute(
+      select(SeverityAssessmentModel)
+      .where(SeverityAssessmentModel.incident_id == incident_id)
+      .order_by(SeverityAssessmentModel.created_at.desc(), SeverityAssessmentModel.id.desc())
+  ).scalars().first()
+  severity = latest_sev.actual_tier if latest_sev else "NOT_ASSESSED"
+  ```
+- **Guaranteed Consistency**: Both list and detail endpoints execute the identical deterministic rule (`created_at.desc(), id.desc()`, falling back to `"NOT_ASSESSED"`).
+- **Verified Scenarios**:
+  1. Equal timestamps with differing tiers (`id.desc()` tie-breaker).
+  2. Unequal timestamps (most recent timestamp wins).
+  3. No severity assessment (`"NOT_ASSESSED"`).
+
+### 4.4 Catalog & Source Freshness Metadata
 - **Location**: Included directly in `PublicIncidentListResponse` under the `freshness` key (`CatalogFreshnessDTO`).
 - **Fields**:
   - `latest_ingestion_time: Optional[str]`: ISO timestamp of the most recently ingested incident in the catalog.
@@ -144,27 +173,40 @@ flowchart LR
   - `catalog_version: str`: Catalog contract version (`"2.0.0"`).
   - `database_environment: str`: Operational environment (`"development"` or `"production"`).
 
-### 4.4 Claim-to-Evidence Excerpts & Provenance
-- **Model**: `PublicAtomicClaimDTO` now exposes grounded evidence links:
-  - `supporting_evidence_ids: list[str]`: List of evidence IDs substantiating the claim (e.g. `["E001", "E002"]`).
-  - `evidence_excerpts: list[str]`: Exact verbatim excerpts from source filings grounding the claim, resolved dynamically from the enrichment payload's provenance items.
-  - `reasoning_summary: Optional[str]`: Epistemic explanation of why the claim was classified as an allegation or unverified fact.
-- **Model**: `PublicSourceReferenceDTO` includes provenance tracking:
-  - `source_id: Optional[str]`: Stable reference identifier (e.g. `SRC-001`).
-  - `retrieval_date: Optional[str]`: Timestamp when the source was retrieved and ingested.
-  - `content_hash: Optional[str]`: SHA-256 cryptographic digest of the source content.
-  - `locator: Optional[str]`: Section or page locator where available.
+### 4.5 Claim-to-Evidence Resolution & Provenance Locators
+- **Claim-to-Evidence Resolution**:
+  - `PublicAtomicClaimDTO.supporting_evidence_ids`: Array of evidence identifiers (e.g. `["EVD-TEST04"]`).
+  - Claims resolve to evidence records (`EvidenceRecordModel`), which in turn link to source filings (`SourceReferenceModel`).
+  - `evidence_excerpts: list[str]`: Direct verbatim excerpts from source filings grounding the claim, resolved dynamically from enrichment payload provenance items.
+  - `reasoning_summary: Optional[str]`: Epistemic explanation justifying classification.
+- **Evidence Locators**:
+  - `PublicSourceReferenceDTO.locator`: Populated from `QuoteSpanModel` associated with the evidence record (`f"char_offset:{start}-{end}"`).
+  - **Offset Units**: 0-indexed Unicode character offsets into the canonical raw text retrieved at `retrieval_date`.
+  - When no quote span exists in the database, `locator` returns `null` (zero invented offsets).
 
-### 4.5 Authoritative EU AI Act Statutory Classifications
-The EU AI Act assessment engine (`EUAIActAssessor`) has been audited against authoritative Union legislation (Regulation (EU) 2024/1689):
-1. **Medical Devices & Clinical Diagnostics**: Mapped strictly to **`Annex I, Section A (Item 11) — Medical Devices Regulation (EU) 2017/745`** (not Annex III Point 5).
-2. **Robotics & Industrial Machinery**: Mapped strictly to **`Annex I, Section A (Item 1) — Machinery Regulation (EU) 2023/1230`**.
-3. **Essential Private/Public Services**: Annex III Point 5 is strictly restricted to creditworthiness evaluation, credit scoring, and life/health insurance risk pricing.
-4. **Critical Infrastructure**: Digital and physical infrastructure safety components mapped to **`Annex III, Point 2`**.
-5. **Biometrics**: Remote biometric identification and categorization mapped to **`Annex III, Point 1`**.
-6. **Territorial Jurisdiction**: Preserves `UNDETERMINED` jurisdiction (38 of 43 incidents) when facts regarding Union market placement or output effects are absent from the report.
-7. **Statutory Baseline**: Under the November 2026 baseline, Annex III requirements are future law (enforceable December 2, 2027) and classified as `NOT_YET_APPLICABLE`.
-8. **Enriched DTO**: `PublicEUAIActDTO` includes `assessment_date`, `legal_framework_version`, `governance_sources`, `qualifications_and_limitations`, and `review_status: "AUTOMATED_STATUTORY_TRIAGE"`.
+### 4.6 Audited EU AI Act Statutory Classifications & Explicit Unknowns
+The EU AI Act assessment engine (`EUAIActAssessor`) has been audited against Regulation (EU) 2024/1689:
+1. **Critical Infrastructure Disambiguation**:
+   - `Annex III, Point 2` is strictly restricted to AI systems deployed as *safety/operational components* managing critical infrastructure (power grid, water/gas networks, traffic control).
+   - Cyberattacks on commercial software or banks (e.g. Artex) do not qualify as Annex III Point 2 high-risk systems merely because target institutions are significant.
+2. **Medical Devices & Robotics**:
+   - Medical devices mapped strictly to **`Annex I, Section A (Item 11) — MDR (EU) 2017/745`**.
+   - Robotics mapped strictly to **`Annex I, Section A (Item 1) — Machinery (EU) 2023/1230`**.
+3. **Explicit Unknowns (`missing_facts`)**:
+   - Added `missing_facts: list[str]` to `PublicEUAIActDTO` and `EUAIActComplianceAssessment`.
+   - Populates incident-specific factual gaps (e.g. whether the system was placed on the Union market, lack of disclosed operational autonomy telemetry, unverified deployer post-market logs) without obscuring them behind boilerplate disclaimers.
+4. **Correction of Unsupported Findings**:
+   - Where AI involvement is `NOT_ESTABLISHED` or autonomy is `UNKNOWN`, the system does not assert that human oversight or risk management failed.
+   - For Artex (`INC-2026-04785D`): Classified as `GENERAL_AI_SYSTEM`, `annex_reference=None`, `identified_gaps=[]`, and `missing_facts` populated.
+   - For true high-risk cases lacking technical disclosure, gap findings are framed as *conditional preparedness requirements* under future law (enforceable December 2, 2027) rather than asserted historical violations.
+
+### 4.7 Test Environment Reproducibility
+- **Root Cause**: `feedparser>=6.0.11` is declared in `backend/pyproject.toml` under `project.dependencies`. Executing in an uninstalled Python virtual environment caused module import failures.
+- **Reproducible Setup Command**:
+  ```bash
+  pip install -e "./backend[dev]"
+  ```
+  This command installs all required runtime and development dependencies into the active virtual environment.
 
 ---
 
@@ -175,7 +217,7 @@ The public API contract is strictly **additive and 100% backward-compatible**. E
 ```diff
 --- a/backend/src/ai_incident_monitor/public/schemas.py
 +++ b/backend/src/ai_incident_monitor/public/schemas.py
-@@ -28,12 +28,16 @@ class PublicCategoryDTO(BaseModel):
+@@ -28,12 +28,19 @@ class PublicCategoryDTO(BaseModel):
  
  
  class PublicSourceReferenceDTO(BaseModel):
@@ -189,11 +231,14 @@ The public API contract is strictly **additive and 100% backward-compatible**. E
      published_at: Optional[str] = Field(default=None, description="Publication timestamp string if available.")
 +    retrieval_date: Optional[str] = Field(default=None, description="Timestamp when source was retrieved/ingested.")
 +    content_hash: Optional[str] = Field(default=None, description="SHA-256 cryptographic digest of source payload where known.")
-+    locator: Optional[str] = Field(default=None, description="Section, locator, or document anchor where available.")
++    locator: Optional[str] = Field(
++        default=None,
++        description="Section, locator, or quote span anchor where available (e.g. 'char_offset:<start>-<end>' in 0-indexed Unicode character offsets into the canonical raw text retrieved at retrieval_date).",
++    )
  
  
  class PublicAtomicClaimDTO(BaseModel):
-@@ -44,6 +48,9 @@ class PublicAtomicClaimDTO(BaseModel):
+@@ -44,6 +51,9 @@ class PublicAtomicClaimDTO(BaseModel):
      classification: str = Field(..., description="Claim classification (CONFIRMED_FACT, ATTRIBUTED_ALLEGATION, etc.).")
      verification_status: str = Field(..., description="Verification status (VERIFIED, UNVERIFIED, CONTESTED, etc.).")
      confidence: str = Field(..., description="Confidence tier (HIGH, MEDIUM, LOW).")
@@ -202,8 +247,8 @@ The public API contract is strictly **additive and 100% backward-compatible**. E
 +    reasoning_summary: Optional[str] = Field(default=None, description="Epistemic rationale justifying classification.")
  
  
- class PublicEUAIActDTO(BaseModel):
-@@ -140,6 +147,23 @@ class PublicEUAIActDTO(BaseModel):
+ class PublicAIInvolvementDTO(BaseModel):
+@@ -140,6 +150,27 @@ class PublicEUAIActDTO(BaseModel):
      article_73_serious_incident: Optional[dict[str, Any]] = Field(default=None, description="Article 73 serious incident evaluation.")
      enforcement_status: str = Field(..., description="ACTIVE_LAW, NOT_YET_APPLICABLE, or PENDING under November 2026 baseline.")
      enforcement_notes: str = Field(..., description="Timeline guidance explaining enforceability.")
@@ -224,10 +269,14 @@ The public API contract is strictly **additive and 100% backward-compatible**. E
 +        default="AUTOMATED_STATUTORY_TRIAGE",
 +        description="Descriptive regulatory assessment status (e.g. AUTOMATED_STATUTORY_TRIAGE).",
 +    )
++    missing_facts: list[str] = Field(
++        default_factory=list,
++        description="Incident-specific missing factual disclosures, uncorroborated claims, or unknown operational parameters preventing definitive regulatory determination.",
++    )
      identified_gaps: list[PublicEUAIActGapDTO] = Field(default_factory=list, description="Identified compliance gaps.")
      disclaimer: str = Field(
          default="This automated regulatory impact assessment is generated for technical research and compliance preparedness only. It does not constitute formal legal advice, regulatory determination, or EU conformity certification.",
-@@ -147,6 +171,15 @@ class PublicEUAIActDTO(BaseModel):
+@@ -147,6 +178,15 @@ class PublicEUAIActDTO(BaseModel):
      )
  
  
@@ -339,11 +388,12 @@ The public API contract is strictly **additive and 100% backward-compatible**. E
       "locator": null
     }
   ],
+  "unknowns": [],
   "intelligence": {
     "is_available": true,
     "model_provider": "gemini",
     "model_name": "gemini-3.1-pro-preview",
-    "generated_at": "2026-11-04T18:50:37.382091",
+    "generated_at": "2026-11-03T01:42:51",
     "is_synthetic_mock": false,
     "assessment_status": "COMPLETE",
     "advisory_review_flag": true,
@@ -411,15 +461,15 @@ The public API contract is strictly **additive and 100% backward-compatible**. E
   "eu_ai_act_compliance": {
     "is_available": true,
     "jurisdiction_status": "UNDETERMINED",
-    "classification": "HIGH_RISK_ANNEX_III",
-    "annex_reference": "Annex III, point 2 — Critical Infrastructure (Management & Safety of Digital Infrastructure)",
+    "classification": "GENERAL_AI_SYSTEM",
+    "annex_reference": null,
     "article_73_serious_incident": {
       "determination": "NON_SERIOUS",
       "criteria_met": [],
       "rationale": "Evaluated against Article 73 statutory thresholds. Identified criteria: None demonstrated by current evidence."
     },
-    "enforcement_status": "NOT_YET_APPLICABLE",
-    "enforcement_notes": "High-risk obligations under Annex III become legally enforceable on December 2, 2027. Current findings provide compliance gap analysis and organizational preparedness guidance.",
+    "enforcement_status": "ACTIVE_LAW",
+    "enforcement_notes": "Evaluated under standard governance baseline as of November 2026.",
     "assessment_date": "2026-11-04T18:58:10.067102",
     "legal_framework_version": "EU Regulation 2024/1689 (AI Act) - November 2026 Baseline",
     "governance_sources": [
@@ -435,23 +485,12 @@ The public API contract is strictly **additive and 100% backward-compatible**. E
       "Deployer technical documentation and conformity declarations not independently verified."
     ],
     "review_status": "AUTOMATED_STATUTORY_TRIAGE",
-    "identified_gaps": [
-      {
-        "article": "Article 14 (Human Oversight)",
-        "gap_status": "NOT_YET_APPLICABLE",
-        "finding": "Evidence indicates human oversight was unable to interrupt autonomous execution cascade in real time."
-      },
-      {
-        "article": "Article 9 (Risk Management System)",
-        "gap_status": "NOT_YET_APPLICABLE",
-        "finding": "Risk management procedures did not anticipate autonomous failure condition manifested during the incident."
-      },
-      {
-        "article": "Article 15 (Accuracy, Robustness, and Cybersecurity)",
-        "gap_status": "NOT_YET_APPLICABLE",
-        "finding": "System exhibited vulnerability to adversarial input or unhandled environment edge case."
-      }
+    "missing_facts": [
+      "Whether the system was placed on the EU market, deployed in the Union, or produced output affecting persons in the Union is unverified in available filings.",
+      "Operational autonomy levels and real-time human oversight telemetry are not documented in source reporting.",
+      "Deployer post-market monitoring logs, internal risk assessments, and technical conformity declarations are not publicly accessible."
     ],
+    "identified_gaps": [],
     "disclaimer": "This automated regulatory impact assessment is generated for technical research and compliance preparedness only. It does not constitute formal legal advice, regulatory determination, or EU conformity certification."
   }
 }
@@ -506,39 +545,140 @@ In nonproduction environments only (`APP_ENV=development`), mock fixtures (e.g. 
 
 ---
 
-## 9. Local Startup & Verification Commands
+## 9. Real Persisted-Data Integration & Local QA Procedures
 
+To verify the portal UI against the actual 43 live-enriched database records without running enrichment, invoking LLM APIs, or modifying records:
+
+### 9.1 Local Server Startup & Configuration
 ```bash
 # 1. Navigate to the repository root
 cd AIG-AI-Incident-Monitor
 
-# 2. Activate Python 3.13 virtual environment
+# 2. Activate Python 3.13 virtual environment & verify dependencies
 source .venv/bin/activate
+pip install -e "./backend[dev]"
 
-# 3. Ensure database schema is up-to-date
-alembic -c backend/alembic.ini upgrade head
-
-# 4. Launch FastAPI application (listens on port 8000)
-make run
-# Or via uvicorn directly:
+# 3. Launch FastAPI server pointing to local .data/dev.db (Read-Only Public Server)
 uvicorn ai_incident_monitor.ui.app:create_app --factory --host 127.0.0.1 --port 8000
+```
 
-# 5. Run verification requests
-# Search by keyword
-curl -s "http://127.0.0.1:8000/api/v1/public/incidents?q=Artex" | jq .total
-# Sort by event date ascending
-curl -s "http://127.0.0.1:8000/api/v1/public/incidents?sort_by=event_date&sort_order=asc" | jq .items[0].event_date
-# Verify live Gemini enriched incident
-curl -s "http://127.0.0.1:8000/api/v1/public/incidents/INC-2026-04785D" | jq .intelligence.model_name
-# -> "gemini-3.1-pro-preview"
+### 9.2 Public API Base URL Format
+- **Local Development Base URL**: `http://127.0.0.1:8000/api/v1/public`
+- **Frontend Environment Setting** (e.g., in Codex portal `.env.local`):
+  ```bash
+  NEXT_PUBLIC_INCIDENTS_API_URL=http://127.0.0.1:8000/api/v1/public
+  ```
+
+### 9.3 Health & OpenAPI Verification Commands
+```bash
+# 1. Health & Taxonomy Verification (returns all 7 category objects)
+curl -s "http://127.0.0.1:8000/api/v1/public/categories" | jq '.[0]'
+
+# 2. OpenAPI Schema Verification
+curl -s "http://127.0.0.1:8000/api/v1/public/openapi.json" | jq '{title: .info.title, version: .info.version}'
+```
+
+### 9.4 Sanitized List & Detail Verification Examples
+```bash
+# 1. Query full catalog summary (43 total live incidents, page 1 of 5)
+curl -s "http://127.0.0.1:8000/api/v1/public/incidents?page_size=10" | jq '{total: .total, total_pages: .total_pages, freshness: .freshness}'
+
+# 2. Keyword Search
+curl -s "http://127.0.0.1:8000/api/v1/public/incidents?q=Artex" | jq '.items[] | {id: .incident_id, title: .title}'
+
+# 3. Category & Filtered Pagination
+curl -s "http://127.0.0.1:8000/api/v1/public/incidents?category=CYBERSECURITY&page_size=2" | jq '{total: .total, pages: .total_pages, count: (.items | length)}'
+
+# 4. Detail Verification for Real Incident (Artex)
+curl -s "http://127.0.0.1:8000/api/v1/public/incidents/INC-2026-04785D" | jq '{id: .incident_id, provider: .intelligence.model_provider, model: .intelligence.model_name, eu_class: .eu_ai_act_compliance.classification}'
+
+# 5. Production Mock Quarantine Rejection Verification
+curl -s -i "http://127.0.0.1:8000/api/v1/public/incidents?include_mock=true"
+# -> In production environment (ENVIRONMENT=production), returns HTTP 403 Forbidden
 ```
 
 ---
 
-## 10. Test Suite Status & Final Release Sign-Off
+## 10. Test Suite Status & Automated Regression Coverage
 
-- **Regression Test Suite**: **941 tests executed, 941 tests PASSED** (0 failures, 0 errors, 100% green).
-- **Public API Coverage**: 14 dedicated unit tests covering CORS, search, sorting, freshness, mock segregation, and production 403 prohibition.
+- **Full Regression Test Suite**: **951 tests executed, 951 tests PASSED** (0 failures, 0 errors, 100% green in 26.56s).
+- **Public API Coverage**: 24 dedicated unit tests covering:
+  - List & detail severity agreement with deterministic `created_at.desc(), id.desc()` tie-breaker.
+  - CORS headers & preflight OPTIONS.
+  - Search query matching title, summary, and ID.
+  - Dynamic sorting by `discovered_date`, `event_date`, and `title` (asc/desc).
+  - Catalog freshness metadata.
+  - Production mock opt-in strict 403 prohibition.
+  - Canonical filtered pagination across combined `q + category + severity + has_enrichment`.
+  - Quote-span evidence locators (`char_offset:<start>-<end>`).
+  - Explicit EU missing facts (`missing_facts: list[str]`).
 - **EU AI Act Coverage**: 10 dedicated unit tests covering Annex I, Annex III, Article 5, Article 50, and Article 73 statutory rules.
+- **Cryptographic Provenance**: 9 dedicated unit tests covering SHA-256 canonical manifests and sequential hash chaining.
 - **Zero Credential Leakage**: Confirmed zero secrets, API keys, or private paths in public DTOs, fixtures, or schemas.
-- **Final Action for Codex**: Codex engineering should use branch `feat/incident-intelligence-enrichment` and develop against the verified contract endpoints and fixtures in `backend/src/ai_incident_monitor/public/contracts/fixtures/`.
+
+---
+
+## 11. Production Cloud Run & Cloud SQL Deployment Proposal
+
+### 11.1 Current Remote Infrastructure State
+- **Audit Finding**: No live Cloud Run instance currently hosts the AI Incident Monitor backend.
+- **Verified GCP Project**: `gen-lang-client-0489559178` ("AI Incident Manager") is available under the operator account, but Cloud Run API (`run.googleapis.com`) is not yet enabled.
+- **Guardrail**: The local workstation development server MUST NOT be exposed to production portal consumers (`https://portal.aiguardiansllc.us/incidents`). A formal Cloud Run service is required.
+
+### 11.2 Deployment Specification
+```mermaid
+flowchart LR
+    Portal["AI Guardians Portal (https://portal.aiguardiansllc.us)"] --> Cloudflare["Cloudflare DNS / SSL (incidents.aiguardiansllc.us)"]
+    Cloudflare --> CloudRun["Google Cloud Run (ai-incident-monitor-backend)"]
+    
+    subgraph GCP["GCP Project: gen-lang-client-0489559178 (us-central1)"]
+        CloudRun --> SecretMgr["Secret Manager (DATABASE_URL)"]
+        CloudRun --> CloudSQL["Cloud SQL for PostgreSQL 16 (ai-incident-monitor-db)"]
+    end
+```
+
+1. **GCP Resources**:
+   - **Cloud Run Service**: `ai-incident-monitor-backend`
+     - CPU: 1 vCPU, Memory: 512 MB, Min Instances: 0 (scale to zero), Max Instances: 3.
+     - Port: 8080 (handled by existing `Dockerfile`).
+     - Ingress: Allow all public traffic (public API).
+   - **Cloud SQL Instance**: `ai-incident-monitor-db`
+     - Engine: PostgreSQL 16, Tier: `db-f1-micro` (shared vCPU, 0.6 GB RAM, 10 GB SSD).
+     - Storage Auto-resize: Enabled.
+     - Connection: Unix domain socket via Cloud Run Cloud SQL integration (`/cloudsql/gen-lang-client-0489559178:us-central1:ai-incident-monitor-db`).
+   - **Secret Manager**:
+     - Secret `AI_MONITOR_DATABASE_URL`: stores `postgresql+psycopg://aig_prod:<password>@/ai_incident_monitor_prod?host=/cloudsql/gen-lang-client-0489559178:us-central1:ai-incident-monitor-db`.
+
+2. **Persistence & Data Migration**:
+   - Initial schema: Apply Alembic migrations `alembic upgrade head`.
+   - Seed data: Run deterministic database sync script to transfer the 43 validated live enriched incident records from SQLite `.data/dev.db` to the Cloud SQL database (incurring **$0.00** LLM cost).
+
+3. **Production Runtime Settings**:
+   - `ENVIRONMENT=production` (strictly prohibits `include_mock=true` with 403 Forbidden).
+   - `AI_MONITOR_ALLOW_MOCK_OPT_IN=false`
+   - `DATABASE_URL` (injected from Secret Manager).
+   - `ALLOWED_HOSTS=*` (public routes only; internal operator routes restricted).
+
+4. **Monthly Operating Cost Estimate**:
+   - Cloud Run (Serverless scale-to-zero): ~$0.50 – $2.00 / month.
+   - Cloud SQL (`db-f1-micro` shared tier): ~$9.50 / month.
+   - Secret Manager & Artifact Registry: <$0.50 / month.
+   - **Total Estimated Hosting Cost**: **~$10 – $12 USD / month**.
+   - Visitor Request Costs: **$0.00** (strictly static relational read queries; zero LLM generation on page loads).
+
+5. **Rollout Verification & Smoke Tests**:
+   - Step 1: Health check `GET https://incidents.aiguardiansllc.us/api/v1/public/categories` returns HTTP 200 with 7 categories.
+   - Step 2: Catalog list `GET https://incidents.aiguardiansllc.us/api/v1/public/incidents?page_size=1` returns HTTP 200 with `total: 43`.
+   - Step 3: Detail check `GET https://incidents.aiguardiansllc.us/api/v1/public/incidents/INC-2026-04785D` returns HTTP 200 with Artex Gemini Pro intelligence.
+   - Step 4: Security test `GET https://incidents.aiguardiansllc.us/api/v1/public/incidents?include_mock=true` returns HTTP 403 Forbidden.
+
+6. **Rollback Plan**:
+   - Cloud Run revisions enable instant zero-downtime rollback:
+     ```bash
+     gcloud run services update-traffic ai-incident-monitor-backend --to-revisions=PREVIOUS_REVISION=100
+     ```
+
+7. **Explicit Release Approvals Required**:
+   - [ ] Approval of GCP project `gen-lang-client-0489559178` provisioning ($10-$12/mo Cloud SQL budget).
+   - [ ] Approval to enable Cloud Run & Cloud SQL APIs on project.
+   - [ ] Operator sign-off on PR merge from `feat/incident-intelligence-enrichment` into `main`.

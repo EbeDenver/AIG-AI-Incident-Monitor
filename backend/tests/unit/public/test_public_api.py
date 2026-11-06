@@ -203,6 +203,27 @@ def public_test_app(tmp_path: Path):
         )
         session.add(enr3)
 
+        # Equal-timestamp dual severity assessments on TEST03 for deterministic tie-breaker verification:
+        # Both created at exact same timestamp: 2026-10-01 12:00:00 UTC
+        # SEV-EQUAL-01 has actual_tier="LOW"
+        # SEV-EQUAL-02 has actual_tier="MEDIUM"
+        # Under id.desc() tie-breaker, "SEV-EQUAL-02" > "SEV-EQUAL-01", so both list and detail MUST resolve to "MEDIUM"
+        sev3_a = SeverityAssessmentModel(
+            id="SEV-EQUAL-01",
+            incident_id="INC-2026-TEST03",
+            actual_tier="LOW",
+            created_at=datetime(2026, 10, 1, 12, 0, tzinfo=timezone.utc),
+        )
+        session.add(sev3_a)
+
+        sev3_b = SeverityAssessmentModel(
+            id="SEV-EQUAL-02",
+            incident_id="INC-2026-TEST03",
+            actual_tier="MEDIUM",
+            created_at=datetime(2026, 10, 1, 12, 0, tzinfo=timezone.utc),
+        )
+        session.add(sev3_b)
+
         # Fourth incident: RIGHTS category, CRITICAL severity with historical LOW, live Claude enrichment, quote span
         inc4 = IncidentModel(
             id="INC-2026-TEST04",
@@ -746,4 +767,60 @@ class TestPublicAPI:
         assert eu["is_available"] is True
         assert len(eu["missing_facts"]) >= 1
         assert any("conformity" in f.lower() for f in eu["missing_facts"])
+
+    def test_list_and_detail_severity_agreement_and_tie_breaking(self, client: TestClient) -> None:
+        """Verify list and detail severity selection use the identical deterministic latest-assessment rule.
+        
+        Covers:
+        1. Equal timestamps with different severity values (deterministic id.desc() tie-breaker).
+        2. Unequal timestamps (most recent timestamp wins).
+        3. No severity assessment (both default to NOT_ASSESSED).
+        """
+        # 1. Equal timestamps with different severity values:
+        # INC-2026-TEST03 has SEV-EQUAL-01 (LOW) and SEV-EQUAL-02 (MEDIUM) with identical created_at.
+        # Under id.desc() tie-breaker: SEV-EQUAL-02 wins -> "MEDIUM".
+        res_list_3 = client.get("/api/v1/public/incidents?q=Drone")
+        assert res_list_3.status_code == 200
+        list_item_3 = next(it for it in res_list_3.json()["items"] if it["incident_id"] == "INC-2026-TEST03")
+        assert list_item_3["severity"] == "MEDIUM"
+
+        res_detail_3 = client.get("/api/v1/public/incidents/INC-2026-TEST03")
+        assert res_detail_3.status_code == 200
+        assert res_detail_3.json()["severity"] == "MEDIUM"
+        assert list_item_3["severity"] == res_detail_3.json()["severity"]
+
+        # Verify filter behavior on tie-breaker: severity=MEDIUM matches TEST03, severity=LOW excludes it
+        res_filter_med = client.get("/api/v1/public/incidents?severity=MEDIUM")
+        assert res_filter_med.status_code == 200
+        assert any(it["incident_id"] == "INC-2026-TEST03" for it in res_filter_med.json()["items"])
+
+        res_filter_low = client.get("/api/v1/public/incidents?severity=LOW")
+        assert res_filter_low.status_code == 200
+        assert not any(it["incident_id"] == "INC-2026-TEST03" for it in res_filter_low.json()["items"])
+
+        # 2. Unequal timestamps:
+        # INC-2026-TEST04 has SEV-HIST-04 (LOW, 2026-09-16) superseded by SEV-CURR-04 (CRITICAL, 2026-09-17).
+        # Most recent created_at wins -> "CRITICAL".
+        res_list_4 = client.get("/api/v1/public/incidents?q=Biometric%20Access")
+        assert res_list_4.status_code == 200
+        list_item_4 = next(it for it in res_list_4.json()["items"] if it["incident_id"] == "INC-2026-TEST04")
+        assert list_item_4["severity"] == "CRITICAL"
+
+        res_detail_4 = client.get("/api/v1/public/incidents/INC-2026-TEST04")
+        assert res_detail_4.status_code == 200
+        assert res_detail_4.json()["severity"] == "CRITICAL"
+        assert list_item_4["severity"] == res_detail_4.json()["severity"]
+
+        # 3. No severity assessment:
+        # INC-2026-TEST02 has zero severity records -> "NOT_ASSESSED".
+        res_list_2 = client.get("/api/v1/public/incidents?q=TEST02")
+        assert res_list_2.status_code == 200
+        list_item_2 = next(it for it in res_list_2.json()["items"] if it["incident_id"] == "INC-2026-TEST02")
+        assert list_item_2["severity"] == "NOT_ASSESSED"
+
+        res_detail_2 = client.get("/api/v1/public/incidents/INC-2026-TEST02")
+        assert res_detail_2.status_code == 200
+        assert res_detail_2.json()["severity"] == "NOT_ASSESSED"
+        assert list_item_2["severity"] == res_detail_2.json()["severity"]
+
 
