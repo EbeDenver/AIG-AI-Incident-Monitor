@@ -563,10 +563,15 @@ uvicorn ai_incident_monitor.ui.app:create_app --factory --host 127.0.0.1 --port 
 ```
 
 ### 9.2 Public API Base URL Format
-- **Local Development Base URL**: `http://127.0.0.1:8000/api/v1/public`
-- **Frontend Environment Setting** (e.g., in Codex portal `.env.local`):
+- **API Base Origin** (no `/api/v1/public` appended):
+  - Local Development Origin: `http://127.0.0.1:8000`
+  - Hosted QA/Production Origin: `https://ai-incident-monitor-backend-142073604693.us-central1.run.app`
+- **Portal Environment Setting** (server-only in AI Guardians portal `.env` / deployment configuration):
   ```bash
-  NEXT_PUBLIC_INCIDENTS_API_URL=http://127.0.0.1:8000/api/v1/public
+  # Server-only environment variable pointing to the API base origin (WITHOUT /api/v1/public appended)
+  AI_INCIDENT_MONITOR_API_URL=http://127.0.0.1:8000
+  # For hosted deployment:
+  # AI_INCIDENT_MONITOR_API_URL=https://ai-incident-monitor-backend-142073604693.us-central1.run.app
   ```
 
 ### 9.3 Health & OpenAPI Verification Commands
