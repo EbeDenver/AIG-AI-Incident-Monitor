@@ -1,0 +1,43 @@
+{
+  "manifest_version": "1.0.0",
+  "updated_at_utc": "2026-10-21T00:00:00Z",
+  "hashing_methodology": "SHA-256 computed over raw UTF-8 bytes of on-disk reference YAML files",
+  "frameworks": [
+    {
+      "framework_code": "OECD_AI_PRINCIPLES",
+      "version": "2024.1",
+      "file_path": "frameworks/oecd/oecd-principles-2024.yaml",
+      "content_sha256": "97d6b4a8cba6e18bfdb9ee17ead09250ab7ac35258853d2778d710594e95837e",
+      "publisher": "OECD",
+      "official_source_url": "https://legalinstruments.oecd.org/en/instruments/OECD-LEGAL-0449",
+      "retrieved_at_utc": "2024-05-03T00:00:00Z",
+      "verified_at_utc": "2026-10-20T00:00:00Z",
+      "verified_by": "AIG-Lead-Governance-Analyst",
+      "license_notes": "OECD Recommendation of the Council on Artificial Intelligence, OECD/LEGAL/0449"
+    },
+    {
+      "framework_code": "NIST_AI_RMF",
+      "version": "1.0.0",
+      "file_path": "frameworks/nist/nist-ai-rmf-1.0.yaml",
+      "content_sha256": "1ea6b081636d94833be833f7d03e8bbbeb1e13a734510db8d34d381a911f98ef",
+      "publisher": "National Institute of Standards and Technology (NIST)",
+      "official_source_url": "https://doi.org/10.6028/NIST.AI.100-1",
+      "retrieved_at_utc": "2023-01-26T00:00:00Z",
+      "verified_at_utc": "2026-10-20T00:00:00Z",
+      "verified_by": "AIG-Lead-Governance-Analyst",
+      "license_notes": "NIST AI 100-1 — US Government Work / Public Domain"
+    },
+    {
+      "framework_code": "EU_AI_ACT",
+      "version": "2024/1689",
+      "file_path": "frameworks/eu-ai-act/eu-ai-act-2024-1689.yaml",
+      "content_sha256": "c5b25d21a4b4c7ec022f8b8c0b39dae48f1b9a96041f89ad082d5bfaff2b2d11",
+      "publisher": "Publications Office of the European Union",
+      "official_source_url": "http://data.europa.eu/eli/reg/2024/1689/oj",
+      "retrieved_at_utc": "2024-07-12T00:00:00Z",
+      "verified_at_utc": "2026-10-20T00:00:00Z",
+      "verified_by": "AIG-Lead-Governance-Analyst",
+      "license_notes": "Official Journal of the European Union, L 2024/1689, 12.7.2024 (EUR-Lex open reuse)"
+    }
+  ]
+}
