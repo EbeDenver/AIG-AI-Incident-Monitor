@@ -149,7 +149,7 @@ def upgrade() -> None:
         sa.Column('reviewed_at', sa.DateTime(timezone=True), nullable=False),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
         sa.CheckConstraint(
-            'is_human = true OR is_human = 1',
+            'is_human = true',
             name=op.f('ck_editorial_dossier_reviews_is_human'),
         ),
         sa.ForeignKeyConstraint(

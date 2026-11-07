@@ -57,7 +57,7 @@ def upgrade() -> None:
     sa.Column('schema_version', sa.String(length=20), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
-    sa.CheckConstraint('is_human = true OR is_human = 1', name=op.f('ck_human_review_records_ck_human_review_records_is_human')),
+    sa.CheckConstraint('is_human = true', name=op.f('ck_human_review_records_ck_human_review_records_is_human')),
     sa.ForeignKeyConstraint(['supersedes_review_id'], ['human_review_records.id'], name=op.f('fk_human_review_records_supersedes_review_id_human_review_records'), ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_human_review_records'))
     )
