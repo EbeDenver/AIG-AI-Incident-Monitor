@@ -823,4 +823,71 @@ class TestPublicAPI:
         assert res_detail_2.json()["severity"] == "NOT_ASSESSED"
         assert list_item_2["severity"] == res_detail_2.json()["severity"]
 
+    def test_public_only_mode_unmounts_all_operator_and_mutation_routes(self, public_test_app) -> None:
+        """In public_only mode, operator routes are completely unmounted and return 404."""
+        engine = public_test_app.state.db_engine
+        root = public_test_app.state.repo_root
+        pub_app = create_app(db_engine=engine, repo_root=root, public_only=True)
+        pub_client = TestClient(pub_app)
+
+        # 1. Operator and Admin routes return 404 Not Found
+        operator_endpoints = [
+            "/login",
+            "/logout",
+            "/incidents",
+            "/incidents/INC-2026-TEST01",
+            "/diagnostics",
+            "/diagnostics/refresh",
+            "/api/ingestion/refresh",
+            "/api/ingestion/status",
+            "/dossiers",
+            "/dossiers/new",
+            "/packages",
+            "/static/css/styles.css",
+        ]
+        for ep in operator_endpoints:
+            res_get = pub_client.get(ep)
+            assert res_get.status_code == 404, f"Expected 404 for operator route {ep}, got {res_get.status_code}"
+            res_post = pub_client.post(ep)
+            assert res_post.status_code == 404, f"Expected 404 for operator POST {ep}, got {res_post.status_code}"
+
+        # 2. Public read-only endpoints function normally
+        res_cat = pub_client.get("/api/v1/public/categories")
+        assert res_cat.status_code == 200
+        assert len(res_cat.json()) >= 5
+
+        res_inc = pub_client.get("/api/v1/public/incidents")
+        assert res_inc.status_code == 200
+        assert res_inc.json()["total"] >= 1
+
+        res_det = pub_client.get("/api/v1/public/incidents/INC-2026-TEST01")
+        assert res_det.status_code == 200
+        assert res_det.json()["incident_id"] == "INC-2026-TEST01"
+
+        # 3. Public root landing returns service status JSON (no redirect to /login)
+        res_root = pub_client.get("/")
+        assert res_root.status_code == 200
+        root_data = res_root.json()
+        assert root_data["status"] == "healthy"
+        assert "public-api" in root_data["service"]
+
+        # 4. Mutation methods on public endpoints are strictly rejected (405 Method Not Allowed)
+        res_post_inc = pub_client.post("/api/v1/public/incidents", json={"title": "Attack"})
+        assert res_post_inc.status_code == 405
+
+        res_del_inc = pub_client.delete("/api/v1/public/incidents/INC-2026-TEST01")
+        assert res_del_inc.status_code == 405
+
+        res_put_cat = pub_client.put("/api/v1/public/categories", json={})
+        assert res_put_cat.status_code == 405
+
+        # 5. Zero secrets or sensitive diagnostics leakage in responses
+        body_text = res_inc.text + res_det.text + res_root.text
+        assert "/Users/" not in body_text
+        assert "/Volumes/" not in body_text
+        assert ".db" not in body_text
+        assert "password" not in body_text.lower()
+        assert "secret" not in body_text.lower() or "circuit breaker" in body_text.lower()
+
+
 

@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Optional, Set
 
 from fastapi import FastAPI, Request, Response, status
-from fastapi.responses import HTMLResponse, RedirectResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import Engine
@@ -44,12 +44,18 @@ MAX_REQUEST_BODY_BYTES = 1024 * 1024  # 1 MB
 class LocalSecurityMiddleware(BaseHTTPMiddleware):
     """Enforces host allowlisting, request body limits, and strict browser security headers."""
 
-    def __init__(self, app: Any, allowed_hosts: Optional[Set[str]] = None) -> None:
+    def __init__(
+        self,
+        app: Any,
+        allowed_hosts: Optional[Set[str]] = None,
+        public_only: bool = False,
+    ) -> None:
         super().__init__(app)
         self.allowed_hosts = allowed_hosts or DEFAULT_ALLOWED_HOSTS
+        self.public_only = public_only
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        is_public = request.url.path.startswith("/api/v1/public")
+        is_public = self.public_only or request.url.path.startswith("/api/v1/public")
 
         # 0. Fast-path CORS preflight for public API
         if is_public and request.method == "OPTIONS":
@@ -135,10 +141,20 @@ def create_app(
     allowed_hosts: Optional[Set[str]] = None,
     reviewer_keystore: Optional[Any] = None,
     reviewer_rate_limiter: Optional[Any] = None,
+    public_only: Optional[bool] = None,
 ) -> FastAPI:
-    """Create and configure the local operator FastAPI application."""
+    """Create and configure the FastAPI application.
+    
+    When public_only is True (or PUBLIC_ONLY=true env), operator and mutation routes
+    are completely unmounted, exposing only read-only /api/v1/public/* endpoints.
+    """
     root = repo_root or get_repo_root()
     engine = db_engine or get_engine()
+
+    if public_only is not None:
+        is_public_only = public_only
+    else:
+        is_public_only = os.getenv("PUBLIC_ONLY", "false").lower().strip() in ("true", "1", "yes")
 
     cred_mgr = credential_manager or LocalCredentialManager(
         storage_path=root / ".data" / ".operator_credential"
@@ -155,9 +171,16 @@ def create_app(
     )
     rev_limiter = reviewer_rate_limiter or ReviewerRateLimiter()
 
+    app_title = "AI Incident Monitor — Public Incident API" if is_public_only else "AI Incident Monitor — Local Operator Explorer & Public API"
+    app_desc = (
+        "Public read-only API for verified AI incident dossiers and regulatory intelligence."
+        if is_public_only
+        else "Local inspection interface and public API for AI incidents and intelligence."
+    )
+
     app = FastAPI(
-        title="AI Incident Monitor — Local Operator Explorer & Public API",
-        description="Local inspection interface and public API for AI incidents and intelligence.",
+        title=app_title,
+        description=app_desc,
         version="0.2.0",
         docs_url="/api/docs",
         redoc_url=None,
@@ -174,7 +197,7 @@ def create_app(
     app.state.reviewer_rate_limiter = rev_limiter
 
     # Security middleware
-    app.add_middleware(LocalSecurityMiddleware, allowed_hosts=allowed_hosts)
+    app.add_middleware(LocalSecurityMiddleware, allowed_hosts=allowed_hosts, public_only=is_public_only)
 
     # Template and static paths
     pkg_dir = Path(__file__).parent
@@ -184,33 +207,51 @@ def create_app(
     templates = Jinja2Templates(directory=str(template_dir))
     app.state.templates = templates
 
-    # Static assets
-    if static_dir.exists():
-        app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
-
-    # Import and register route modules
-    from ai_incident_monitor.ui.routes.auth import router as auth_router
-    from ai_incident_monitor.ui.routes.incidents import router as incidents_router
-    from ai_incident_monitor.ui.routes.diagnostics import router as diagnostics_router
-    from ai_incident_monitor.ui.routes.dossiers import router as dossiers_router
-    from ai_incident_monitor.ui.routes.packages import router as packages_router
+    # Register public routes
     from ai_incident_monitor.public.routes import router as public_router
-
-    app.include_router(auth_router)
-    app.include_router(incidents_router)
-    app.include_router(diagnostics_router)
-    app.include_router(dossiers_router)
-    app.include_router(packages_router)
     app.include_router(public_router)
 
-    # Root landing redirect
-    @app.get("/", response_class=HTMLResponse)
-    async def index_redirect(request: Request) -> Response:
-        cookie_val = request.cookies.get(SESSION_COOKIE_NAME)
-        session = sess_mgr.get_session(cookie_val)
-        if session:
-            return RedirectResponse(url="/incidents", status_code=status.HTTP_303_SEE_OTHER)
-        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+    if not is_public_only:
+        # Static assets
+        if static_dir.exists():
+            app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
+        # Import and register operator route modules
+        from ai_incident_monitor.ui.routes.auth import router as auth_router
+        from ai_incident_monitor.ui.routes.incidents import router as incidents_router
+        from ai_incident_monitor.ui.routes.diagnostics import router as diagnostics_router
+        from ai_incident_monitor.ui.routes.dossiers import router as dossiers_router
+        from ai_incident_monitor.ui.routes.packages import router as packages_router
+
+        app.include_router(auth_router)
+        app.include_router(incidents_router)
+        app.include_router(diagnostics_router)
+        app.include_router(dossiers_router)
+        app.include_router(packages_router)
+
+        # Root landing redirect
+        @app.get("/", response_class=HTMLResponse)
+        async def index_redirect(request: Request) -> Response:
+            cookie_val = request.cookies.get(SESSION_COOKIE_NAME)
+            session = sess_mgr.get_session(cookie_val)
+            if session:
+                return RedirectResponse(url="/incidents", status_code=status.HTTP_303_SEE_OTHER)
+            return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+    else:
+        # Root landing endpoint for public API
+        @app.get("/", response_class=JSONResponse)
+        async def public_root_status() -> dict[str, Any]:
+            return {
+                "status": "healthy",
+                "service": "ai-incident-monitor-public-api",
+                "version": "0.2.0",
+                "documentation": "/api/docs",
+                "endpoints": {
+                    "categories": "/api/v1/public/categories",
+                    "incidents": "/api/v1/public/incidents",
+                    "openapi": "/api/v1/public/openapi.json",
+                },
+            }
 
     # Custom clean exception handlers to prevent debug tracebacks containing sensitive data
     @app.exception_handler(404)
