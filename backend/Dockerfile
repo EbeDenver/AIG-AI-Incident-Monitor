@@ -45,7 +45,7 @@ RUN groupadd -g 10001 appgroup && \
     useradd -u 10001 -g appgroup -s /bin/bash -m appuser
 
 # Copy application code, migrations, and canonical governance data
-COPY --chown=appuser:appgroup alembic.ini ./
+COPY --chown=appuser:appgroup pyproject.toml README.md alembic.ini ./
 COPY --chown=appuser:appgroup alembic/ ./alembic/
 COPY --chown=appuser:appgroup frameworks/ ./frameworks/
 COPY --chown=appuser:appgroup src/ ./src/
